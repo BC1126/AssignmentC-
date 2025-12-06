@@ -12,11 +12,17 @@ public class DB(DbContextOptions options) : DbContext(options)
 
 public class User
 {
+    [Key, MaxLength(5)]
     public string UserId {  get; set; }
     [MaxLength(100)]
     public string Name { get; set; }
+    [MaxLength(1)]
+    public string Gender { get; set; }
+    [MaxLength(100)]
     public string Email { get; set; }
-    public string Password { get; set; }
+    [MaxLength(100)]
+    public string PasswordHash { get; set; }
+    [MaxLength(11)]
     public string Phone { get; set; }
     public string Role => GetType().Name;
 
@@ -29,7 +35,8 @@ public class Admin : User
 
 public class Member : User
 {
-
+    [MaxLength(100)]
+    public string PhotoURL { get; set; }
 }
 
 public class Order
