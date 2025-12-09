@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace AssignmentC_.Models;
 
+#nullable disable warnings
+
 public class MovieViewModel
 {
     public int MovieId { get; set; }
