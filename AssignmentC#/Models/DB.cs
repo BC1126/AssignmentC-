@@ -15,6 +15,7 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Hall> Halls { get; set; }
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowTime> ShowTimes { get; set; }
+    public DbSet<Outlet> Outlets { get; set; }
 }
 
 public class User
@@ -117,11 +118,13 @@ public class Hall
 {
     [Key]
     public int HallId { get; set; }
+    public int OutletId { get; set; }
     [MaxLength(50)]
     public string Name { get; set; } // E.g., "Hall 1", "IMAX"
     public int Capacity { get; set; }
 
     // Navigation: A Hall has many Seats and ShowTimes
+    public Outlet Outlet { get; set; }
     public ICollection<Seat> Seats { get; set; } = new List<Seat>();
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
 }
@@ -136,3 +139,17 @@ public class Seat
     public bool IsPremium { get; set; } 
     public Hall Hall { get; set; }
 }
+
+public class Outlet
+{
+    [Key]
+    public int OutletId { get; set; }
+    [MaxLength(50)]
+    public string City { get; set; } // E.g., "Kuala Lumpur", "Johor Bahru"
+    [MaxLength(100)]
+    public string Name { get; set; } // E.g., "Mid Valley Megamall"
+
+    // Navigation: An Outlet has many Halls
+    public ICollection<Hall> Halls { get; set; } = new List<Hall>();
+}
+
