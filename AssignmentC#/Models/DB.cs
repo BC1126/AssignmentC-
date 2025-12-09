@@ -15,6 +15,7 @@ public class DB(DbContextOptions options) : DbContext(options)
 
     public DbSet<Product> Products { get; set; }
     public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderLine> OrderLines { get; set; }
     public DbSet<Movie>Movies { get; set; }
     public DbSet<Hall> Halls { get; set; }
     public DbSet<Seat> Seats { get; set; }
@@ -57,10 +58,10 @@ public class Product
     [MaxLength(100)]
     public string Name { get; set; }
     [MaxLength(100)]
-    public string Desc {  get; set; }
+    public string Desc { get; set; }
     [Precision(6, 2)]
     public decimal Price { get; set; }
-    public int stock {  get; set; }
+    public int stock { get; set; }
     [MaxLength(100)]
     public string region { get; set; }
     [MaxLength(100)]
@@ -83,7 +84,7 @@ public class Order
     [MaxLength(100)]
     public string cinema { get; set; }
     [MaxLength(100)]
-    public DateOnly CollectDate {  get; set; }
+    public DateOnly CollectDate { get; set; }
 
     // Foreign Keys
     public string MemberEmail { get; set; }
