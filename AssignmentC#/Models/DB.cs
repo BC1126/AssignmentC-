@@ -33,6 +33,9 @@ public class User
     public string Phone { get; set; }
     public string Role => GetType().Name;
 
+
+    // Navigation Properties
+    public List<Payment> Payment { get; set; } = [];
 }
 
 public class Admin : User
@@ -58,8 +61,35 @@ public class FoodAndBeverage
 
 public class Payment
 {
+    [Key]
+    public int PaymentId { get; set; }
 
+    public int amount { get; set; }
+    public bool status { get; set; }
+    public DateOnly date {  get; set; }
+
+    //FK
+    public User User { get; set; }
+    public Order Order { get; set; }
+    public Promotion Promotion {  get; set; }
 }
+
+public class Promotion
+{
+    public int PromotionId { get; set; }
+}
+
+public class Memberpoints : Promotion
+{
+    public int points { get; set; }
+}
+
+public class Voucher : Promotion
+{
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+}
+
 
 public class Booking
 {
@@ -68,7 +98,7 @@ public class Booking
 
 public class Review
 {
-
+    
 }
 
 public class Movie{
