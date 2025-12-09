@@ -17,6 +17,7 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<OrderLine> OrderLines { get; set; }
     public DbSet<Movie> Movies { get; set; }
     public DbSet<Booking> Bookings { get; set; }
+    public DbSet<BookingSeat> BookingSeats { get; set; }
     public DbSet<Hall> Halls { get; set; }
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowTime> ShowTimes { get; set; }
@@ -63,17 +64,15 @@ public class Product
     public string Id { get; set; }
     [MaxLength(100)]
     public string Name { get; set; }
-    [MaxLength(255)]
+    [MaxLength(100)]
     public string Desc { get; set; }
     [Precision(6, 2)]
     public decimal Price { get; set; }
-    public int Stock { get; set; }
+    public int stock { get; set; }
     [MaxLength(100)]
-    public string Region { get; set; }
+    public string region { get; set; }
     [MaxLength(100)]
-    public string Cinema { get; set; }
-    [MaxLength (100)]
-    public string Category {  get; set; }
+    public string cinema { get; set; }
     [MaxLength(100)]
     public string PhotoURL { get; set; }
 
@@ -89,9 +88,9 @@ public class Order
     public DateOnly Date { get; set; }
     public bool Paid { get; set; }
     [MaxLength(100)]
-    public string Region { get; set; }
+    public string region { get; set; }
     [MaxLength(100)]
-    public string Cinema { get; set; }
+    public string cinema { get; set; }
     [MaxLength(100)]
     public DateOnly CollectDate { get; set; }
 
@@ -156,25 +155,24 @@ public class Booking
 {
     [Key]
     public int BookingId { get; set; }
-
     public string MemberId { get; set; }
-    public Member Member { get; set; }
-
     public int MovieId { get; set; }
-    public Movie Movie { get; set; }
     public int ShowTimeId { get; set; }
-    public ShowTime ShowTime { get; set; }
-
     public int HallId { get; set; }
-    public Hall Hall { get; set; }
+    
 
     // Booking info
     public int TicketQuantity { get; set; }
-
     [Column(TypeName = "decimal(18, 2)")]
     public decimal TotalPrice { get; set; }
     public DateTime BookingDate { get; set; } = DateTime.Now;
 
+
+    // Navigation: Link to Movie, Hall, Member, and Showtime
+    public Hall Hall { get; set; }
+    public ShowTime ShowTime { get; set; }
+    public Movie Movie { get; set; }
+    public Member Member { get; set; }
     public ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
 }
 

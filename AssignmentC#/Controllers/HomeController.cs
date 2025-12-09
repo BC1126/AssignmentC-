@@ -63,4 +63,9 @@ public class HomeController : Controller
     {
         return View();
     }
+
+    public IActionResult SelectSeat()
+    {
+        return View();
+    }
 }
