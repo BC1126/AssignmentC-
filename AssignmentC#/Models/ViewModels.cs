@@ -4,8 +4,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AssignmentC_.Models;
 
-using System.ComponentModel.DataAnnotations;
-
 public class LoginVM
 {
     // The Email property is used as the username for login.
@@ -27,29 +25,47 @@ public class LoginVM
 
 public class RegisterVM
 {
-    // --- Email Field ---
+    // Corresponds to the 'Name' property in your User entity
+    [Required(ErrorMessage = "Full Name is required.")]
+    [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
+    [Display(Name = "Full Name")]
+    public string Name { get; set; }
+
+    // Email is used for login and identification
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email format.")]
-    [StringLength(100)]
+    [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters.")]
     public string Email { get; set; }
 
-    // --- Password Field ---
+    // Password fields
     [Required(ErrorMessage = "Password is required.")]
-    [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters long.")]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters.")]
     [DataType(DataType.Password)]
     public string Password { get; set; }
 
-    // --- Password Confirmation Field ---
-    [Required(ErrorMessage = "Confirm Password is required.")]
+    [Required(ErrorMessage = "Password confirmation is required.")]
     [DataType(DataType.Password)]
-    [Display(Name = "Confirm Password")] // Used for display labels in the View
+    [Display(Name = "Confirm Password")]
     [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
     public string ConfirmPassword { get; set; }
 
-    // --- Optional Name Fields ---
-    [StringLength(50)]
-    public string FirstName { get; set; }
+    // Corresponds to the 'Gender' property in your User entity
+    [Required(ErrorMessage = "Gender is required.")]
+    [StringLength(1, ErrorMessage = "Gender must be a single character (e.g., M, F, or O).")]
+    public string Gender { get; set; }
 
-    [StringLength(50)]
-    public string LastName { get; set; }
+    // Corresponds to the 'Phone' property in your User entity
+    // Note: The [Required] attribute is generally used here if the field is mandatory. 
+    // If optional, remove [Required]. I'll keep it for completeness based on your previous input pattern.
+    [Required(ErrorMessage = "Phone number is required.")]
+    [Phone(ErrorMessage = "Invalid phone number format.")]
+    [StringLength(11, ErrorMessage = "Phone number cannot exceed 11 digits.")]
+    [Display(Name = "Phone Number")]
+    public string Phone { get; set; }
+
+    // Checkbox for terms and conditions
+    [Required(ErrorMessage = "You must agree to the terms and conditions.")]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the terms and conditions.")]
+    [Display(Name = "Agree to Terms")]
+    public bool AgreeToTerms { get; set; }
 }
