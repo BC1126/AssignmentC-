@@ -17,9 +17,11 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderLine> OrderLines { get; set; }
     public DbSet<Movie>Movies { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
     public DbSet<Hall> Halls { get; set; }
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowTime> ShowTimes { get; set; }
+    public DbSet<Outlet> Outlets { get; set; }
 }
 
 public class User
@@ -38,6 +40,9 @@ public class User
     public string Phone { get; set; }
     public string Role => GetType().Name;
 
+
+    // Navigation Properties
+    public List<Payment> Payment { get; set; } = [];
 }
 
 public class Admin : User
@@ -115,17 +120,78 @@ public class OrderLine
 
 public class Payment
 {
+    [Key]
+    public int PaymentId { get; set; }
 
+    public int amount { get; set; }
+    public bool status { get; set; }
+    public DateOnly date {  get; set; }
+
+    //FK
+    public User User { get; set; }
+    public Order Order { get; set; }
+    public Promotion Promotion {  get; set; }
 }
+
+public class Promotion
+{
+    public int PromotionId { get; set; }
+}
+
+public class Memberpoints : Promotion
+{
+    public int points { get; set; }
+}
+
+public class Voucher : Promotion
+{
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+}
+
 
 public class Booking
 {
+    [Key]
+    public int BookingId { get; set; }
 
+    public string MemberId { get; set; }
+    public Member Member { get; set; }
+
+    public int MovieId { get; set; }
+    public Movie Movie { get; set; }
+    public int ShowTimeId { get; set; }
+    public ShowTime ShowTime { get; set; }
+
+    public int HallId { get; set; }
+    public Hall Hall { get; set; }
+
+    // Booking info
+    public int TicketQuantity { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal TotalPrice { get; set; }
+    public DateTime BookingDate { get; set; } = DateTime.Now;
+
+    public ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
 }
+
+public class BookingSeat
+{
+    [Key]
+    public int BookingSeatId { get; set; }
+
+    public int BookingId { get; set; }
+    public int SeatId { get; set; }
+
+    public Booking Booking { get; set; }
+    public Seat Seat { get; set; }
+}
+
 
 public class Review
 {
-
+    
 }
 
 public class Movie{
@@ -174,11 +240,13 @@ public class Hall
 {
     [Key]
     public int HallId { get; set; }
+    public int OutletId { get; set; }
     [MaxLength(50)]
     public string Name { get; set; } // E.g., "Hall 1", "IMAX"
     public int Capacity { get; set; }
 
     // Navigation: A Hall has many Seats and ShowTimes
+    public Outlet Outlet { get; set; }
     public ICollection<Seat> Seats { get; set; } = new List<Seat>();
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
 }
@@ -193,3 +261,17 @@ public class Seat
     public bool IsPremium { get; set; } 
     public Hall Hall { get; set; }
 }
+
+public class Outlet
+{
+    [Key]
+    public int OutletId { get; set; }
+    [MaxLength(50)]
+    public string City { get; set; } // E.g., "Kuala Lumpur", "Johor Bahru"
+    [MaxLength(100)]
+    public string Name { get; set; } // E.g., "Mid Valley Megamall"
+
+    // Navigation: An Outlet has many Halls
+    public ICollection<Hall> Halls { get; set; } = new List<Hall>();
+}
+
