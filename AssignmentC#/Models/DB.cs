@@ -7,6 +7,8 @@ namespace AssignmentC_.Models;
 public class DB(DbContextOptions options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
+    public DbSet<Admin> Admins { get; set; }
+    public DbSet<Member> Members { get; set; }
     public DbSet<Order> Orders { get; set; }
 }
 
