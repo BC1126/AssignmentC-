@@ -15,8 +15,10 @@ public class DB(DbContextOptions options) : DbContext(options)
 
     public DbSet<Product> Products { get; set; }
     public DbSet<Order> Orders { get; set; }
-    public DbSet<OrderLine> OrderLines { get; set; }
-
+    public DbSet<Movie>Movies { get; set; }
+    public DbSet<Hall> Halls { get; set; }
+    public DbSet<Seat> Seats { get; set; }
+    public DbSet<ShowTime> ShowTimes { get; set; }
 }
 
 public class User
@@ -123,22 +125,68 @@ public class Review
 
 }
 
-public class Movie
-{
-
+public class Movie{
+    [Key]
+    public int MovieId { get; set; }
+    [MaxLength(100)]
+    public string Title { get; set; }
+    [Column(TypeName = "nvarchar(MAX)")]
+    public string Description { get; set; }
+    [MaxLength(50)]
+    public string Genre { get; set; }
+    public int DurationMinutes { get; set; }
+    [MaxLength(10)]
+    public string Rating { get; set; }
+    [MaxLength(100)]
+    public string Director { get; set; }
+    [MaxLength(100)]
+    public string Writer { get; set; }
+    public DateTime PremierDate { get; set; }
+    [MaxLength(255)]
+    public string PosterUrl { get; set; }
+    [MaxLength(255)]
+    public string BannerUrl { get; set; }
+    [MaxLength(255)]
+    public string TrailerUrl { get; set; }
+    public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }
-
 public class ShowTime
 {
+    [Key]
+    public int ShowTimeId { get; set; }
+    public int MovieId { get; set; } // Foreign Key to Movie
+    public int HallId { get; set; } // Foreign Key to Hall
+    public DateTime StartTime { get; set; } // Date and time of the showing
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal TicketPrice { get; set; }
 
+    // Navigation: Links to Movie, Hall, and Bookings
+    public Movie Movie { get; set; }
+    public Hall Hall { get; set; }
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
 
 public class Hall
 {
+    [Key]
+    public int HallId { get; set; }
+    [MaxLength(50)]
+    public string Name { get; set; } // E.g., "Hall 1", "IMAX"
+    public int Capacity { get; set; }
 
+    // Navigation: A Hall has many Seats and ShowTimes
+    public ICollection<Seat> Seats { get; set; } = new List<Seat>();
+    public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
 }
 
 public class Seat
 {
-
+    [Key]
+    public int SeatId { get; set; }
+    public int HallId { get; set; } 
+    [MaxLength(10)]
+    public string SeatIdentifier { get; set; } 
+    public bool IsPremium { get; set; } 
+    public Hall Hall { get; set; }
 }
