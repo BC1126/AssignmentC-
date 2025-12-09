@@ -58,4 +58,9 @@ public class HomeController : Controller
     {
         return View();
     }
+
+    public IActionResult review()
+    {
+        return View();
+    }
 }

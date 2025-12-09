@@ -12,16 +12,17 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<User> Users { get; set; }
     public DbSet<Admin> Admins { get; set; }
     public DbSet<Member> Members { get; set; }
-
     public DbSet<Product> Products { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderLine> OrderLines { get; set; }
-    public DbSet<Movie>Movies { get; set; }
+    public DbSet<Movie> Movies { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<Hall> Halls { get; set; }
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowTime> ShowTimes { get; set; }
     public DbSet<Outlet> Outlets { get; set; }
+    public DbSet<MovieReview> MovieReviews { get; set; }
+    public DbSet<ProductReview> ProductReviews { get; set; }
 }
 
 public class User
@@ -78,6 +79,7 @@ public class Product
 
     // Navigation Properties
     public List<OrderLine> Lines { get; set; } = [];
+    public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
 }
 
 public class Order
@@ -188,10 +190,75 @@ public class BookingSeat
     public Seat Seat { get; set; }
 }
 
-
-public class Review
+public class MovieReview
 {
-    
+    [Key]
+    public int MovieReviewId { get; set; }
+
+    [Required]
+    [MaxLength(5)]
+    public string UserId { get; set; }
+
+    [Required(ErrorMessage = "The review must be linked to a movie.")]
+    public int MovieId { get; set; }
+
+    [Required(ErrorMessage = "A title is required.")]
+    [MaxLength(100)]
+    public string Title { get; set; }
+
+    [Required(ErrorMessage = "A comment is required.")]
+    [StringLength(500, MinimumLength = 10, ErrorMessage = "Review must be between 10 and 500 characters.")]
+    public string Comment { get; set; }
+
+    [Required(ErrorMessage = "A rating is required.")]
+    [Range(1, 10, ErrorMessage = "Rating must be between 1 and 10.")]
+    public int Rating { get; set; }
+
+    public bool? Recommend { get; set; }
+
+    [Required]
+    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+
+    public bool IsApproved { get; set; } = false;
+
+    // --- Navigation Properties ---
+    public User User { get; set; }
+    public Movie Movie { get; set; }
+}
+
+public class ProductReview
+{
+    [Key]
+    public int ProductReviewId { get; set; }
+
+    [Required]
+    [MaxLength(5)]
+    public string UserId { get; set; }
+
+    [Required(ErrorMessage = "The review must be linked to a product.")]
+    [MaxLength(4)]
+    public string ProductId { get; set; }
+
+    [Required(ErrorMessage = "A title is required.")]
+    [MaxLength(100)]
+    public string Title { get; set; }
+
+    [Required(ErrorMessage = "A comment is required.")]
+    [StringLength(500, MinimumLength = 10, ErrorMessage = "Review must be between 10 and 500 characters.")]
+    public string Comment { get; set; }
+
+    [Required(ErrorMessage = "A rating is required.")]
+    [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]
+    public int Rating { get; set; }
+
+    [Required]
+    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
+
+    public bool IsApproved { get; set; } = false;
+
+    // --- Navigation Properties ---
+    public User User { get; set; }
+    public Product Product { get; set; }
 }
 
 public class Movie{
@@ -218,7 +285,7 @@ public class Movie{
     [MaxLength(255)]
     public string TrailerUrl { get; set; }
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
-    public ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public ICollection<MovieReview> Reviews { get; set; } = new List<MovieReview>();
 }
 public class ShowTime
 {
