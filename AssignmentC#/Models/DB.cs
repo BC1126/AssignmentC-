@@ -24,6 +24,28 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Outlet> Outlets { get; set; }
     public DbSet<MovieReview> MovieReviews { get; set; }
     public DbSet<ProductReview> ProductReviews { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // FIX 1: Prevent Hall deletion from immediately deleting ShowTimes
+        // This stops one path of the cycle.
+        modelBuilder.Entity<ShowTime>()
+            .HasOne(st => st.Hall)
+            .WithMany(h => h.ShowTimes)
+            .HasForeignKey(st => st.HallId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // FIX 2: Prevent Seat deletion from immediately deleting BookingSeats
+        // This stops the other path of the cycle.
+        modelBuilder.Entity<BookingSeat>()
+            .HasOne(bs => bs.Seat)
+            .WithMany()
+            .HasForeignKey(bs => bs.SeatId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Must call the base method last
+        base.OnModelCreating(modelBuilder);
+    }
 }
 
 public class User
@@ -156,22 +178,16 @@ public class Booking
     [Key]
     public int BookingId { get; set; }
     public string MemberId { get; set; }
-    public int MovieId { get; set; }
     public int ShowTimeId { get; set; }
-    public int HallId { get; set; }
     
-
     // Booking info
     public int TicketQuantity { get; set; }
     [Column(TypeName = "decimal(18, 2)")]
     public decimal TotalPrice { get; set; }
     public DateTime BookingDate { get; set; } = DateTime.Now;
 
-
     // Navigation: Link to Movie, Hall, Member, and Showtime
-    public Hall Hall { get; set; }
     public ShowTime ShowTime { get; set; }
-    public Movie Movie { get; set; }
     public Member Member { get; set; }
     public ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
 }
