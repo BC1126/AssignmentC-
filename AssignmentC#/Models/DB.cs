@@ -87,14 +87,16 @@ public class Product
     [MaxLength(100)]
     public string Name { get; set; }
     [MaxLength(100)]
-    public string Desc { get; set; }
+    public string Description { get; set; }
     [Precision(6, 2)]
     public decimal Price { get; set; }
-    public int stock { get; set; }
+    public int Stock { get; set; }
     [MaxLength(100)]
-    public string region { get; set; }
+    public string Region { get; set; }
     [MaxLength(100)]
-    public string cinema { get; set; }
+    public string Cinema { get; set; }
+    [MaxLength(100)]
+    public string Category { get; set; }
     [MaxLength(100)]
     public string PhotoURL { get; set; }
 
@@ -110,9 +112,9 @@ public class Order
     public DateOnly Date { get; set; }
     public bool Paid { get; set; }
     [MaxLength(100)]
-    public string region { get; set; }
+    public string Region { get; set; }
     [MaxLength(100)]
-    public string cinema { get; set; }
+    public string Cinema { get; set; }
     [MaxLength(100)]
     public DateOnly CollectDate { get; set; }
 

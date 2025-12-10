@@ -1,5 +1,5 @@
 global using AssignmentC_.Models;
-using Demo;
+using AssignmentC_;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
