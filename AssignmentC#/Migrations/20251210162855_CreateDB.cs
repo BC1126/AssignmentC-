@@ -54,11 +54,12 @@ namespace AssignmentC_.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(4)", maxLength: 4, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Desc = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Price = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: false),
-                    stock = table.Column<int>(type: "int", nullable: false),
-                    region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    cinema = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Stock = table.Column<int>(type: "int", nullable: false),
+                    Region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Cinema = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     PhotoURL = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
@@ -157,8 +158,8 @@ namespace AssignmentC_.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     Paid = table.Column<bool>(type: "bit", nullable: false),
-                    region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    cinema = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Cinema = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CollectDate = table.Column<DateOnly>(type: "date", maxLength: 100, nullable: false),
                     MemberEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MemberUserId = table.Column<string>(type: "nvarchar(5)", nullable: true)

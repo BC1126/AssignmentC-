@@ -1,0 +1,49 @@
+﻿@model IEnumerable<Product>
+
+@{
+    ViewBag.Title = "Product | Index";
+}
+
+@section head {
+    <style>
+        .popup {
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+}
+
+<p>@Model.Count() record(s)</p>
+
+<table class="table">
+    <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Price</th>
+        <th>Stock</th>
+        <th>Region</th>
+        <th>Cinema</th>
+        <th>Category</th>
+    </tr>
+
+    @foreach (var p in Model)
+    {
+        <tr>
+            <td>@p.Id</td>
+            <td>@p.Name</td>
+            <td>@p.Description</td>
+            <td>@p.Price</td>
+            <td>@p.Stock</td>
+            <td>@p.Region</td>
+            <td>@p.Cinema</td>
+            <td>@p.Category</td>
+            <td>
+                <button data-get="/Product/Update/@p.Id">Update</button>
+                <button data-post="/Product/Delete/@p.Id">Delete</button>
+                <img src="/products/@p.PhotoURL" class="popup">
+            </td>
+        </tr>
+    }
+</table>
+
