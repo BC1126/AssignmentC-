@@ -1,0 +1,101 @@
+﻿@{
+    ViewData["Title"] = "Manage Hall Seats";
+}
+
+@section head {
+    <link rel="stylesheet" href="~/css/ManageSeat.css" />
+}
+
+<div class="container">
+    <h2>Manage Hall Seats</h2>
+
+    <!-- Seat Legend -->
+    <ul class="legend">
+        <li><span class="seat standard"></span> Standard</li>
+        <li><span class="seat vip"></span> VIP</li>
+        <li><span class="seat wheelchair"></span> Wheelchair</li>
+        <li><span class="seat disabled"></span> Disabled</li>
+    </ul>
+
+    <!-- Screen -->
+    <div class="screen">SCREEN</div>
+
+    <!-- Seat Grid -->
+    <div id="seat-map">
+        @for (char row = 'A'; row <= 'F'; row++)
+        {
+            <div class="row">
+                @for (int col = 1; col <= 10; col++)
+                {
+                    <div class="seat standard"
+                         data-row="@row"
+                         data-col="@col">
+                        @row@col
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Seat Tools -->
+    <div class="tools">
+        <label>Seat Type:</label>
+        <select id="seatType">
+            <option value="standard">Standard</option>
+            <option value="vip">VIP</option>
+            <option value="wheelchair">Wheelchair</option>
+        </select>
+
+        <button id="disableSeat" class="btn danger">Disable</button>
+        <button id="enableSeat" class="btn success">Enable</button>
+        <button id="saveLayout" class="btn primary">Save Layout</button>
+    </div>
+</div>
+
+<script>
+    let selectedSeat = null;
+
+    document.querySelectorAll('.seat').forEach(seat => {
+        seat.addEventListener('click', () => {
+            if (seat.classList.contains('disabled')) return;
+
+            document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+            seat.classList.add('selected');
+            selectedSeat = seat;
+        });
+    });
+
+    document.getElementById('seatType').addEventListener('change', e => {
+        if (!selectedSeat) return;
+
+        selectedSeat.classList.remove('standard', 'vip', 'wheelchair');
+        selectedSeat.classList.add(e.target.value);
+    });
+
+    document.getElementById('disableSeat').addEventListener('click', () => {
+        if (!selectedSeat) return;
+        selectedSeat.classList.add('disabled');
+    });
+
+    document.getElementById('enableSeat').addEventListener('click', () => {
+        if (!selectedSeat) return;
+        selectedSeat.classList.remove('disabled');
+    });
+
+    document.getElementById('saveLayout').addEventListener('click', () => {
+        const seats = [];
+
+        document.querySelectorAll('.seat').forEach(seat => {
+            seats.push({
+                row: seat.dataset.row,
+                col: seat.dataset.col,
+                type: seat.classList.contains('vip') ? 'VIP' :
+                      seat.classList.contains('wheelchair') ? 'Wheelchair' : 'Standard',
+                active: !seat.classList.contains('disabled')
+            });
+        });
+
+        console.log(seats);
+        alert("Seat layout ready to save (check console)");
+    });
+</script>

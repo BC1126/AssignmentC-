@@ -120,4 +120,45 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct)
 
         return password;
     }
+
+    public string SaveImage(IFormFile file)
+    {
+        if (file == null || file.Length == 0) return null;
+
+        // Ensure the path to the wwwroot/img folder exists (we'll assume the path is handled by the injected environment)
+        // We'll use the WebRootPath (which points to wwwroot)
+        var uploadsFolder = Path.Combine(en.WebRootPath, "img");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        // Generate a unique file name to prevent conflicts
+        string uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        // Save the file to the server's disk
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            file.CopyTo(fileStream);
+        }
+
+        // Return the path that the browser can access
+        return "/img/" + uniqueFileName;
+    }
+
+    // Deletes an image from the server given its URL path
+    public void DeleteImage(string imageUrl)
+    {
+        if (string.IsNullOrEmpty(imageUrl)) return;
+
+        // Get the full physical path on the server
+        // We remove the leading '/' to correctly combine the path
+        string physicalPath = Path.Combine(en.WebRootPath, imageUrl.TrimStart('/'));
+
+        if (System.IO.File.Exists(physicalPath))
+        {
+            System.IO.File.Delete(physicalPath);
+        }
+    }
 }

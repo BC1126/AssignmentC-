@@ -1,0 +1,95 @@
+﻿.container {
+    color: white;
+    padding: 20px;
+    font-family: Arial;
+}
+
+body {
+    background-color: #242333;
+    justify-content: center;
+    height: 100vh;
+    font-family: "Lato", sans-serif;
+}
+.screen {
+    background: #fff;
+    color: #000;
+    text-align: center;
+    margin: 20px auto;
+    padding: 10px;
+    width: 300px;
+    border-radius: 5px;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    --bs-gutter-x: 0rem;
+}
+
+.seat {
+    width: 30px;
+    height: 30px;
+    margin: 4px;
+    text-align: center;
+    line-height: 30px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.standard {
+    background: #444451;
+}
+
+.vip {
+    background: gold;
+    color: black;
+}
+
+.wheelchair {
+    background: dodgerblue;
+}
+
+.disabled {
+    background: #777;
+    cursor: not-allowed;
+}
+
+.seat.selected {
+    outline: 2px solid red;
+}
+
+.legend {
+    display: flex;
+    gap: 15px;
+    list-style: none;
+    padding: 0;
+}
+
+    .legend .seat {
+        display: inline-block;
+    }
+
+.tools {
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 6px 12px;
+    margin-left: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.primary {
+    background: #6feaf6;
+}
+
+.success {
+    background: #4CAF50;
+}
+
+.danger {
+    background: #f44336;
+}
