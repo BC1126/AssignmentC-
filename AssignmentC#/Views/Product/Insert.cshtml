@@ -4,6 +4,10 @@
     ViewBag.Title = "Product | Insert";
 }
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
 <form class="form" method="post" enctype="multipart/form-data">
     <div asp-validation-summary="ModelOnly"></div>
 
@@ -42,10 +46,6 @@
     <label asp-for="Cinema"></label>
     <select asp-for="Cinema" id="cinema" class="form-control">
         <option value="">-- Select Cinema --</option>
-        @foreach (var c in ViewBag.Cinemas)
-        {
-            <option value="@c.Name" data-region="@c.City">@c.Name</option>
-        }
     </select>
     <span asp-validation-for="Cinema"></span>
 
@@ -60,16 +60,17 @@
     </select>
     <span asp-validation-for="Category"></span>
 
+    <!-- Photo Upload -->
     <label asp-for="Photo"></label>
     <label class="upload">
         <input asp-for="Photo" accept="image/jpeg,image/png" hidden>
-        <img src="/images/photo.jpg" id="photoPreview">
+        <img src="/images/photo.jpg" id="photoPreview" style="max-width:150px;">
     </label>
     <span asp-validation-for="Photo"></span>
 
     <section>
         <button type="submit">Submit</button>
-        <button type="reset">Reset</button>
+        <button type="reset" id="resetBtn">Reset</button>
     </section>
 </form>
 
@@ -78,7 +79,7 @@
         $.validator.setDefaults({ ignore: '' });
 
         // Photo preview
-        document.querySelector('input[type="file"]').addEventListener('change', function (e) {
+        document.querySelector('input[type="file"]').addEventListener('change', function () {
             const reader = new FileReader();
             reader.onload = function (e) {
                 document.getElementById('photoPreview').src = e.target.result;
@@ -86,32 +87,50 @@
             reader.readAsDataURL(this.files[0]);
         });
 
-        // Cascading dropdown: Region -> Cinema
         const regionDropdown = document.getElementById('region');
         const cinemaDropdown = document.getElementById('cinema');
 
-        function filterCinemas() {
-            const selectedRegion = regionDropdown.value;
+        // AJAX load cinemas by selected region
+        function loadCinemas(region) {
+            if (!region) {
+                cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
+                return;
+            }
 
-            for (let i = 0; i < cinemaDropdown.options.length; i++) {
-                const option = cinemaDropdown.options[i];
-                const region = option.getAttribute('data-region');
+            $.ajax({
+                url: '@Url.Action("GetCinemas", "Product")',
+                type: 'GET',
+                data: { region: region },
+                success: function (data) {
+                    console.log("Returned cinemas:", data);
+                    cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
 
-                if (!region || region === selectedRegion) {
-                    option.style.display = '';
-                } else {
-                    option.style.display = 'none';
+                    data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.name;  // lowercase to match controller JSON
+                        opt.text = c.name;
+                        cinemaDropdown.appendChild(opt);
+                    });
+                },
+                error: function () {
+                    alert('Failed to load cinemas.');
                 }
-            }
-
-            if (cinemaDropdown.selectedOptions.length > 0 &&
-                cinemaDropdown.selectedOptions[0].style.display === 'none') {
-                cinemaDropdown.value = '';
-            }
+            });
         }
 
-        // On page load & region change
-        filterCinemas();
-        regionDropdown.addEventListener('change', filterCinemas);
+        // On region change
+        regionDropdown.addEventListener('change', function () {
+            loadCinemas(this.value);
+        });
+
+        // Reset button clears cinema dropdown
+        document.getElementById('resetBtn').addEventListener('click', function () {
+            cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
+        });
+
+        // Load cinemas for default region on page load
+        if (regionDropdown.value) {
+            loadCinemas(regionDropdown.value);
+        }
     </script>
 }

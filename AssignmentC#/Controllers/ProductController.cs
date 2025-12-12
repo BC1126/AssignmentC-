@@ -5,6 +5,14 @@ namespace AssignmentC_;
 public class ProductController(DB db,
                                Helper hp) : Controller
 {
+    // Helper: Always trim Name and City to avoid filter breaking
+    private List<dynamic> GetOutlets()
+    {
+        return db.Outlets
+                 .Select(o => new { Name = o.Name.Trim(), City = o.City.Trim() })
+                 .ToList<dynamic>();
+    }
+
     // GET: Product/Index
     public IActionResult Index()
     {
@@ -31,14 +39,16 @@ public class ProductController(DB db,
         var vm = new ProductInsertVM
         {
             Id = NextId(),
-            Price = 0.01m,
+            Price = 0.01m
         };
 
-        // Get regions and cinemas from DB
-        var outlets = db.Outlets.ToList();
+        var outlets = GetOutlets();
+
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
-        ViewBag.Cinemas = outlets.ToList(); // List of all outlets
-        ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
+        ViewBag.Cinemas = outlets;
+        ViewBag.Categories = new List<string> {
+            "Ala cart", "Drinks", "Merchandise", "Snack"
+        };
 
         return View(vm);
     }
@@ -47,19 +57,17 @@ public class ProductController(DB db,
     [HttpPost]
     public IActionResult Insert(ProductInsertVM vm)
     {
-        // ID validation
         if (ModelState["Id"]?.Errors.Count == 0 && db.Products.Any(p => p.Id == vm.Id))
             ModelState.AddModelError("Id", "Duplicated Id.");
 
-        // Photo validation
         if (ModelState["Photo"]?.Errors.Count == 0)
         {
             var e = hp.ValidatePhoto(vm.Photo);
             if (e != "") ModelState.AddModelError("Photo", e);
         }
 
-        // Server-side Region → Cinema validation
-        var outlets = db.Outlets.ToList();
+        var outlets = GetOutlets();
+
         if (!outlets.Any(o => o.Name == vm.Cinema && o.City == vm.Region))
             ModelState.AddModelError("Cinema", "Selected cinema does not match the selected region.");
 
@@ -83,10 +91,11 @@ public class ProductController(DB db,
             return RedirectToAction("Index");
         }
 
-        // Refill dropdowns if validation fails
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
         ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
+        ViewBag.Categories = new List<string> {
+            "Ala cart", "Drinks", "Merchandise", "Snack"
+        };
 
         return View(vm);
     }
@@ -110,10 +119,13 @@ public class ProductController(DB db,
             PhotoURL = p.PhotoURL
         };
 
-        var outlets = db.Outlets.ToList();
+        var outlets = GetOutlets();
+
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
         ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
+        ViewBag.Categories = new List<string> {
+            "Ala cart", "Drinks", "Merchandise", "Snack"
+        };
 
         return View(vm);
     }
@@ -125,15 +137,14 @@ public class ProductController(DB db,
         var p = db.Products.Find(vm.Id);
         if (p == null) return RedirectToAction("Index");
 
-        // Photo validation
         if (vm.Photo != null)
         {
             var e = hp.ValidatePhoto(vm.Photo);
             if (e != "") ModelState.AddModelError("Photo", e);
         }
 
-        // Server-side Region → Cinema validation
-        var outlets = db.Outlets.ToList();
+        var outlets = GetOutlets();
+
         if (!outlets.Any(o => o.Name == vm.Cinema && o.City == vm.Region))
             ModelState.AddModelError("Cinema", "Selected cinema does not match the selected region.");
 
@@ -158,17 +169,14 @@ public class ProductController(DB db,
             return RedirectToAction("Index");
         }
 
-        // Refill dropdowns if validation fails
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
         ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
+        ViewBag.Categories = new List<string> {
+            "Ala cart", "Drinks", "Merchandise", "Snack"
+        };
 
         return View(vm);
     }
-
-
-
-
 
     // POST: Product/Delete
     [HttpPost]
@@ -178,8 +186,6 @@ public class ProductController(DB db,
 
         if (p != null)
         {
-            // TODO
-
             hp.DeletePhoto(p.PhotoURL, "products");
             db.Products.Remove(p);
             db.SaveChanges();
@@ -189,4 +195,19 @@ public class ProductController(DB db,
 
         return RedirectToAction("Index");
     }
+
+    // AJAX: Get cinemas for selected region
+    public JsonResult GetCinemas(string region)
+    {
+        if (string.IsNullOrEmpty(region))
+            return Json(new List<dynamic>());
+
+        var cinemas = db.Outlets
+                        .Where(o => o.City.Trim().ToLower() == region.Trim().ToLower())
+                        .Select(o => new { name = o.Name.Trim() }) // lowercase
+                        .ToList();
+
+        return Json(cinemas);
+    }
+
 }
