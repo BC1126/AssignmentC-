@@ -32,6 +32,28 @@ public class AdminController(DB db, Helper hp) : Controller
         return View(memberList); // Now passing IEnumerable<Member>
     }
 
+    public IActionResult StaffList()
+    {
+        //[Authorize(Role = "Admin")]
+        // Declare the list as the type the view expects: IEnumerable<Member>
+        IEnumerable<Staff> staffList = new List<Staff>();
+
+        try
+        {
+            // 1. Fetch only Member objects (assuming your DB context supports this)
+            // AND/OR
+            // 2. Explicitly cast the entire collection to the required type.
+            // The "as Member" cast will only succeed if the object is actually a Member
+            staffList = db.Users.OfType<Staff>().ToList();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception
+        }
+
+        return View(staffList); // Now passing IEnumerable<Member>
+    }
+
     public IActionResult AdminList()
     {
         //[Authorize(Role = "Admin")]
