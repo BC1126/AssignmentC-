@@ -1,0 +1,189 @@
+﻿@{
+    ViewData["Title"] = "Select Seats";
+}
+@section head {
+    <link rel="stylesheet" href="~/css/SelectTicket.css" />
+}
+
+<section id="content">
+    <div class="movie-container">
+        <label>Pick a movie:</label>
+        <select id="movie">
+            <option value="10">Avengers: Endgame ($10)</option>
+            <option value="12">Joker ($12)</option>
+            <option value="8">Toy Story 4 ($8)</option>
+            <option value="9">The Lion King ($9)</option>
+        </select>
+    </div>
+
+    <ul class="showcase">
+        <li><div class="seat"></div><small>Available</small></li>
+        <li><div class="seat selected"></div><small>Selected</small></li>
+        <li><div class="seat occupied"></div><small>Occupied</small></li>
+        <li><div class="seat vip"></div><small>VIP</small></li>
+        <li><div class="seat wheelchair"></div><small>Wheelchair</small></li>
+    </ul>
+
+    <div class="container">
+        <div class="screen">SCREEN</div>
+
+        <div class="row">
+            <div class="seat">A1</div>
+            <div class="seat vip">A2</div>
+            <div class="seat">A3</div>
+            <div class="seat wheelchair">A4</div>
+        </div>
+
+        <div class="row">
+            <div class="seat">B1</div>
+            <div class="seat">B2</div>
+            <div class="seat">B3</div>
+            <div class="seat vip">B4</div>
+        </div>
+
+        <div class="row">
+            <div class="seat">C1</div>
+            <div class="seat">C2</div>
+            <div class="seat wheelchair">C3</div>
+            <div class="seat">C4</div>
+        </div>
+    </div>
+
+    <div class="booking-summary">
+        <p>You have selected <span id="count">0</span> seats for a total of $<span id="total">0</span></p>
+        <label>Promo Code: </label><input type="text" id="promo" placeholder="Enter code" />
+        <button id="applyPromo">Apply</button>
+        <button id="checkout">Checkout</button>
+        <p id="lockTimer"></p>
+    </div>
+</section>
+
+<!-- Checkout Modal -->
+<div id="checkoutModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Booking Summary</h2>
+        <div id="seatSummary"></div>
+        <p>Total: $<span id="modalTotal">0</span></p>
+        <div id="qrCode"></div>
+        <button id="confirmBooking">Confirm Booking</button>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script>
+        const container = document.querySelector(".container");
+        const seats = document.querySelectorAll(".row .seat:not(.occupied)");
+        const count = document.getElementById("count");
+        const total = document.getElementById("total");
+        const movieSelect = document.getElementById("movie");
+        const promoInput = document.getElementById("promo");
+        const applyPromoBtn = document.getElementById("applyPromo");
+        const lockTimer = document.getElementById("lockTimer");
+
+        const checkoutBtn = document.getElementById("checkout");
+        const modal = document.getElementById("checkoutModal");
+        const closeModal = document.querySelector(".modal .close");
+        const seatSummary = document.getElementById("seatSummary");
+        const modalTotal = document.getElementById("modalTotal");
+        const qrCodeDiv = document.getElementById("qrCode");
+
+        let ticketPrice = +movieSelect.value;
+        let promoDiscount = 0;
+        let lockTime = 5 * 60;
+        let lockInterval;
+
+        // Save selected movie
+        function setMovieData(movieIndex, moviePrice) {
+            localStorage.setItem("selectedMovieIndex", movieIndex);
+            localStorage.setItem("selectedMoviePrice", moviePrice);
+        }
+
+        // Update total and count
+        function updateSelectedCount() {
+            const selectedSeats = document.querySelectorAll(".row .seat.selected");
+            const selectedCount = selectedSeats.length;
+            count.innerText = selectedCount;
+            const totalPrice = selectedCount * ticketPrice;
+            total.innerText = (totalPrice - promoDiscount > 0 ? totalPrice - promoDiscount : 0);
+            startLockTimer(selectedSeats.length);
+            localStorage.setItem("selectedSeats", JSON.stringify([...selectedSeats].map(seat => [...seats].indexOf(seat))));
+        }
+
+        // Load from local storage
+        function populateUI() {
+            const selectedSeats = JSON.parse(localStorage.getItem("selectedSeats"));
+            if (selectedSeats) {
+                seats.forEach((seat, index) => {
+                    if (selectedSeats.indexOf(index) > -1) seat.classList.add("selected");
+                });
+            }
+            const selectedMovieIndex = localStorage.getItem("selectedMovieIndex");
+            if (selectedMovieIndex !== null) movieSelect.selectedIndex = selectedMovieIndex;
+        }
+
+        // Apply promo
+        function applyPromo() {
+            const code = promoInput.value.trim();
+            promoDiscount = (code === "DISCOUNT5") ? 5 : 0;
+            updateSelectedCount();
+        }
+
+        // Lock timer for selected seats
+        function startLockTimer(countSeats) {
+            if (lockInterval) clearInterval(lockInterval);
+            if (countSeats === 0) {
+                lockTimer.innerText = "";
+                return;
+            }
+            let timeLeft = lockTime;
+            lockInterval = setInterval(() => {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                lockTimer.innerText = `Seats locked for ${minutes}:${seconds < 10 ? '0'+seconds : seconds}`;
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(lockInterval);
+                    seats.forEach(seat => seat.classList.remove("selected"));
+                    updateSelectedCount();
+                    lockTimer.innerText = "Lock expired. Seats released.";
+                }
+            }, 1000);
+        }
+
+        // Open checkout modal
+        checkoutBtn.addEventListener("click", () => {
+            const selectedSeats = [...document.querySelectorAll(".seat.selected")].map(s => s.innerText || s.className);
+            seatSummary.innerHTML = `<p>Seats: ${selectedSeats.join(', ')}</p>`;
+            modalTotal.innerText = total.innerText;
+
+            // Generate QR
+            qrCodeDiv.innerHTML = "";
+            const qr = new QRious({
+                element: document.createElement('canvas'),
+                value: `Booking: Seats ${selectedSeats.join(', ')} | Total $${total.innerText}`
+            });
+            qrCodeDiv.appendChild(qr.element);
+
+            modal.style.display = "block";
+        });
+
+        // Close modal
+        closeModal.addEventListener("click", () => modal.style.display = "none");
+        window.addEventListener("click", e => { if (e.target == modal) modal.style.display = "none"; });
+
+        // Event listeners
+        movieSelect.addEventListener("change", e => { ticketPrice = +e.target.value; setMovieData(e.target.selectedIndex, e.target.value); updateSelectedCount(); });
+        container.addEventListener("click", e => {
+            if (e.target.classList.contains("seat") && !e.target.classList.contains("occupied")) {
+                e.target.classList.toggle("selected");
+                updateSelectedCount();
+            }
+        });
+        applyPromoBtn.addEventListener("click", applyPromo);
+
+        populateUI();
+        updateSelectedCount();
+    </script>
+}

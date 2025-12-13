@@ -64,7 +64,7 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult SelectSeat()
+    public IActionResult selectTicket()
     {
         return View();
     }
