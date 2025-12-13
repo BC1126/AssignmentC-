@@ -1,0 +1,128 @@
+﻿@section head {
+    <link href="/css/ticket.css" rel="stylesheet" />
+}
+
+
+<h1>Payment Method</h1>
+<section id="detail" class="paymentMethod">
+    <div class="paymentDetail">
+        <div class="method">
+            <h3>Payment Options</h3>
+            <div>
+                <div>
+                    <input type="radio" name="method" id="creditcard" value="" />
+                    <label for="creditcard"><i class="fa-regular fa-credit-card"></i> Credit Card</label>
+                </div>
+
+                <div>
+                    <input type="radio" name="method" id="ewallet" value="" />
+                    <label for="ewallet"><i class="fa-solid fa-wallet"></i> E-wallet</label>
+                </div>
+
+                <div>
+                    <input type="radio" name="method" id="paypal" value="" />
+                    <label for="paypal"><i class="fa-brands fa-paypal"></i> Paypal</label>
+                </div>
+            </div>
+
+
+            
+        </div>
+
+        <div class="paymentInput">
+            <input type="text" name="" placeholder="Credit Card Number" />
+            <div>
+                <input type="month" value="" />
+                <input type="text" placeholder="CVV" />
+            </div>
+        </div>
+    </div>
+
+    <!---------------->
+    <div class="transDetail">
+        <h2>Transaction Detail</h2>
+        <!--
+        <div>
+            <span>Title of Film :</span>
+            <span>Movie Name</span>
+        </div>
+        
+        <div>
+            <span>Cinema :</span>
+            <span>Penang</span>
+        </div>
+
+        <div>
+            <span>Show Date/Time :</span>
+            <span>1 Dec 2025 18:00</span>
+        </div>
+
+        <div>
+            <span>Hall / Seat :</span>
+            <span>8 / A01</span>
+        </div>
+
+        -->
+        <div class="purchaseDetail">
+            <div>
+                <div>
+                    <span>No. of Tickets :</span>
+                    <span>Adult x 1</span>
+                </div>
+                <div class="displayPrice">
+                    RM20.00
+                </div>
+            </div>
+
+            <div>
+                <div>
+                    <span>Add-On :</span>
+                    <span>Combo A x 1</span>
+                </div>
+                <div class="displayPrice">
+                    RM20.00
+                </div>
+            </div>
+        </div>
+        
+
+        <hr />
+
+        <div class="amount">
+            <div class="subtotal">
+                <div>
+                    <span>Subtotal</span>
+                </div>
+                <div class="displayPrice">
+                    RM40.00
+                </div>
+            </div>
+
+            <div class="discount">
+                <div>
+                    <span>Discount</span>
+                </div>
+                <div class="displayPrice">
+                    - RM10.00
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="total">
+                <div>
+                    <span>Total</span>
+                </div>
+                <div class="displayPrice">
+                    RM30.00
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<div class="paybtn">
+    <button>Cancel</button>
+    <button>Pay</button>
+</div>
