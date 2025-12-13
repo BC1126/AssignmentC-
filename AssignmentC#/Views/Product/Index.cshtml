@@ -6,44 +6,163 @@
 
 @section head {
     <style>
-        .popup {
-            width: 100px;
-            height: 100px;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e0e0; /* light grey background */
         }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5; /* grey container */
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+            .top-actions h2 {
+                margin: 0;
+                color: #333;
+            }
+
+        .btn-insert {
+            background-color: #6c757d; /* grey button */
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+            .btn-insert:hover {
+                background-color: #5a6268;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #6c757d; /* grey header */
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+
+        tr:hover {
+            background-color: #dcdcdc;
+        }
+
+        button[data-get], button[data-post] {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+            button[data-get]:hover, button[data-post]:hover {
+                background-color: #5a6268;
+            }
+
+        table tr {
+            position: relative; /* Make the row the reference for absolute positioning */
+        }
+
+        table td:last-child {
+            position: relative;
+        }
+
+        table .popup {
+            background: #fff;
+            width:100px;
+            border: inherit;
+            padding: inherit;
+            position: absolute;
+            z-index: 1;
+            white-space: nowrap;
+            top: 50%;
+            left: 100%;
+            transform: translate(5px, -50%);
+            display: none;
+        }
+
+        table img.popup {
+            padding: 0;
+        }
+
+        table tr:hover .popup {
+            display: block;
+        }
+
     </style>
 }
 
-<p>@Model.Count() record(s)</p>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<table class="table">
-    <tr>
-        <th>Id</th>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Price</th>
-        <th>Stock</th>
-        <th>Region</th>
-        <th>Cinema</th>
-        <th>Category</th>
-    </tr>
+<div class="container">
 
-    @foreach (var p in Model)
-    {
+    <div class="top-actions">
+        <h2>Products (@Model.Count())</h2>
+        <button type="button" data-get="/Product/Insert" class="btn-insert" style="background: #0d6efd;
+            color: #fff;">
+            + Insert Product
+        </button>
+    </div>
+
+    <table>
         <tr>
-            <td>@p.Id</td>
-            <td>@p.Name</td>
-            <td>@p.Description</td>
-            <td>@p.Price</td>
-            <td>@p.Stock</td>
-            <td>@p.Region</td>
-            <td>@p.Cinema</td>
-            <td>@p.Category</td>
-            <td>
-                <button data-get="/Product/Update/@p.Id">Update</button>
-                <button data-post="/Product/Delete/@p.Id">Delete</button>
-                <img src="/products/@p.PhotoURL" class="popup">
-            </td>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Region</th>
+            <th>Cinema</th>
+            <th>Category</th>
+            <th>Actions</th>
         </tr>
-    }
-</table>
 
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.Name</td>
+                <td>@p.Description</td>
+                <td>@p.Price</td>
+                <td>@p.Stock</td>
+                <td>@p.Region</td>
+                <td>@p.Cinema</td>
+                <td>@p.Category</td>
+                <td>
+                    <button data-get="/Product/Update/@p.Id" style="background: #0d6efd;
+                color: #fff;">
+                        Update
+                    </button>
+                    <button data-post="/Product/Delete/@p.Id">Delete</button>
+                    <img src="/products/@p.PhotoURL" class="popup">
+                </td>
+            </tr>
+        }
+    </table>
+</div>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <Folder Include="Views\Account\" />
-    <Folder Include="wwwroot\img\" />
-    <Folder Include="wwwroot\js\" />
+    <Folder Include="wwwroot\products\" />
+    <Folder Include="wwwroot\js\"/>
   </ItemGroup>
 
   <ItemGroup>
