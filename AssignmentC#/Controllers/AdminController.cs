@@ -12,7 +12,7 @@ public class AdminController(DB db, Helper hp) : Controller
     // In AdminController.cs
     public IActionResult MemberList()
     {
-        //[Authorize(Role = "Admin")]
+        //[Authorize(Role = "Admin")]dwadawdadadadad
         // Declare the list as the type the view expects: IEnumerable<Member>
         IEnumerable<Member> memberList = new List<Member>();
 
