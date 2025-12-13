@@ -1,7 +1,7 @@
-﻿@model ProductInsertVM
+﻿@model ProductUpdateVM
 
 @{
-    ViewBag.Title = "Product | Insert";
+    ViewBag.Title = "Product | Update";
 }
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -9,55 +9,55 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
 
 <form class="product-form" method="post" enctype="multipart/form-data">
+
     <div class="product-back">
-        <button type="button" data-get="/Product/Index" aria-label="Back">
-            ←
-        </button>
+        <button type="button" data-get="/Product/Index" aria-label="Back">←</button>
     </div>
 
-
-    <h2>Insert Product</h2>
+    <h2>Update Product</h2>
 
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+    <!-- Hidden Id -->
+    <input asp-for="Id" type="hidden" />
+
     <div class="product-grid">
 
-        
+        <!-- Product ID (readonly) -->
         <div>
-            <label asp-for="Id"></label>
-            <input asp-for="Id" data-upper>
-            <span asp-validation-for="Id" class="text-danger"></span>
+            <label>Id</label>
+            <b>@Model.Id</b>
         </div>
 
-       
+        <!-- Name -->
         <div>
             <label asp-for="Name"></label>
-            <input asp-for="Name">
+            <input asp-for="Name" autofocus>
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
 
-     
+        <!-- Description -->
         <div style="grid-column: span 2;">
             <label asp-for="Description"></label>
             <textarea asp-for="Description"></textarea>
             <span asp-validation-for="Description" class="text-danger"></span>
         </div>
 
-     
+        <!-- Price -->
         <div>
             <label asp-for="Price"></label>
             <input asp-for="Price" type="number" step="0.01">
             <span asp-validation-for="Price" class="text-danger"></span>
         </div>
 
-        
+        <!-- Stock -->
         <div>
             <label asp-for="Stock"></label>
             <input asp-for="Stock" type="number">
             <span asp-validation-for="Stock" class="text-danger"></span>
         </div>
 
-        
+        <!-- Region -->
         <div>
             <label asp-for="Region"></label>
             <select asp-for="Region" id="region">
@@ -70,7 +70,7 @@
             <span asp-validation-for="Region" class="text-danger"></span>
         </div>
 
-       
+        <!-- Cinema -->
         <div>
             <label asp-for="Cinema"></label>
             <select asp-for="Cinema" id="cinema">
@@ -79,7 +79,7 @@
             <span asp-validation-for="Cinema" class="text-danger"></span>
         </div>
 
-        
+        <!-- Category -->
         <div>
             <label asp-for="Category"></label>
             <select asp-for="Category">
@@ -92,12 +92,12 @@
             <span asp-validation-for="Category" class="text-danger"></span>
         </div>
 
-       
+        <!-- Photo -->
         <div>
             <label asp-for="Photo"></label>
             <label class="product-upload">
                 <input asp-for="Photo" accept="image/jpeg,image/png" hidden>
-                <img src="/img/photo.jpg" id="photoPreview">
+                <img src="/products/@Model.PhotoURL" id="photoPreview">
                 <small>Click to upload</small>
             </label>
             <span asp-validation-for="Photo" class="text-danger"></span>
@@ -106,7 +106,7 @@
     </div>
 
     <div class="product-actions">
-        <button type="submit">Submit</button>
+        <button type="submit">Update</button>
         <button type="reset" id="resetBtn">Reset</button>
     </div>
 </form>
@@ -115,7 +115,7 @@
     <script>
         $.validator.setDefaults({ ignore: '' });
 
-        // Photo preview
+        // photo preview
         document.querySelector('input[type="file"]').addEventListener('change', function () {
             const reader = new FileReader();
             reader.onload = e => document.getElementById('photoPreview').src = e.target.result;
@@ -125,7 +125,7 @@
         const regionDropdown = document.getElementById('region');
         const cinemaDropdown = document.getElementById('cinema');
 
-        function loadCinemas(region) {
+        function loadCinemas(region, selectedCinema) {
             if (!region) {
                 cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
                 return;
@@ -133,26 +133,22 @@
 
             $.get('@Url.Action("GetCinemas", "Product")', { region }, function (data) {
                 cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
-
                 data.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.name;
                     opt.text = c.name;
+                    if (c.name === selectedCinema) opt.selected = true;
                     cinemaDropdown.appendChild(opt);
                 });
             });
         }
 
+        // region change
         regionDropdown.addEventListener('change', function () {
-            loadCinemas(this.value);
+            loadCinemas(this.value, null);
         });
 
-        document.getElementById('resetBtn').addEventListener('click', function () {
-            cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
-        });
-
-        if (regionDropdown.value) {
-            loadCinemas(regionDropdown.value);
-        }
+        // load cinemas on page load
+        loadCinemas('@Model.Region', '@Model.Cinema');
     </script>
 }
