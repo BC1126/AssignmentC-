@@ -74,6 +74,11 @@ public class Admin : User
 
 }
 
+public class Staff : User
+{
+
+}
+
 public class Member : User
 {
     [MaxLength(100)]

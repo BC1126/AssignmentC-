@@ -1,0 +1,60 @@
+﻿@model IEnumerable<Admin>
+@using System.Linq
+
+@{
+    ViewBag.Title = "Admin | AdminList";
+}
+
+@section head {
+    <style>
+        /* Styles for the user photo thumbnail */
+        .user-photo-thumbnail {
+            width: 50px; /* Reduced size for cleaner table */
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px; /* Optional: Make it look a bit nicer */
+        }
+        /* Style for the table to improve readability */
+        .table th, .table td {
+            vertical-align: middle;
+        }
+    </style>
+}
+
+@if (Model != null)
+{
+    <p>@Model.Count() user record(s)</p>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.First().UserId)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Name)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Email)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.UserId</td>
+                    <td>@u.Name</td>
+                    <td>@u.Gender</td>
+                    <td>@u.Email</td>
+                    <td>@u.Phone</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" data-get="/User/Update/@u.UserId">Update</button>
+                        <button class="btn btn-sm btn-danger" data-post="/User/Delete/@u.UserId">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="alert alert-warning">No user data available or an error occurred loading the data.</p>
+}

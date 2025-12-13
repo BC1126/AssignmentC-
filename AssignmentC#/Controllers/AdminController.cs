@@ -9,6 +9,51 @@ namespace AssignmentC_.Controllers;
 //[Authorize(Roles = "Admin")]
 public class AdminController(DB db, Helper hp) : Controller
 {
+    // In AdminController.cs
+    public IActionResult MemberList()
+    {
+        //[Authorize(Role = "Admin")]
+        // Declare the list as the type the view expects: IEnumerable<Member>
+        IEnumerable<Member> memberList = new List<Member>();
+
+        try
+        {
+            // 1. Fetch only Member objects (assuming your DB context supports this)
+            // AND/OR
+            // 2. Explicitly cast the entire collection to the required type.
+            // The "as Member" cast will only succeed if the object is actually a Member
+            memberList = db.Users.OfType<Member>().ToList();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception
+        }
+
+        return View(memberList); // Now passing IEnumerable<Member>
+    }
+
+    public IActionResult AdminList()
+    {
+        //[Authorize(Role = "Admin")]
+        // Declare the list as the type the view expects: IEnumerable<Member>
+        IEnumerable<Admin> adminList = new List<Admin>();
+
+        try
+        {
+            // 1. Fetch only Member objects (assuming your DB context supports this)
+            // AND/OR
+            // 2. Explicitly cast the entire collection to the required type.
+            // The "as Member" cast will only succeed if the object is actually a Member
+            adminList = db.Users.OfType<Admin>().ToList();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception
+        }
+
+        return View(adminList); // Now passing IEnumerable<Member>
+    }
+
     // ----------------------------------------------------------------
     // 1. READ (List All Movies) - GET: /Admin/Movies
     // ----------------------------------------------------------------
