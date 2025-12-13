@@ -12,12 +12,12 @@ body {
 }
 .screen {
     background: #fff;
-    color: #000;
-    text-align: center;
     margin: 20px auto;
     padding: 10px;
+    height: 70px;
     width: 300px;
-    border-radius: 5px;
+    transform: rotateX(-35deg);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.7);
 }
 
 .row {
