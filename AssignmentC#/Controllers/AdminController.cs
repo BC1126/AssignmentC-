@@ -178,5 +178,18 @@ public class AdminController(DB db, Helper hp) : Controller
 
         TempData["Info"] = $"Movie '{movie.Title}' deleted successfully.";
         return RedirectToAction("Movies");
+
+    }
+    public IActionResult EditHallSeats()
+    {
+        return View();
+    }
+    public IActionResult ManageHalls()
+    {
+        return View();
+    }
+    public IActionResult AddHall()
+    {
+        return View();
     }
 }
