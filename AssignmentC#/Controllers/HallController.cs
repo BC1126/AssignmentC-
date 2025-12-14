@@ -85,7 +85,7 @@ public class HallController(DB db, Helper hp) : Controller
         }
 
         // Calculate capacity based on rows and seats per row
-        int capacity = vm.Rows * vm.SeatsPerRow;
+        int capacity = vm.Rows!.Value * vm.SeatsPerRow!.Value;
 
         // Create the Hall
         var hall = new Hall

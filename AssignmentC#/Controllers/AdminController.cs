@@ -237,8 +237,19 @@ public class AdminController : Controller
 
     }
 
+}        return View();
+    }
+    public IActionResult AddHall()
+    {
+        return View();
+    }
+}    public IActionResult AddHall()
+    {
+        return View();
+    }
+}    }
+    public IActionResult AddHall()
+    {
+        return View();
+    }
 }
-
-
-
-
