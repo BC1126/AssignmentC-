@@ -79,7 +79,6 @@ public class AdminController : Controller
     // 1. READ (List All Movies) - GET: /Admin/Movies
     // ----------------------------------------------------------------
     // Displays a list/table of all movies for the Admin dashboard.
-    public async Task<IActionResult> Movies()
     private readonly DB db;
     private readonly Helper hp;
 
@@ -242,4 +241,4 @@ public class AdminController : Controller
 
 
 
-}
+

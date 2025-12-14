@@ -24,7 +24,7 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct)
         {
             return "Only JPG and PNG photo is allowed.";
         }
-        else if (f.Length > 2 * 1024 * 1024)
+        else if (f.Length > 10 * 1024 * 1024)
         {
             return "Photo size cannot more than 2MB.";
         }
