@@ -19,7 +19,6 @@ namespace AssignmentC_.Migrations
 >>>>>>>> 512e28d (add):AssignmentC#/Migrations/20251214133908_CreateDB.Designer.cs
     partial class CreateDB
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618

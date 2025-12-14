@@ -594,11 +594,6 @@ namespace AssignmentC_.Migrations
                     b.HasDiscriminator().HasValue("Staff");
                 });
 
-            {
-                b.HasBaseType("AssignmentC_.Models.User");
-
-                b.HasDiscriminator().HasValue("Staff");
-            });
 
 
 
