@@ -247,16 +247,5 @@ public class AdminController(DB db, Helper hp) : Controller
         return RedirectToAction("Movies");
 
     }
-    public IActionResult EditHallSeats()
-    {
-        return View();
-    }
-    public IActionResult ManageHalls()
-    {
-        return View();
-    }
-    public IActionResult AddHall()
-    {
-        return View();
-    }
+
 }
