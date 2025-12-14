@@ -71,119 +71,119 @@
 </div>
 
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-    <script>
-        const container = document.querySelector(".container");
-        const seats = document.querySelectorAll(".row .seat:not(.occupied)");
-        const count = document.getElementById("count");
-        const total = document.getElementById("total");
-        const movieSelect = document.getElementById("movie");
-        const promoInput = document.getElementById("promo");
-        const applyPromoBtn = document.getElementById("applyPromo");
-        const lockTimer = document.getElementById("lockTimer");
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script>
+    const container = document.querySelector(".container");
+    const seats = document.querySelectorAll(".row .seat:not(.occupied)");
+    const count = document.getElementById("count");
+    const total = document.getElementById("total");
+    const movieSelect = document.getElementById("movie");
+    const promoInput = document.getElementById("promo");
+    const applyPromoBtn = document.getElementById("applyPromo");
+    const lockTimer = document.getElementById("lockTimer");
 
-        const checkoutBtn = document.getElementById("checkout");
-        const modal = document.getElementById("checkoutModal");
-        const closeModal = document.querySelector(".modal .close");
-        const seatSummary = document.getElementById("seatSummary");
-        const modalTotal = document.getElementById("modalTotal");
-        const qrCodeDiv = document.getElementById("qrCode");
+    const checkoutBtn = document.getElementById("checkout");
+    const modal = document.getElementById("checkoutModal");
+    const closeModal = document.querySelector(".modal .close");
+    const seatSummary = document.getElementById("seatSummary");
+    const modalTotal = document.getElementById("modalTotal");
+    const qrCodeDiv = document.getElementById("qrCode");
 
-        let ticketPrice = +movieSelect.value;
-        let promoDiscount = 0;
-        let lockTime = 5 * 60;
-        let lockInterval;
+    let ticketPrice = +movieSelect.value;
+    let promoDiscount = 0;
+    let lockTime = 5 * 60;
+    let lockInterval;
 
-        // Save selected movie
-        function setMovieData(movieIndex, moviePrice) {
-            localStorage.setItem("selectedMovieIndex", movieIndex);
-            localStorage.setItem("selectedMoviePrice", moviePrice);
+    // Save selected movie
+    function setMovieData(movieIndex, moviePrice) {
+        localStorage.setItem("selectedMovieIndex", movieIndex);
+        localStorage.setItem("selectedMoviePrice", moviePrice);
+    }
+
+    // Update total and count
+    function updateSelectedCount() {
+        const selectedSeats = document.querySelectorAll(".row .seat.selected");
+        const selectedCount = selectedSeats.length;
+        count.innerText = selectedCount;
+        const totalPrice = selectedCount * ticketPrice;
+        total.innerText = (totalPrice - promoDiscount > 0 ? totalPrice - promoDiscount : 0);
+        startLockTimer(selectedSeats.length);
+        localStorage.setItem("selectedSeats", JSON.stringify([...selectedSeats].map(seat => [...seats].indexOf(seat))));
+    }
+
+    // Load from local storage
+    function populateUI() {
+        const selectedSeats = JSON.parse(localStorage.getItem("selectedSeats"));
+        if (selectedSeats) {
+            seats.forEach((seat, index) => {
+                if (selectedSeats.indexOf(index) > -1) seat.classList.add("selected");
+            });
         }
+        const selectedMovieIndex = localStorage.getItem("selectedMovieIndex");
+        if (selectedMovieIndex !== null) movieSelect.selectedIndex = selectedMovieIndex;
+    }
 
-        // Update total and count
-        function updateSelectedCount() {
-            const selectedSeats = document.querySelectorAll(".row .seat.selected");
-            const selectedCount = selectedSeats.length;
-            count.innerText = selectedCount;
-            const totalPrice = selectedCount * ticketPrice;
-            total.innerText = (totalPrice - promoDiscount > 0 ? totalPrice - promoDiscount : 0);
-            startLockTimer(selectedSeats.length);
-            localStorage.setItem("selectedSeats", JSON.stringify([...selectedSeats].map(seat => [...seats].indexOf(seat))));
+    // Apply promo
+    function applyPromo() {
+        const code = promoInput.value.trim();
+        promoDiscount = (code === "DISCOUNT5") ? 5 : 0;
+        updateSelectedCount();
+    }
+
+    // Lock timer for selected seats
+    function startLockTimer(countSeats) {
+        if (lockInterval) clearInterval(lockInterval);
+        if (countSeats === 0) {
+            lockTimer.innerText = "";
+            return;
         }
-
-        // Load from local storage
-        function populateUI() {
-            const selectedSeats = JSON.parse(localStorage.getItem("selectedSeats"));
-            if (selectedSeats) {
-                seats.forEach((seat, index) => {
-                    if (selectedSeats.indexOf(index) > -1) seat.classList.add("selected");
-                });
+        let timeLeft = lockTime;
+        lockInterval = setInterval(() => {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            lockTimer.innerText = `Seats locked for ${minutes}:${seconds < 10 ? '0'+seconds : seconds}`;
+            timeLeft--;
+            if (timeLeft < 0) {
+                clearInterval(lockInterval);
+                seats.forEach(seat => seat.classList.remove("selected"));
+                updateSelectedCount();
+                lockTimer.innerText = "Lock expired. Seats released.";
             }
-            const selectedMovieIndex = localStorage.getItem("selectedMovieIndex");
-            if (selectedMovieIndex !== null) movieSelect.selectedIndex = selectedMovieIndex;
-        }
+        }, 1000);
+    }
 
-        // Apply promo
-        function applyPromo() {
-            const code = promoInput.value.trim();
-            promoDiscount = (code === "DISCOUNT5") ? 5 : 0;
+    // Open checkout modal
+    checkoutBtn.addEventListener("click", () => {
+        const selectedSeats = [...document.querySelectorAll(".seat.selected")].map(s => s.innerText || s.className);
+        seatSummary.innerHTML = `<p>Seats: ${selectedSeats.join(', ')}</p>`;
+        modalTotal.innerText = total.innerText;
+
+        // Generate QR
+        qrCodeDiv.innerHTML = "";
+        const qr = new QRious({
+            element: document.createElement('canvas'),
+            value: `Booking: Seats ${selectedSeats.join(', ')} | Total $${total.innerText}`
+        });
+        qrCodeDiv.appendChild(qr.element);
+
+        modal.style.display = "block";
+    });
+
+    // Close modal
+    closeModal.addEventListener("click", () => modal.style.display = "none");
+    window.addEventListener("click", e => { if (e.target == modal) modal.style.display = "none"; });
+
+    // Event listeners
+    movieSelect.addEventListener("change", e => { ticketPrice = +e.target.value; setMovieData(e.target.selectedIndex, e.target.value); updateSelectedCount(); });
+    container.addEventListener("click", e => {
+        if (e.target.classList.contains("seat") && !e.target.classList.contains("occupied")) {
+            e.target.classList.toggle("selected");
             updateSelectedCount();
         }
+    });
+    applyPromoBtn.addEventListener("click", applyPromo);
 
-        // Lock timer for selected seats
-        function startLockTimer(countSeats) {
-            if (lockInterval) clearInterval(lockInterval);
-            if (countSeats === 0) {
-                lockTimer.innerText = "";
-                return;
-            }
-            let timeLeft = lockTime;
-            lockInterval = setInterval(() => {
-                let minutes = Math.floor(timeLeft / 60);
-                let seconds = timeLeft % 60;
-                lockTimer.innerText = `Seats locked for ${minutes}:${seconds < 10 ? '0'+seconds : seconds}`;
-                timeLeft--;
-                if (timeLeft < 0) {
-                    clearInterval(lockInterval);
-                    seats.forEach(seat => seat.classList.remove("selected"));
-                    updateSelectedCount();
-                    lockTimer.innerText = "Lock expired. Seats released.";
-                }
-            }, 1000);
-        }
-
-        // Open checkout modal
-        checkoutBtn.addEventListener("click", () => {
-            const selectedSeats = [...document.querySelectorAll(".seat.selected")].map(s => s.innerText || s.className);
-            seatSummary.innerHTML = `<p>Seats: ${selectedSeats.join(', ')}</p>`;
-            modalTotal.innerText = total.innerText;
-
-            // Generate QR
-            qrCodeDiv.innerHTML = "";
-            const qr = new QRious({
-                element: document.createElement('canvas'),
-                value: `Booking: Seats ${selectedSeats.join(', ')} | Total $${total.innerText}`
-            });
-            qrCodeDiv.appendChild(qr.element);
-
-            modal.style.display = "block";
-        });
-
-        // Close modal
-        closeModal.addEventListener("click", () => modal.style.display = "none");
-        window.addEventListener("click", e => { if (e.target == modal) modal.style.display = "none"; });
-
-        // Event listeners
-        movieSelect.addEventListener("change", e => { ticketPrice = +e.target.value; setMovieData(e.target.selectedIndex, e.target.value); updateSelectedCount(); });
-        container.addEventListener("click", e => {
-            if (e.target.classList.contains("seat") && !e.target.classList.contains("occupied")) {
-                e.target.classList.toggle("selected");
-                updateSelectedCount();
-            }
-        });
-        applyPromoBtn.addEventListener("click", applyPromo);
-
-        populateUI();
-        updateSelectedCount();
-    </script>
+    populateUI();
+    updateSelectedCount();
+</script>
 

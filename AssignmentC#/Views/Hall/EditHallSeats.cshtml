@@ -1,0 +1,194 @@
+﻿@model HallViewModel
+@{
+    ViewData["Title"] = "Manage Hall Seats - " + Model.Name;
+}
+@section head {
+    <link rel="stylesheet" href="~/css/ManageSeat.css" />
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Manage Seats: @Model.Name</h2>
+            <p class="text-muted">@Model.OutletName | Total Capacity: @Model.Capacity</p>
+        </div>
+        <a asp-controller="Hall" asp-action="ManageHalls" class="btn-secondary">Back to Halls</a>
+    </div>
+
+    <!-- Seat Legend -->
+    <ul class="legend">
+        <li><span class="seat standard"></span> Standard</li>
+        <li><span class="seat vip"></span> VIP</li>
+        <li><span class="seat wheelchair"></span> Wheelchair</li>
+        <li><span class="seat disabled"></span> Disabled</li>
+        <li><span class="seat selected"></span> Selected</li>
+    </ul>
+
+    <!-- Screen -->
+    <div class="screen">SCREEN</div>
+
+    <!-- Seat Grid -->
+    <div id="seat-map">
+        @{
+            var groupedSeats = Model.Seats.GroupBy(s => s.Row).OrderBy(g => g.Key);
+        }
+        @foreach (var rowGroup in groupedSeats)
+        {
+            <div class="seat-row">
+                <span class="row-label">@rowGroup.Key</span>
+                @foreach (var seat in rowGroup.OrderBy(s => s.Column))
+                {
+                    var seatClass = "seat";
+                    if (seat.IsPremium) seatClass += " vip";
+                    else if (seat.IsWheelchair) seatClass += " wheelchair";
+                    else seatClass += " standard";
+
+                    if (!seat.IsActive) seatClass += " disabled";
+
+                    <div class="@seatClass"
+                         data-seat-id="@seat.SeatId"
+                         data-identifier="@seat.SeatIdentifier"
+                         data-premium="@seat.IsPremium.ToString().ToLower()"
+                         data-wheelchair="@seat.IsWheelchair.ToString().ToLower()"
+                         data-active="@seat.IsActive.ToString().ToLower()">
+                        @seat.SeatIdentifier
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Seat Tools -->
+    <div class="tools card p-3 mt-4">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <label class="form-label">Seat Type:</label>
+                <select id="seatType" class="form-select">
+                    <option value="standard">Standard</option>
+                    <option value="vip">VIP</option>
+                    <option value="wheelchair">Wheelchair</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Actions:</label>
+                <div class="btn-group w-100">
+                    <button id="disableSeat" class="btn danger">Disable</button>
+                    <button id="enableSeat" class="btn success">Enable</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <button id="saveLayout" class="btn primary w-100">
+                    Save Layout
+                </button>
+            </div>
+            <div class="col-md-3">
+                <div class="alert-info">
+                    <strong>Tip:</strong> Click a seat to select, then change its type or disable it.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section foot {
+    <script>
+        let selectedSeat = null;
+
+        // Seat selection
+        document.querySelectorAll('.seat').forEach(seat => {
+            seat.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+
+                // Select new seat
+                this.classList.add('selected');
+                selectedSeat = this;
+
+                // Update dropdown to match current seat type
+                if (this.classList.contains('vip')) {
+                    document.getElementById('seatType').value = 'vip';
+                } else if (this.classList.contains('wheelchair')) {
+                    document.getElementById('seatType').value = 'wheelchair';
+                } else {
+                    document.getElementById('seatType').value = 'standard';
+                }
+            });
+        });
+
+        // Change seat type
+        document.getElementById('seatType').addEventListener('change', function(e) {
+            if (!selectedSeat) {
+                alert('Please select a seat first');
+                return;
+            }
+
+            if (selectedSeat.classList.contains('disabled')) {
+                alert('Cannot change type of disabled seat. Enable it first.');
+                return;
+            }
+
+            selectedSeat.classList.remove('standard', 'vip', 'wheelchair');
+            selectedSeat.classList.add(e.target.value);
+
+            // Update data attributes
+            selectedSeat.dataset.premium = (e.target.value === 'vip') ? 'true' : 'false';
+            selectedSeat.dataset.wheelchair = (e.target.value === 'wheelchair') ? 'true' : 'false';
+        });
+
+        // Disable seat
+        document.getElementById('disableSeat').addEventListener('click', () => {
+            if (!selectedSeat) {
+                alert('Please select a seat first');
+                return;
+            }
+            selectedSeat.classList.add('disabled');
+            selectedSeat.dataset.active = 'false';
+        });
+
+        // Enable seat
+        document.getElementById('enableSeat').addEventListener('click', () => {
+            if (!selectedSeat) {
+                alert('Please select a seat first');
+                return;
+            }
+            selectedSeat.classList.remove('disabled');
+            selectedSeat.dataset.active = 'true';
+        });
+
+        // Save layout
+        document.getElementById('saveLayout').addEventListener('click', async () => {
+            const seats = [];
+            document.querySelectorAll('.seat').forEach(seat => {
+                seats.push({
+                    seatId: parseInt(seat.dataset.seatId),
+                    isPremium: seat.dataset.premium === 'true',
+                    isWheelchair: seat.dataset.wheelchair === 'true',
+                    isActive: seat.dataset.active === 'true'
+                });
+            });
+
+            try {
+                const response = await fetch('@Url.Action("SaveAllSeats", "Hall")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(seats)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Seat layout saved successfully!');
+                    window.location.href = '@Url.Action("ManageHalls", "Hall")';
+                } else {
+                    alert('Error saving seat layout');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving seat layout');
+            }
+        });
+    </script>
+}

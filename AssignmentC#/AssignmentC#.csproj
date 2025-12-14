@@ -9,8 +9,9 @@
 
   <ItemGroup>
     <Folder Include="Views\Account\" />
+    <Folder Include="Views\Hall\" />
     <Folder Include="wwwroot\products\" />
-    <Folder Include="wwwroot\js\"/>
+    <Folder Include="wwwroot\js\" />
   </ItemGroup>
 
   <ItemGroup>

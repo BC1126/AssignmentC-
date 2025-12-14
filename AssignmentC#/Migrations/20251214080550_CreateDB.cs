@@ -105,7 +105,9 @@ namespace AssignmentC_.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OutletId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Capacity = table.Column<int>(type: "int", nullable: false)
+                    Capacity = table.Column<int>(type: "int", nullable: false),
+                    HallType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -213,7 +215,9 @@ namespace AssignmentC_.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     HallId = table.Column<int>(type: "int", nullable: false),
                     SeatIdentifier = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    IsPremium = table.Column<bool>(type: "bit", nullable: false)
+                    IsPremium = table.Column<bool>(type: "bit", nullable: false),
+                    IsWheelchair = table.Column<bool>(type: "bit", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {

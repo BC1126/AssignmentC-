@@ -1,0 +1,67 @@
+﻿@model HallViewModel
+
+
+@{
+    ViewData["Title"] = "Add New Hall";
+}
+
+@section head {
+    <link rel="stylesheet" href="~/css/ManageHall.css" />
+}
+
+<div class="container mt-4">
+    <h2>Add New Hall</h2>
+
+    <form asp-action="AddHall" method="post" class="mt-4 card p-4 shadow-sm">
+        <div class="mb-3">
+            <label class="form-label">Hall Name</label>
+            <input asp-for="Name" class="form-control"
+                   placeholder="e.g. Hall 1 / IMAX Hall" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Outlet</label>
+            <select asp-for="OutletId"
+                    asp-items="Model.OutletList"
+                    class="form-select">
+                <option value="">-- Select Outlet --</option>
+            </select>
+            <span asp-validation-for="OutletId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Seat Layout</label>
+            <div class="row">
+                <div class="col">
+                    <input asp-for="Rows" type="number" class="form-control"
+                           placeholder="Rows (e.g. 10)" />
+                </div>
+                <div class="col">
+                    <input asp-for="SeatsPerRow" type="number" class="form-control"
+                           placeholder="Seats per row (e.g. 12)" />
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Hall Type</label>
+            <select asp-for="HallType" class="form-select">
+                <option value="Standard">Standard</option>
+                <option value="IMAX">IMAX</option>
+                <option value="4DX">4DX</option>
+                <option value="Luxury">Luxury</option>
+            </select>
+        </div>
+
+        <div class="form-check mb-3">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label class="form-check-label">Enable Hall</label>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">Save & Manage Seats</button>
+            <a asp-action="ManageHalls" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
