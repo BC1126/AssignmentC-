@@ -578,7 +578,6 @@ namespace AssignmentC_.Migrations
                     b.HasBaseType("AssignmentC_.Models.User");
 
                     b.Property<string>("PhotoURL")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -586,11 +585,19 @@ namespace AssignmentC_.Migrations
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Staff", b =>
+
                 {
                     b.HasBaseType("AssignmentC_.Models.User");
 
                     b.HasDiscriminator().HasValue("Staff");
                 });
+
+            {
+                b.HasBaseType("AssignmentC_.Models.User");
+
+                b.HasDiscriminator().HasValue("Staff");
+            });
+
 
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
                 {
