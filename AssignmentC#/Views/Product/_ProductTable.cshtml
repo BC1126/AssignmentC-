@@ -1,0 +1,98 @@
+﻿@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<Product>
+
+@{
+    string[] fields = {
+        "Id", "Name", "Description", "Price", "Stock",
+        "Region", "Cinema", "Category"
+    };
+}
+
+<p>
+    @Model.Count() of @Model.TotalItemCount record(s) |
+    Page @Model.PageNumber of @Model.PageCount
+</p>
+
+<table>
+    <thead>
+        <tr>
+            @foreach (var f in fields)
+            {
+                string d = "asc";
+                string c = "";
+
+                if (f == ViewBag.Sort)
+                {
+                    d = ViewBag.Dir == "des" ? "asc" : "des";
+                    c = ViewBag.Dir;
+                }
+
+                <th>
+                    <a data-ajax="true"
+                       data-ajax-update="#target"
+                       data-ajax-loading="#loader"
+                       href="?name=@ViewBag.Name&sort=@f&dir=@d"
+                       class="@c">
+                        @f
+                    </a>
+                </th>
+            }
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var p in Model)
+        {
+            var rowClass = p.Stock < 10 ? "low-stock" : "";
+            <tr class="@rowClass">
+                <td>@p.Id</td>
+                <td>@p.Name</td>
+                <td class="description" title="@p.Description">@p.Description</td>
+                <td>@p.Price</td>
+                <td>@p.Stock</td>
+                <td>@p.Region</td>
+                <td>@p.Cinema</td>
+                <td>@p.Category</td>
+                <td>
+                    <button data-get="/Product/Update/@p.Id" style="background:#0d6efd;color:#fff;">
+                        Update
+                    </button>
+                    <button data-post="/Product/Delete/@p.Id">
+                        Delete
+                    </button>
+                    <img src="/products/@p.PhotoURL" class="popup" />
+                </td>
+            </tr>
+        }
+    </tbody>
+
+</table>
+
+@{
+    // AJAX Pagination options
+    var options = PagedListRenderOptions.ClassicPlusFirstAndLast;
+    options.LinkToFirstPageFormat = "First";
+    options.LinkToLastPageFormat = "Last";
+    options.LinkToPreviousPageFormat = "Previous";
+    options.LinkToNextPageFormat = "Next";
+
+    var ajaxOptions = new AjaxOptions
+    {
+        HttpMethod = "get",
+        UpdateTargetId = "target",
+        LoadingElementId = "#loader"
+    };
+}
+
+<div class="pagination-wrapper">
+    @Html.PagedListPager(
+    Model,
+    page => $"?name={ViewBag.Name}&sort={ViewBag.Sort}&dir={ViewBag.Dir}&page={page}",
+    PagedListRenderOptions.EnableUnobtrusiveAjaxReplacing(options, ajaxOptions)
+        )
+</div>
+
+
+

@@ -26,7 +26,7 @@ public class ProductInsertVM
     public decimal Price { get; set; }
 
     [Required(ErrorMessage = "Stock is required.")]
-    [Range(1, 200)]
+    [Range(1, 999)]
     public int Stock {  get; set; }
 
     [Required(ErrorMessage = "Region is required.")]
@@ -59,7 +59,7 @@ public class ProductUpdateVM
     public string Description { get; set; }
 
     [Required(ErrorMessage = "Stock is required.")]
-    [Range(1, 200)]
+    [Range(1, 999)]
     public int Stock { get; set; }
 
     [Range(0.01, 9999.99)]
@@ -81,4 +81,26 @@ public class ProductUpdateVM
     // Other properties
     public string? PhotoURL { get; set; }
     public IFormFile? Photo { get; set; }
+
 }
+
+// Shopping Cart
+public class ProductCartItem
+{
+    public Product Product { get; set; }
+    public int Quantity { get; set; }
+    public decimal Subtotal { get; set; }
+}
+
+public class UserSelectCinemaVM
+{
+    [Required(ErrorMessage = "Region is required.")]
+    public string? Region { get; set; }
+
+    [Required(ErrorMessage = "Cinema is required.")]
+    public string? Cinema { get; set; }
+
+    [Required(ErrorMessage = "Date is required.")]
+    public DateTime? Date { get; set; }
+}
+

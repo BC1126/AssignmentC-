@@ -13,7 +13,6 @@
     <Folder Include="Views\Hall\" />
     <Folder Include="wwwroot\products\" />
     <Folder Include="wwwroot\js\" />
-    <Folder Include="wwwroot\img\" />
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
