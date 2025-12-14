@@ -93,3 +93,25 @@ $('.upload input').on('change', e => {
     // Trigger input validation
     $(e.target).valid();
 });
+
+//Payment method
+$('[data-method]').on('click', e => {
+    const method = e.target.dataset.method;
+
+    if (method === "creditCard") {
+        document.getElementById("payWithCard").style.display = "block";
+        document.getElementById("payWithEwallet").style.display = "none";
+    } else {
+        document.getElementById("payWithCard").style.display = "none";
+        document.getElementById("payWithEwallet").style.display = "block";
+    }
+});
+
+$(document.getElementById('promotionBtn')).on('click', e => {
+    const promo = document.getElementById('promotionList');
+
+    if (promo.style.display = "none")
+        promo.style.display = "block";
+    else
+        promo.style.display = "none";
+});

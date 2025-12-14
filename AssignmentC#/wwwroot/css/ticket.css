@@ -42,79 +42,480 @@
     text-align: right;
 }
 
-.method > * {
-    margin: 10px 0;
-    padding: 5px 10px;
-    border-radius: 15px;
+:root {
+    --primary: #d96c2c;
+    --bg: #101322;
+    --surface: lightgray;
+    --surface-2: rgba(50,50,50. 0.6);
+    --border: #2e3658;
+    --text-muted: black;
+
+    --surface-soft: #161a2c;
+    --success: #2dd4bf;
 }
 
-.method div {
-    display: flex;
+/* =========================
+   Header
+========================= */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #101323;
+    border-bottom: 1px solid #222949;
 }
 
-.method > div > div {
-    width: 20%;
-    border: 1px solid black;    
-    border-radius: 5px;
-    margin-right: 10px;
-    padding: 2px 10px;
+    header .bar {
+        max-width: 1280px;
+        margin: auto;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    header .logo {
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    header nav a {
+        margin-left: 28px;
+        font-size: .9rem;
+        color: #fff;
+        opacity: .85;
+    }
+
+        header nav a:hover {
+            color: var(--primary);
+        }
+
+/* =========================
+   Layout
+========================= */
+main {
+    max-width: 1280px;
+    margin: auto;
+    padding: 32px 20px;
 }
 
-.method > div > div > input{
-    margin-right: 5px;
+.page {
+    display: grid;
+    grid-template-columns: 70% 30%;
+    gap: 40px;
 }
 
-.paymentMethod {
+/* =========================
+   Headings
+========================= */
+h1 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: var(--text-muted)
+}
+
+/* =========================
+   Cards
+========================= */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 24px;
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+}
+
+/* =========================
+   Inputs & Forms
+========================= */
+label {
+    font-size: .8rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: block;
+}
+
+input[type=text], input[type=month] {
     width: 100%;
+    height: 46px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 12px;
+    color: black;
+}
+
+    input::placeholder {
+        color: #6b7280
+    }
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* =========================
+   Buttons
+========================= */
+.actions {
     display: flex;
-    padding: 10px;
+    gap: 16px;
+    margin-top: 24px;
 }
 
-.paymentDetail, .transDetail {
-    margin: 20px;
-    padding: 30px;
-    border: 1px solid rgba(128, 128, 128, 0.5);
-    border-radius: 10px;
+.btn-primary {
+    flex: 1;
+    height: 56px;
+    background: var(--primary);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
 }
 
-.paymentDetail{
-    width: 60%;
+.btn-secondary {
+    height: 56px;
+    padding: 0 28px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: black;
+    cursor: pointer;
 }
 
-.transDetail {
-    width: 40%;
-}
-
-.paymentInput input{
-    padding: 5px;
-    border: 1px gray solid;
-    border-radius: 5px;
-}
-
-.paymentInput div{
+/* =========================
+   Order Summary
+========================= */
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .9rem;
     margin-top: 10px;
 }
 
-.paymentInput > input[type=text]{
-    width: 42%;
+    .summary-row span:first-child {
+        color: var(--text-muted)
+    }
+
+.summary-total {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    font-weight: 800;
 }
 
-.paymentInput > div > input{
-    width: 20%;
+.summary-total span:last-child {
+    color: var(--primary);
+    font-size: 1.2rem
 }
 
-.paybtn{
-    position: absolute;
-    right: 0;
-    margin: 10px;
-    margin-bottom: 40px;
-}
-
-.paybtn button{
-    padding: 10px;
-    width: 100px;
+.methodBtn{
+    border: 1px solid black;
+    padding: 10px 15px;
+    margin-right: 10px;
     border-radius: 10px;
+    display: flex;
+}
+
+.paymentSelect{
+    display: flex;
+}
+
+.cardInputDetail {
+    display: flex;
+}
+
+/* =========================
+   Time Header
+========================= */
+.timeHeader, .time, .flex{
+    display: flex;
+}
+
+.timeHeader > p{
+    width: 95%;
+}
+
+.promoCode > div{
+    width: 85%;
+}
+
+.promoCode > button{
+    border-radius: 10px;
+    width: 15%;
+    color: white;
+    background-color: var(--primary);
+}
+
+.memberPoint{
+   width: 100%;
+}
+
+.memberPoint > div{
+    width: 95%;
+}
+
+.memberPoint button {
     border: none;
-    margin: 0 10px;
-    background-color: #d96c2c;
+    background-color: var(--surface);
+}
+
+.arrowRight {
+    font-size: 30px;
+}
+
+.actions > a{
+    text-align: center;
+    padding: 15px;
+}
+
+/* =======================
+   RECEIPT CONTAINER
+======================= */
+#receipt-container {
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0,0,0,.45);
+    margin: 30px auto;
+}
+
+/* =======================
+   SUCCESS HEADER
+======================= */
+.receipt-header {
+    background: linear-gradient(180deg, rgba(13,51,242,.25), transparent);
+    padding: 32px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+
+    .receipt-header .icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 32px;
+        font-weight: bold;
+    }
+
+    .receipt-header h1 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+    }
+
+    .receipt-header p {
+        font-size: .9rem;
+        color: var(--text-muted);
+    }
+
+/* =======================
+   SECTION WRAPPER
+======================= */
+.section {
+    padding: 24px;
+    border-bottom: 1px dashed var(--border);
+}
+
+    .section:last-child {
+        border-bottom: none;
+    }
+
+/* =======================
+   MOVIE INFO
+======================= */
+.movie {
+    display: flex;
+    gap: 16px;
+}
+
+.movie-poster {
+    width: 90px;
+    aspect-ratio: 2 / 3;
+    background: #000;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+}
+
+.movie h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.movie .meta {
+    font-size: .85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+    font-size: .85rem;
+}
+
+/* =======================
+   TRANSACTION META
+======================= */
+.meta-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    background-color: rgba(50,50,50, 0.3);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 10px;
+    font-size: .8rem;
+}
+
+    .meta-box span {
+        color: var(--text-muted);
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .meta-box strong {
+        font-weight: 600;
+    }
+
+/* =======================
+   ORDER TABLE
+======================= */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+}
+
+th {
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding-bottom: 10px;
+}
+
+    th:nth-child(2),
+    td:nth-child(2) {
+        text-align: center;
+    }
+
+    th:nth-child(3),
+    td:nth-child(3) {
+        text-align: right;
+    }
+
+td {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.item-sub {
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+
+/* =======================
+   TOTALS
+======================= */
+.totals {
+    max-width: 300px;
+    margin-left: auto;
+    font-size: .9rem;
+}
+
+    .totals div {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+.discount {
+    color: #22c55e;
+}
+
+.grand-total {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+    .grand-total span:last-child {
+        color: var(--primary);
+        font-size: 1.3rem;
+    }
+
+/* =======================
+   PAYMENT FOOTER
+======================= */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.payment-method {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: var(--surface-soft);
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: .8rem;
+}
+
+.qr {
+    width: 80px;
+    height: 80px;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.receiptBtn {
+    margin: auto;
+}
+
+.receiptBtn .btn-primary{
+    width: 450px;
+}
+/* =======================
+   PRINT
+======================= */
+@media print {
+    body {
+        background: #fff;
+        color: #000;
+    }
+
+    #receipt-container {
+        box-shadow: none;
+        border: none;
+    }
 }
