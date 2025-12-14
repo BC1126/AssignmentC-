@@ -301,9 +301,9 @@ public class Movie{
     public string Writer { get; set; }
     public DateTime PremierDate { get; set; }
     [MaxLength(255)]
-    public string PosterUrl { get; set; }
+    public string? PosterUrl { get; set; }
     [MaxLength(255)]
-    public string BannerUrl { get; set; }
+    public string? BannerUrl { get; set; }
     [MaxLength(255)]
     public string TrailerUrl { get; set; }
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
@@ -331,10 +331,14 @@ public class Hall
     public int HallId { get; set; }
     public int OutletId { get; set; }
     [MaxLength(50)]
-    public string Name { get; set; } // E.g., "Hall 1", "IMAX"
+    public string Name { get; set; }
     public int Capacity { get; set; }
 
-    // Navigation: A Hall has many Seats and ShowTimes
+    [MaxLength(20)]
+    public string HallType { get; set; } = "Standard";
+
+    public bool IsActive { get; set; } = true;
+
     public Outlet Outlet { get; set; }
     public ICollection<Seat> Seats { get; set; } = new List<Seat>();
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
@@ -344,10 +348,12 @@ public class Seat
 {
     [Key]
     public int SeatId { get; set; }
-    public int HallId { get; set; } 
+    public int HallId { get; set; }
     [MaxLength(10)]
-    public string SeatIdentifier { get; set; } 
-    public bool IsPremium { get; set; } 
+    public string SeatIdentifier { get; set; }
+    public bool IsPremium { get; set; }
+    public bool IsWheelchair { get; set; } = false;
+    public bool IsActive { get; set; } = true;
     public Hall Hall { get; set; }
 }
 

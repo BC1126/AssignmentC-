@@ -64,8 +64,4 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult selectTicket()
-    {
-        return View();
-    }
 }

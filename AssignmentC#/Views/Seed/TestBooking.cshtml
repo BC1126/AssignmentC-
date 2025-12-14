@@ -1,0 +1,144 @@
+﻿@{
+    ViewData["Title"] = "Test Booking System";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1>🎬 Cinema Booking Test System</h1>
+        <p class="lead">Test the seat selection and booking functionality</p>
+    </div>
+
+    @if (TempData["Info"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Info"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Quick Start</h4>
+                </div>
+                <div class="card-body">
+                    <ol class="lead">
+                        <li class="mb-3">
+                            Click the button below to generate test data
+                            <br>
+                            <a href="/Seed/BookingTestData" class="btn btn-success mt-2">
+                                🌱 Generate Test Data
+                            </a>
+                        </li>
+                        <li class="mb-3">
+                            Browse available showtimes and select one
+                        </li>
+                        <li class="mb-3">
+                            Choose your seats and add to cart
+                        </li>
+                        <li>
+                            View your cart at
+                            <a href="/Cart" class="btn btn-info btn-sm">🛒 Cart</a>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">Test Data Includes</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h5>🎥 Movies</h5>
+                            <ul>
+                                <li>Avengers: Endgame</li>
+                                <li>The Dark Knight</li>
+                                <li>Inception</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>🏢 Venues</h5>
+                            <ul>
+                                <li>Mid Valley Megamall</li>
+                                <li>Hall 1 (50 seats)</li>
+                                <li>5 rows x 10 seats</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h5>🎫 Showtimes</h5>
+                            <ul>
+                                <li>Next 7 days</li>
+                                <li>Multiple shows per day</li>
+                                <li>Prices: RM 14-18</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">Quick Links</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/Seed/BookingTestData" class="btn btn-success btn-lg">
+                            🌱 Generate Test Data
+                        </a>
+                        <a href="/Seed/TestBooking" class="btn btn-primary btn-lg">
+                            📋 View All Showtimes
+                        </a>
+                        <a href="/Cart" class="btn btn-warning btn-lg">
+                            🛒 View Cart
+                        </a>
+                        <a href="/Hall/ManageHalls" class="btn btn-secondary btn-lg">
+                            🎭 Manage Halls
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning mt-4">
+        <strong>Note:</strong> This is a test environment. All data is for testing purposes only.
+        The system includes:
+        <ul class="mb-0 mt-2">
+            <li>50 seats per hall (A1-E10)</li>
+            <li>Last 2 rows (D & E) are VIP seats</li>
+            <li>First row corners (A1, A10) are wheelchair accessible</li>
+            <li>Some seats are pre-booked to test occupied seat display</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .btn-lg {
+        padding: 15px;
+        font-size: 1.2rem;
+    }
+</style>
