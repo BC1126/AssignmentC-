@@ -46,15 +46,7 @@
                     <td>@u.Email</td>
                     <td>@u.Phone</td>
                     <td>
-                        @* Check if the PhotoURL property exists and has a value *@
-                        @if (!string.IsNullOrEmpty(u.PhotoURL))
-                        {
-                            <img src="~/@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name">
-                        }
-                        else
-                        {
-                            <img src="~/profile_photo/default-pfp.jpg" class="user-photo-thumbnail" alt="No Profile Photo" style="background-color: #ddd;">
-                        }
+                            <img src="@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name">
                     </td>
                     <td>
                         <button class="btn btn-sm btn-info" data-get="/User/Update/@u.UserId">Update</button>
