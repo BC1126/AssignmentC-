@@ -10,7 +10,7 @@
   <ItemGroup>
     <Folder Include="Views\Account\" />
     <Folder Include="wwwroot\img\" />
-    <Folder Include="wwwroot\js\" />
+    <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 
   <ItemGroup>

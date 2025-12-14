@@ -295,9 +295,9 @@ public class Movie{
     public string Writer { get; set; }
     public DateTime PremierDate { get; set; }
     [MaxLength(255)]
-    public string PosterUrl { get; set; }
+    public string? PosterUrl { get; set; }
     [MaxLength(255)]
-    public string BannerUrl { get; set; }
+    public string? BannerUrl { get; set; }
     [MaxLength(255)]
     public string TrailerUrl { get; set; }
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();

@@ -1,32 +1,42 @@
-﻿@model MovieViewModel
+﻿@model AssignmentC_.Models.MovieViewModel
 @{
-    ViewData["Title"] = (Model.MovieId == 0 ? "Create" : "Edit") + " Movie";
+    ViewData["Title"] = Model.MovieId == 0 ? "Add Movie" : "Edit Movie";
 }
 
-<div class="container-xl pt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>@ViewData["Title"]</h1>
-        <a asp-controller="Admin" asp-action="Movies" class="btn btn-secondary">
-            Back to List
-        </a>
-    </div>
+<div class="container-xl py-5">
+    <div class="card shadow-sm p-4 mx-auto" style="max-width: 900px; background-color: #fff;">
+        <h2 class="mb-4">@ViewData["Title"]</h2>
 
-    <form method="post" enctype="multipart/form-data" asp-controller="Admin" asp-action="UpsertMovie">
-        @* Anti-Forgery Token and Hidden ID are required *@
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="MovieId" />
+        <!-- Top model errors -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+        }
 
-        @* Hidden fields to store existing URLs for Edit operations *@
-        <input type="hidden" asp-for="PosterUrl" />
-        <input type="hidden" asp-for="BannerUrl" />
+        <!-- TempData messages -->
+        @if (TempData["Info"] != null)
+        {
+            <div class="alert alert-success">@TempData["Info"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
 
-        <div class="row g-3">
+        <form asp-action="UpsertMovie" method="post" enctype="multipart/form-data" id="movieForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="MovieId" />
 
-            @* COLUMN 1: Movie Details *@
-            <div class="col-md-6">
-                <div class="card p-4">
-                    <h5 class="card-title">Basic Details</h5>
-
+            <div class="row g-4">
+                <!-- Left Column -->
+                <div class="col-md-6">
                     <div class="mb-3">
                         <label asp-for="Title" class="form-label"></label>
                         <input asp-for="Title" class="form-control" />
@@ -39,46 +49,27 @@
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Genre" class="form-label"></label>
-                            <input asp-for="Genre" class="form-control" placeholder="e.g., Action / Comedy" />
-                            <span asp-validation-for="Genre" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="DurationMinutes" class="form-label"></label>
-                            <input asp-for="DurationMinutes" class="form-control" />
-                            <span asp-validation-for="DurationMinutes" class="text-danger"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Rating" class="form-label"></label>
-                            <input asp-for="Rating" class="form-control" placeholder="e.g., PG-13, 18+" />
-                            <span asp-validation-for="Rating" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="PremierDate" class="form-label"></label>
-                            <input asp-for="PremierDate" class="form-control" type="date" />
-                            <span asp-validation-for="PremierDate" class="text-danger"></span>
-                        </div>
+                    <div class="mb-3">
+                        <label asp-for="Genre" class="form-label"></label>
+                        <input asp-for="Genre" class="form-control" />
+                        <span asp-validation-for="Genre" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="TrailerUrl" class="form-label"></label>
-                        <input asp-for="TrailerUrl" class="form-control" placeholder="YouTube or Vimeo URL" />
-                        <span asp-validation-for="TrailerUrl" class="text-danger"></span>
+                        <label asp-for="DurationMinutes" class="form-label"></label>
+                        <input asp-for="DurationMinutes" type="number" class="form-control" />
+                        <span asp-validation-for="DurationMinutes" class="text-danger"></span>
                     </div>
 
+                    <div class="mb-3">
+                        <label asp-for="Rating" class="form-label"></label>
+                        <input asp-for="Rating" class="form-control" />
+                        <span asp-validation-for="Rating" class="text-danger"></span>
+                    </div>
                 </div>
-            </div>
 
-            @* COLUMN 2: Personnel and Images *@
-            <div class="col-md-6">
-                <div class="card p-4 mb-3">
-                    <h5 class="card-title">Personnel</h5>
-
+                <!-- Right Column -->
+                <div class="col-md-6">
                     <div class="mb-3">
                         <label asp-for="Director" class="form-label"></label>
                         <input asp-for="Director" class="form-control" />
@@ -90,55 +81,64 @@
                         <input asp-for="Writer" class="form-control" />
                         <span asp-validation-for="Writer" class="text-danger"></span>
                     </div>
-                </div>
 
-                <div class="card p-4">
-                    <h5 class="card-title">Images</h5>
-
-                    @* Poster Upload *@
                     <div class="mb-3">
-                        <label asp-for="PosterFile" class="form-label">Poster Image (Square/Vertical)</label>
-                        <input asp-for="PosterFile" class="form-control" type="file" accept="image/*" />
-                        @if (!string.IsNullOrEmpty(Model.PosterUrl))
-                        {
-                            <small class="text-muted">Current: <a href="@Model.PosterUrl" target="_blank">@Model.PosterUrl</a></small>
-                            <img src="@Model.PosterUrl" alt="Current Poster" class="mt-2" style="width: 100px; height: 150px; object-fit: cover;" />
-                        }
-                        <span asp-validation-for="PosterFile" class="text-danger"></span>
+                        <label asp-for="PremierDate" class="form-label"></label>
+                        <input asp-for="PremierDate" type="date" class="form-control" />
+                        <span asp-validation-for="PremierDate" class="text-danger"></span>
                     </div>
 
-                    @* Banner Upload *@
                     <div class="mb-3">
-                        <label asp-for="BannerFile" class="form-label">Banner Image (Wide/Horizontal)</label>
-                        <input asp-for="BannerFile" class="form-control" type="file" accept="image/*" />
-                        @if (!string.IsNullOrEmpty(Model.BannerUrl))
-                        {
-                            <small class="text-muted">Current: <a href="@Model.BannerUrl" target="_blank">@Model.BannerUrl</a></small>
-                            <img src="@Model.BannerUrl" alt="Current Banner" class="mt-2" style="width: 200px; height: 100px; object-fit: cover;" />
-                        }
-                        <span asp-validation-for="BannerFile" class="text-danger"></span>
+                        <label asp-for="TrailerUrl" class="form-label"></label>
+                        <input asp-for="TrailerUrl" class="form-control" />
+                        <span asp-validation-for="TrailerUrl" class="text-danger"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 mt-4">
-                <button type="submit" class="btn btn-success w-100 p-2">
-                    @if (Model.MovieId == 0)
+            <hr class="my-4" />
+
+            <!-- Poster + Banner Upload -->
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label">Poster</label>
+                    <input asp-for="PosterFile" type="file" class="form-control" id="posterInput" accept="image/*" />
+                    <img id="posterPreview" class="img-thumbnail mt-2" style="display:none; max-width:200px;" />
+                         @if (!string.IsNullOrEmpty(Model.PosterUrl))
                     {
-                        <span><i class="fa fa-plus"></i> Create Movie</span>
+                        <div class="mt-2">
+                            <img src="/uploads/@Model.PosterUrl" width="200" class="img-thumbnail" />
+                        </div>
                     }
-                    else
+                    <span asp-validation-for="PosterFile" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Banner</label>
+                    <input asp-for="BannerFile" type="file" class="form-control" id="bannerInput" accept="image/*" />
+                    <img id="bannerPreview" class="img-thumbnail mt-2" style="display:none; max-width:300px;" />
+                         @if (!string.IsNullOrEmpty(Model.BannerUrl))
                     {
-                        <span><i class="fa fa-save"></i> Update Movie</span>
+                        <div class="mt-2">
+                            <img src="/uploads/@Model.BannerUrl" width="300" class="img-thumbnail" />
+                        </div>
                     }
-                </button>
+                    <span asp-validation-for="BannerFile" class="text-danger"></span>
+                </div>
             </div>
-        </div>
-    </form>
+
+            <!-- Buttons -->
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a asp-action="Movies" class="btn btn-secondary ms-2">Cancel</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/app.js"></script>
 }

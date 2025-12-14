@@ -24,9 +24,9 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct)
         {
             return "Only JPG and PNG photo is allowed.";
         }
-        else if (f.Length > 1 * 1024 * 1024)
+        else if (f.Length > 2 * 1024 * 1024)
         {
-            return "Photo size cannot more than 1MB.";
+            return "Photo size cannot more than 2MB.";
         }
 
         return "";
@@ -161,4 +161,26 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct)
             System.IO.File.Delete(physicalPath);
         }
     }
+
+    public string SavePhotoNoResize(IFormFile file, string folder)
+    {
+        if (file == null || file.Length == 0)
+            return null;
+
+        // Generate unique file name
+        var fileName = Guid.NewGuid().ToString("n") + Path.GetExtension(file.FileName);
+
+        // Combine path
+        var path = Path.Combine(en.WebRootPath, folder, fileName);
+
+        // Save file directly without resizing
+        using (var stream = new FileStream(path, FileMode.Create))
+        {
+            file.CopyTo(stream);
+        }
+
+        return fileName;
+    }
+
+
 }

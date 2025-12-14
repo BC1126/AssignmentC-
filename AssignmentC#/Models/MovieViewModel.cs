@@ -22,7 +22,7 @@ public class MovieViewModel
     public string Genre { get; set; }
 
     [Required(ErrorMessage = "Duration is required.")]
-    [Range(1, 500, ErrorMessage = "Duration must be between 1 and 500 minutes.")]
+    [Range(1, 500)]
     public int DurationMinutes { get; set; }
 
     [Required(ErrorMessage = "Rating is required.")]
@@ -39,20 +39,23 @@ public class MovieViewModel
 
     [Required(ErrorMessage = "Premier Date is required.")]
     [DataType(DataType.Date)]
-    public DateTime PremierDate { get; set; }
+    public DateTime? PremierDate { get; set; }
 
-    // Existing URLs (used when editing a movie)
-    public string PosterUrl { get; set; }
-    public string BannerUrl { get; set; }
+    [Required(ErrorMessage = "Trailer URL is required.")]
+    [Url]
+    [MaxLength(255)]
+    public string TrailerUrl { get; set; }
 
-    // IFormFile properties handle the actual file upload from the HTML form.
-    // We don't mark them as [Required] here because for an Edit operation,
-    // they are optional if the user is keeping the old image.
+    // ------------------------
+    // FILE UPLOADS (FORM ONLY)
+    // ------------------------
     public IFormFile PosterFile { get; set; }
     public IFormFile BannerFile { get; set; }
 
-    [Required(ErrorMessage = "Trailer URL is required.")]
-    [Url(ErrorMessage = "Must be a valid URL.")]
-    [MaxLength(255)]
-    public string TrailerUrl { get; set; }
+    // ------------------------
+    // STORED FILENAMES (DB)
+    // ❌ NOT REQUIRED
+    // ------------------------
+    public string PosterUrl { get; set; }
+    public string BannerUrl { get; set; }
 }
