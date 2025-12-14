@@ -3,7 +3,7 @@
     ViewData["Title"] = "Manage Hall Seats - " + Model.Name;
 }
 @section head {
-    <link rel="stylesheet" href="~/css/ManageSeat.css" />
+    <link rel="stylesheet" asp-append-version="true" href="~/css/ManageSeat.css" />
 }
 
 <div class="container mt-4">
@@ -12,16 +12,18 @@
             <h2>Manage Seats: @Model.Name</h2>
             <p class="text-muted">@Model.OutletName | Total Capacity: @Model.Capacity</p>
         </div>
-        <a asp-controller="Hall" asp-action="ManageHalls" class="btn-secondary">Back to Halls</a>
+        <a asp-controller="Hall" asp-action="ManageHalls" class="btn-secondary">
+            ← Back to Halls
+        </a>
     </div>
 
     <!-- Seat Legend -->
     <ul class="legend">
-        <li><span class="seat standard"></span> Standard</li>
-        <li><span class="seat vip"></span> VIP</li>
-        <li><span class="seat wheelchair"></span> Wheelchair</li>
-        <li><span class="seat disabled"></span> Disabled</li>
-        <li><span class="seat selected"></span> Selected</li>
+        <li><span class="seat-legend standard"></span> Standard</li>
+        <li><span class="seat-legend vip"></span> VIP</li>
+        <li><span class="seat-legend wheelchair"></span> Wheelchair</li>
+        <li><span class="seat-legend disabled"></span> Disabled</li>
+        <li><span class="seat-legend selected"></span> Selected</li>
     </ul>
 
     <!-- Screen -->
@@ -60,103 +62,288 @@
 
     <!-- Seat Tools -->
     <div class="tools card p-3 mt-4">
-        <div class="row align-items-center">
-            <div class="col-md-3">
-                <label class="form-label">Seat Type:</label>
-                <select id="seatType" class="form-select">
-                    <option value="standard">Standard</option>
-                    <option value="vip">VIP</option>
-                    <option value="wheelchair">Wheelchair</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Actions:</label>
-                <div class="btn-group w-100">
-                    <button id="disableSeat" class="btn danger">Disable</button>
-                    <button id="enableSeat" class="btn success">Enable</button>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">&nbsp;</label>
-                <button id="saveLayout" class="btn primary w-100">
-                    Save Layout
-                </button>
-            </div>
-            <div class="col-md-3">
-                <div class="alert-info">
-                    <strong>Tip:</strong> Click a seat to select, then change its type or disable it.
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-info mb-0">
+                    <strong>💡 Multi-Select Mode:</strong> Click seats to add/remove from selection. Selected: <strong><span id="selectedCount">0</span></strong> seat(s)
                 </div>
             </div>
         </div>
+
+        <form asp-controller="Hall" asp-action="SaveAllSeats" method="post" id="seatForm">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label asp-for="@Model.Seats" class="form-label" for="seatType">Change Seat Type:</label>
+                    <select id="seatType" name="seatType" class="form-select" aria-label="Select seat type">
+                        <option value="">-- Select Type --</option>
+                        <option value="standard">Standard</option>
+                        <option value="vip">VIP</option>
+                        <option value="wheelchair">Wheelchair</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Apply Type:</label>
+                    <button type="button" id="applyType" class="btn primary w-100" disabled>
+                        Apply Type
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Seat Status:</label>
+                    <div class="btn-group w-100" role="group" aria-label="Seat status controls">
+                        <button type="button" id="disableSeat" class="btn danger" disabled>Disable</button>
+                        <button type="button" id="enableSeat" class="btn success" disabled>Enable</button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Selection:</label>
+                    <button type="button" id="clearSelection" class="btn btn-outline-secondary w-100">
+                        Clear Selection
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" id="saveLayout" class="btn primary w-100">
+                        💾 Save Layout
+                    </button>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="btn-group w-100" role="group" aria-label="Selection tools">
+                        <button type="button" id="selectRow" class="btn btn-outline-primary">Select Row</button>
+                        <button type="button" id="selectColumn" class="btn btn-outline-primary">Select Column</button>
+                        <button type="button" id="selectAll" class="btn btn-outline-primary">Select All</button>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
+@section Scripts {
+    <script src="~/js/manageSeat.js" asp-append-version="true"></script>
+    <script>
+        // Initialize with URLs generated by tag helpers
+        const config = {
+            saveUrl: '@Url.Action("SaveAllSeats", "Hall")',
+            manageHallsUrl: '@Url.Action("ManageHalls", "Hall")',
+            hallId: @Model.HallId,
+            hallName: '@Model.Name'
+        };
+
+        // Initialize the seat manager
+        initializeSeatManager(config);
+    </script>
+}
+
 @section foot {
     <script>
-        let selectedSeat = null;
+        let selectedSeats = new Set();
+        const saveUrl = '@Url.Action("SaveAllSeats", "Hall")';
+        const manageHallsUrl = '@Url.Action("ManageHalls", "Hall")';
 
-        // Seat selection
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedSeats.size;
+
+            // Enable/disable buttons based on selection
+            const hasSelection = selectedSeats.size > 0;
+            document.getElementById('applyType').disabled = !hasSelection;
+            document.getElementById('disableSeat').disabled = !hasSelection;
+            document.getElementById('enableSeat').disabled = !hasSelection;
+        }
+
+        function toggleSeatSelection(seat) {
+            if (seat.classList.contains('selected')) {
+                seat.classList.remove('selected');
+                selectedSeats.delete(seat);
+            } else {
+                seat.classList.add('selected');
+                selectedSeats.add(seat);
+            }
+            updateSelectedCount();
+        }
+
+        // Seat selection with multi-select support
         document.querySelectorAll('.seat').forEach(seat => {
-            seat.addEventListener('click', function() {
-                // Remove previous selection
-                document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+            seat.addEventListener('click', function(e) {
+                // Always toggle seat - no need for Ctrl key
+                toggleSeatSelection(this);
 
-                // Select new seat
-                this.classList.add('selected');
-                selectedSeat = this;
-
-                // Update dropdown to match current seat type
-                if (this.classList.contains('vip')) {
-                    document.getElementById('seatType').value = 'vip';
-                } else if (this.classList.contains('wheelchair')) {
-                    document.getElementById('seatType').value = 'wheelchair';
+                // Update dropdown to match if only one seat selected
+                if (selectedSeats.size === 1) {
+                    const singleSeat = Array.from(selectedSeats)[0];
+                    if (singleSeat.classList.contains('vip')) {
+                        document.getElementById('seatType').value = 'vip';
+                    } else if (singleSeat.classList.contains('wheelchair')) {
+                        document.getElementById('seatType').value = 'wheelchair';
+                    } else {
+                        document.getElementById('seatType').value = 'standard';
+                    }
                 } else {
-                    document.getElementById('seatType').value = 'standard';
+                    document.getElementById('seatType').value = '';
                 }
             });
         });
 
-        // Change seat type
-        document.getElementById('seatType').addEventListener('change', function(e) {
-            if (!selectedSeat) {
-                alert('Please select a seat first');
+        // Apply seat type to all selected seats
+        document.getElementById('applyType').addEventListener('click', function() {
+            const seatType = document.getElementById('seatType').value;
+
+            if (!seatType) {
+                alert('Please select a seat type first');
                 return;
             }
 
-            if (selectedSeat.classList.contains('disabled')) {
-                alert('Cannot change type of disabled seat. Enable it first.');
+            if (selectedSeats.size === 0) {
+                alert('Please select at least one seat');
                 return;
             }
 
-            selectedSeat.classList.remove('standard', 'vip', 'wheelchair');
-            selectedSeat.classList.add(e.target.value);
+            let changedCount = 0;
+            selectedSeats.forEach(seat => {
+                // Don't change disabled seats
+                if (seat.classList.contains('disabled')) {
+                    return;
+                }
 
-            // Update data attributes
-            selectedSeat.dataset.premium = (e.target.value === 'vip') ? 'true' : 'false';
-            selectedSeat.dataset.wheelchair = (e.target.value === 'wheelchair') ? 'true' : 'false';
+                seat.classList.remove('standard', 'vip', 'wheelchair');
+                seat.classList.add(seatType);
+
+                // Update data attributes
+                seat.dataset.premium = (seatType === 'vip') ? 'true' : 'false';
+                seat.dataset.wheelchair = (seatType === 'wheelchair') ? 'true' : 'false';
+                changedCount++;
+            });
+
+            alert(`Changed ${changedCount} seat(s) to ${seatType}`);
+
+            // Clear selection after applying
+            selectedSeats.forEach(s => s.classList.remove('selected'));
+            selectedSeats.clear();
+            document.getElementById('seatType').value = '';
+            updateSelectedCount();
         });
 
-        // Disable seat
+        // Disable selected seats
         document.getElementById('disableSeat').addEventListener('click', () => {
-            if (!selectedSeat) {
-                alert('Please select a seat first');
+            if (selectedSeats.size === 0) {
+                alert('Please select at least one seat');
                 return;
             }
-            selectedSeat.classList.add('disabled');
-            selectedSeat.dataset.active = 'false';
+
+            selectedSeats.forEach(seat => {
+                seat.classList.add('disabled');
+                seat.dataset.active = 'false';
+            });
+
+            alert(`Disabled ${selectedSeats.size} seat(s)`);
+
+            // Clear selection after disabling
+            selectedSeats.forEach(s => s.classList.remove('selected'));
+            selectedSeats.clear();
+            document.getElementById('seatType').value = '';
+            updateSelectedCount();
         });
 
-        // Enable seat
+        // Enable selected seats
         document.getElementById('enableSeat').addEventListener('click', () => {
-            if (!selectedSeat) {
-                alert('Please select a seat first');
+            if (selectedSeats.size === 0) {
+                alert('Please select at least one seat');
                 return;
             }
-            selectedSeat.classList.remove('disabled');
-            selectedSeat.dataset.active = 'true';
+
+            selectedSeats.forEach(seat => {
+                seat.classList.remove('disabled');
+                seat.dataset.active = 'true';
+            });
+
+            alert(`Enabled ${selectedSeats.size} seat(s)`);
+
+            // Clear selection after enabling
+            selectedSeats.forEach(s => s.classList.remove('selected'));
+            selectedSeats.clear();
+            document.getElementById('seatType').value = '';
+            updateSelectedCount();
         });
 
-                // Save layout
+        // Clear selection
+        document.getElementById('clearSelection').addEventListener('click', () => {
+            selectedSeats.forEach(s => s.classList.remove('selected'));
+            selectedSeats.clear();
+            document.getElementById('seatType').value = '';
+            updateSelectedCount();
+        });
+
+        // Select entire row
+        document.getElementById('selectRow').addEventListener('click', () => {
+            const rowLabel = prompt('Enter row letter (e.g., A, B, C):');
+            if (!rowLabel) return;
+
+            const row = rowLabel.toUpperCase();
+            let count = 0;
+
+            document.querySelectorAll('.seat').forEach(seat => {
+                const identifier = seat.dataset.identifier;
+                if (identifier && identifier.startsWith(row)) {
+                    if (!seat.classList.contains('selected')) {
+                        seat.classList.add('selected');
+                        selectedSeats.add(seat);
+                        count++;
+                    }
+                }
+            });
+
+            updateSelectedCount();
+            if (count === 0) {
+                alert(`No seats found in row ${row}`);
+            } else {
+                alert(`Selected ${count} seat(s) in row ${row}`);
+            }
+        });
+
+        // Select entire column
+        document.getElementById('selectColumn').addEventListener('click', () => {
+            const columnNum = prompt('Enter column number (e.g., 1, 2, 3):');
+            if (!columnNum) return;
+
+            let count = 0;
+
+            document.querySelectorAll('.seat').forEach(seat => {
+                const identifier = seat.dataset.identifier;
+                // Extract number from identifier (e.g., "A10" -> "10")
+                const seatColumn = identifier.replace(/[A-Z]/g, '');
+
+                if (seatColumn === columnNum) {
+                    if (!seat.classList.contains('selected')) {
+                        seat.classList.add('selected');
+                        selectedSeats.add(seat);
+                        count++;
+                    }
+                }
+            });
+
+            updateSelectedCount();
+            if (count === 0) {
+                alert(`No seats found in column ${columnNum}`);
+            } else {
+                alert(`Selected ${count} seat(s) in column ${columnNum}`);
+            }
+        });
+
+        // Select all seats
+        document.getElementById('selectAll').addEventListener('click', () => {
+            document.querySelectorAll('.seat').forEach(seat => {
+                if (!seat.classList.contains('selected')) {
+                    seat.classList.add('selected');
+                    selectedSeats.add(seat);
+                }
+            });
+            updateSelectedCount();
+            alert(`Selected all ${selectedSeats.size} seats`);
+        });
+
+        // Save layout
         document.getElementById('saveLayout').addEventListener('click', async () => {
             const seats = [];
 
@@ -185,8 +372,12 @@
                 return;
             }
 
+            if (!confirm(`Save layout for ${seats.length} seats?`)) {
+                return;
+            }
+
             try {
-                const response = await fetch('@Url.Action("SaveAllSeats", "Hall")', {
+                const response = await fetch(saveUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -206,7 +397,7 @@
 
                 if (result.success) {
                     alert('Seat layout saved successfully!');
-                    window.location.href = '@Url.Action("ManageHalls", "Hall")';
+                    window.location.href = manageHallsUrl;
                 } else {
                     alert('Error saving seat layout: ' + (result.message || 'Unknown error'));
                 }
@@ -215,5 +406,8 @@
                 alert('Error saving seat layout: ' + error.message);
             }
         });
+
+        // Initialize
+        updateSelectedCount();
     </script>
 }

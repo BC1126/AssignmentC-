@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿// Add this method to your HallController or create a new SeedController
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AssignmentC_.Models;
 
@@ -313,7 +315,7 @@ public class SeedController : Controller
                 StartTime = st.StartTime.ToString("MMM dd, yyyy - h:mm tt"),
                 Hall = $"{st.Hall.Name} - {st.Hall.Outlet.Name}",
                 Price = st.TicketPrice,
-                BookingUrl = Url.Action("selectTicket", "Booking", new { showtimeId = st.ShowTimeId })
+                BookingUrl = Url.Action("SelectTicket", "Booking", new { showtimeId = st.ShowTimeId })
             })
             .ToList();
 
