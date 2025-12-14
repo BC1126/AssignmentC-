@@ -18,4 +18,9 @@ public class TicketController : Controller
     {
         return View();
     }
+
+    public IActionResult Receipt()
+    {
+        return View();
+    }
 }

@@ -2,127 +2,156 @@
     <link href="/css/ticket.css" rel="stylesheet" />
 }
 
+<main>
+    <div class="page">
 
-<h1>Payment Method</h1>
-<section id="detail" class="paymentMethod">
-    <div class="paymentDetail">
-        <div class="method">
-            <h3>Payment Options</h3>
-            <div>
-                <div>
-                    <input type="radio" name="method" id="creditcard" value="" />
-                    <label for="creditcard"><i class="fa-regular fa-credit-card"></i> Credit Card</label>
+        <!-- Left -->
+        <section>
+            <h1>Complete Your Purchase</h1>
+            <p class="subtitle">Please review your order and enter payment details securely.</p>
+
+            <!-- Promotion -->
+                <div class="card">
+                    <h3 class="text-black-50 text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">local_offer</span>
+                        Discounts &amp; Promo
+                    </h3>
+                    <div class="flex gap-3 promoCode">
+                        <div class="flex-1 relative">
+                            <input type="text" placeholder="Enter voucher or promo code" type="text" />
+                        </div>
+                        <button class="bg-[#101323] border border-border-dark hover:bg-white/5 text-black-50 font-semibold py-2 px-6 rounded-lg transition-colors">
+                            Apply
+                        </button>
+                    </div>
                 </div>
 
-                <div>
-                    <input type="radio" name="method" id="ewallet" value="" />
-                    <label for="ewallet"><i class="fa-solid fa-wallet"></i> E-wallet</label>
+                <div class="card">
+                    <div class="flex justify-between items-start mb-4 memberPoint">
+                        <div>
+                            <h3 class="text-black-50 text-lg font-bold flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">loyalty</span>
+                                Loyalty Rewards
+                            </h3>
+                            <p class="text-text-secondary text-sm mt-1">
+                                You have <span class="text-primary font-bold">2,450 pts</span> available.
+                            </p>
+                        </div>
+
+                        <button class="text-primary text-sm font-semibold hover:underline"><i class="fa-solid fa-angle-right arrowRight"></i></button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-[#101323] border border-border-dark p-3 rounded-lg flex items-center gap-3 hover:border-primary/50 transition-colors cursor-pointer group">
+                            <div class="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-amber-400">local_activity</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-black-50 text-sm font-semibold">Free Popcorn (L)</h4>
+                                <p class="text-text-secondary text-xs">500 pts</p>
+                            </div>
+                            <div class="w-5 h-5 rounded-full border border-border-dark group-hover:border-primary flex items-center justify-center">
+                                <div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-[#101323] border border-border-dark p-3 rounded-lg flex items-center gap-3 hover:border-primary/50 transition-colors cursor-pointer group">
+                            <div class="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-purple-400">local_drink</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-black-50 text-sm font-semibold">Drink Upgrade</h4>
+                                <p class="text-text-secondary text-xs">300 pts</p>
+                            </div>
+                            <div class="w-5 h-5 rounded-full border border-border-dark flex items-center justify-center">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <input type="radio" name="method" id="paypal" value="" />
-                    <label for="paypal"><i class="fa-brands fa-paypal"></i> Paypal</label>
+            <!-- Payment Method-->
+            <div class="card">
+                <h3>Payment Method</h3>
+
+                <div class="paymentSelect">
+                    <label for="creditCard" class="methodBtn">
+                        <input type="radio" name="method" id="creditCard" checked/>
+                        <span class="material-symbols-outlined">credit_card</span>
+                        Card
+                    </label>
+                    <label for="ewallet" class="methodBtn">
+                        <input type="radio" name="method" id="ewallet" />
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                        E-wallet
+                    </label>
+                </div>
+
+
+                <label>Card Number</label>
+                <input type="text" placeholder="0000 0000 0000 0000" />
+
+                <div class="cardInputDetail">
+                    <div class="form-row">
+                        <div>
+                            <label>Cardholder Name</label>
+                            <input type="text" placeholder="Your Name" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label>Expiry Date</label>
+                            <input type="month" placeholder="MM/YY" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label>CVV</label>
+                            <input type="text" placeholder="XXX" />
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="actions">
+                <a href="/Ticket/Receipt" class="btn-primary">Pay $35.40</a>
+                <button class="btn-secondary">Cancel</button>
+            </div>
+        </section>
+
+        <!-- Right -->
+        <section>
+            <div class="card">
+                <div class="timeHeader">
+                    <p class="text-text-secondary text-sm font-medium">Time remaining to purchase</p>
+                    <span class="material-symbols-outlined text-text-secondary text-sm">timer</span>
+                </div>
+                
+
+                <div class="flex gap-3 time">
+                    <div class="timeMins">
+                        <span class="text-black text-xl font-bold font-mono">04</span>
+                        <span class="text-text-secondary text-[10px] uppercase tracking-wider py-2">Mins</span>
+                    </div>
+                    <div class="text-black-50">:</div>
+                    <div class="timeSecs">
+                        <span class="text-black text-xl font-bold font-mono">59</span>
+                        <span class="text-text-secondary text-[10px] uppercase tracking-wider py-2">Secs</span>
+                    </div>
                 </div>
             </div>
 
-
-            
-        </div>
-
-        <div class="paymentInput">
-            <input type="text" name="" placeholder="Credit Card Number" />
-            <div>
-                <input type="month" value="" />
-                <input type="text" placeholder="CVV" />
+            <div class="card">
+                <h3>Order Summary</h3>
+                <div class="summary-row"><span>Standard Ticket (x2)</span><span>$30.00</span></div>
+                <div class="summary-row"><span>Convenience Fee</span><span>$3.50</span></div>
+                <div class="summary-row"><span>Tax</span><span>$1.90</span></div>
+                <div class="summary-row summary-total"><span>Total Payable</span><span>$35.40</span></div>
             </div>
-        </div>
-    </div>
-
-    <!---------------->
-    <div class="transDetail">
-        <h2>Transaction Detail</h2>
-        <!--
-        <div>
-            <span>Title of Film :</span>
-            <span>Movie Name</span>
-        </div>
+        </section>
         
-        <div>
-            <span>Cinema :</span>
-            <span>Penang</span>
-        </div>
 
-        <div>
-            <span>Show Date/Time :</span>
-            <span>1 Dec 2025 18:00</span>
-        </div>
-
-        <div>
-            <span>Hall / Seat :</span>
-            <span>8 / A01</span>
-        </div>
-
-        -->
-        <div class="purchaseDetail">
-            <div>
-                <div>
-                    <span>No. of Tickets :</span>
-                    <span>Adult x 1</span>
-                </div>
-                <div class="displayPrice">
-                    RM20.00
-                </div>
-            </div>
-
-            <div>
-                <div>
-                    <span>Add-On :</span>
-                    <span>Combo A x 1</span>
-                </div>
-                <div class="displayPrice">
-                    RM20.00
-                </div>
-            </div>
-        </div>
-        
-
-        <hr />
-
-        <div class="amount">
-            <div class="subtotal">
-                <div>
-                    <span>Subtotal</span>
-                </div>
-                <div class="displayPrice">
-                    RM40.00
-                </div>
-            </div>
-
-            <div class="discount">
-                <div>
-                    <span>Discount</span>
-                </div>
-                <div class="displayPrice">
-                    - RM10.00
-                </div>
-            </div>
-
-            <hr />
-
-            <div class="total">
-                <div>
-                    <span>Total</span>
-                </div>
-                <div class="displayPrice">
-                    RM30.00
-                </div>
-            </div>
-        </div>
     </div>
-
-</section>
-
-<div class="paybtn">
-    <button>Cancel</button>
-    <button>Pay</button>
-</div>
+</main>
