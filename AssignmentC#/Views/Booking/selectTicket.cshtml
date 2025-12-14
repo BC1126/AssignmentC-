@@ -1,0 +1,194 @@
+﻿@model SelectTicketViewModel
+@{
+    ViewData["Title"] = "Select Seats - " + Model.MovieTitle;
+}
+@section head {
+    <link rel="stylesheet" href="~/css/selectTicket.css" />
+}
+
+<section id="content">
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>@Model.MovieTitle</h2>
+                <p class="text-muted">
+                    @Model.HallName - @Model.OutletName<br>
+                    @Model.StartTime.ToString("dddd, MMMM dd, yyyy - h:mm tt")<br>
+                    Price: RM @Model.TicketPrice per seat
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a asp-controller="Seed" asp-action="TestBooking" class="btn btn-secondary">
+                    ⬅ Back to Showtimes
+                </a>
+            </div>
+        </div>
+
+        <ul class="showcase">
+            <li><div class="seat-legend"></div><small>Available</small></li>
+            <li><div class="seat-legend selected"></div><small>Selected</small></li>
+            <li><div class="seat-legend occupied"></div><small>Occupied</small></li>
+            <li><div class="seat-legend vip"></div><small>VIP</small></li>
+            <li><div class="seat-legend wheelchair"></div><small>Wheelchair</small></li>
+        </ul>
+
+        <div class="screen">SCREEN</div>
+
+        <div id="seat-map">
+            @{
+                var groupedSeats = Model.Seats.GroupBy(s => s.Row).OrderBy(g => g.Key);
+                var rowCount = groupedSeats.Count();
+                Console.WriteLine($"Total rows: {rowCount}");
+            }
+            @foreach (var rowGroup in groupedSeats)
+            {
+                <div class="seat-row">
+                    <span class="row-label">@rowGroup.Key</span>
+                    @foreach (var seat in rowGroup.OrderBy(s => s.Column))
+                    {
+                        var seatClass = "seat";
+
+                        if (seat.IsOccupied)
+                        {
+                            seatClass += " occupied";
+                        }
+                        else if (seat.IsPremium)
+                        {
+                            seatClass += " vip";
+                        }
+                        else if (seat.IsWheelchair)
+                        {
+                            seatClass += " wheelchair";
+                        }
+
+                        <div class="@seatClass"
+                             data-seat-id="@seat.SeatId"
+                             data-identifier="@seat.SeatIdentifier"
+                             data-row="@seat.Row"
+                             data-column="@seat.Column">
+                            @seat.SeatIdentifier
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="booking-summary card p-4 mt-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        You have selected <strong><span id="count">0</span></strong> seats
+                    </p>
+                    <p class="mb-0">
+                        Total: <strong>RM <span id="total">0</span></strong>
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button id="addToCart" class="btn btn-primary btn-lg">
+                        🛒 Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section foot {
+    <script>
+        const showTimeId = @Model.ShowTimeId;
+        const ticketPrice = @Model.TicketPrice;
+        const seatMap = document.getElementById("seat-map");
+        const count = document.getElementById("count");
+        const total = document.getElementById("total");
+
+        function updateSelectedCount() {
+            const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
+            count.innerText = selectedSeats.length;
+            total.innerText = (selectedSeats.length * ticketPrice).toFixed(2);
+        }
+
+        // Seat selection
+        seatMap.addEventListener("click", e => {
+            if (e.target.classList.contains("seat") &&
+                !e.target.classList.contains("occupied")) {
+                e.target.classList.toggle("selected");
+                updateSelectedCount();
+            }
+        });
+
+        // Add to cart
+        document.getElementById("addToCart").addEventListener("click", async () => {
+            const selectedSeats = [...document.querySelectorAll("#seat-map .seat.selected")];
+
+            if (selectedSeats.length === 0) {
+                alert("Please select at least one seat");
+                return;
+            }
+
+            // Get seat IDs and validate
+            const seatIds = [];
+            let hasInvalidSeats = false;
+
+            selectedSeats.forEach(s => {
+                const seatIdStr = s.dataset.seatId;
+                const identifier = s.dataset.identifier;
+
+                if (!seatIdStr || seatIdStr === "0" || seatIdStr === "") {
+                    console.error(`Invalid seat ID for ${identifier}:`, seatIdStr);
+                    hasInvalidSeats = true;
+                    return;
+                }
+
+                const id = parseInt(seatIdStr);
+                if (isNaN(id) || id === 0) {
+                    console.error(`Failed to parse seat ID for ${identifier}:`, seatIdStr);
+                    hasInvalidSeats = true;
+                    return;
+                }
+
+                seatIds.push(id);
+            });
+
+            if (hasInvalidSeats || seatIds.length === 0) {
+                alert("Error: Invalid seat selection. Please refresh the page and try again.");
+                return;
+            }
+
+            const requestData = {
+                showTimeId: showTimeId,
+                seatIds: seatIds
+            };
+
+            try {
+                const response = await fetch("/Booking/AddToCart", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Server error:", errorText);
+                    alert("Server error: " + response.status);
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    window.location.href = "/Cart";
+                } else {
+                    alert(result.message || "Failed to add to cart");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred: " + error.message);
+            }
+        });
+
+        updateSelectedCount();
+    </script>
+}

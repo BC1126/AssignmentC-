@@ -156,38 +156,63 @@
             selectedSeat.dataset.active = 'true';
         });
 
-        // Save layout
+                // Save layout
         document.getElementById('saveLayout').addEventListener('click', async () => {
             const seats = [];
+
             document.querySelectorAll('.seat').forEach(seat => {
+                const seatId = parseInt(seat.dataset.seatId);
+
+                // Skip if seatId is invalid
+                if (!seatId || isNaN(seatId)) {
+                    console.warn('Invalid seat ID:', seat.dataset.seatId);
+                    return;
+                }
+
                 seats.push({
-                    seatId: parseInt(seat.dataset.seatId),
+                    seatId: seatId,
                     isPremium: seat.dataset.premium === 'true',
                     isWheelchair: seat.dataset.wheelchair === 'true',
                     isActive: seat.dataset.active === 'true'
                 });
             });
 
+            console.log('Sending seats:', seats);
+            console.log('Total seats:', seats.length);
+
+            if (seats.length === 0) {
+                alert('No seats found to save!');
+                return;
+            }
+
             try {
                 const response = await fetch('@Url.Action("SaveAllSeats", "Hall")', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                     },
                     body: JSON.stringify(seats)
                 });
 
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const result = await response.json();
+                console.log('Result:', result);
 
                 if (result.success) {
                     alert('Seat layout saved successfully!');
                     window.location.href = '@Url.Action("ManageHalls", "Hall")';
                 } else {
-                    alert('Error saving seat layout');
+                    alert('Error saving seat layout: ' + (result.message || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error saving seat layout');
+                alert('Error saving seat layout: ' + error.message);
             }
         });
     </script>
