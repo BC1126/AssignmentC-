@@ -26,7 +26,7 @@ public class ProductInsertVM
     public decimal Price { get; set; }
 
     [Required(ErrorMessage = "Stock is required.")]
-    [Range(0, 200)]
+    [Range(1, 200)]
     public int Stock {  get; set; }
 
     [Required(ErrorMessage = "Region is required.")]
@@ -59,7 +59,7 @@ public class ProductUpdateVM
     public string Description { get; set; }
 
     [Required(ErrorMessage = "Stock is required.")]
-    [Range(0, 200)]
+    [Range(1, 200)]
     public int Stock { get; set; }
 
     [Range(0.01, 9999.99)]
