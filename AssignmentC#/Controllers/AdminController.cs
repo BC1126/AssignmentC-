@@ -8,6 +8,14 @@ namespace AssignmentC_.Controllers;
 
 public class AdminController : Controller
 {
+    private readonly DB db;
+    private readonly Helper hp;
+
+    public AdminController(DB db, Helper hp)
+    {
+        this.db = db;
+        this.hp = hp;
+    }
     // In AdminController.cs
     public IActionResult MemberList()
     {
@@ -73,19 +81,6 @@ public class AdminController : Controller
         }
 
         return View(adminList); // Now passing IEnumerable<Member>
-    }
-
-    // ----------------------------------------------------------------
-    // 1. READ (List All Movies) - GET: /Admin/Movies
-    // ----------------------------------------------------------------
-    // Displays a list/table of all movies for the Admin dashboard.
-    private readonly DB db;
-    private readonly Helper hp;
-
-    public AdminController(DB db, Helper hp)
-    {
-        this.db = db;
-        this.hp = hp;
     }
 
     // ========== MOVIE LIST ==========
@@ -237,19 +232,4 @@ public class AdminController : Controller
 
     }
 
-}        return View();
-    }
-    public IActionResult AddHall()
-    {
-        return View();
-    }
-}    public IActionResult AddHall()
-    {
-        return View();
-    }
-}    }
-    public IActionResult AddHall()
-    {
-        return View();
-    }
 }
