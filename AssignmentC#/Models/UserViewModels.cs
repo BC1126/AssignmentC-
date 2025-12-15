@@ -40,8 +40,11 @@ public class RegisterVM
 
     // Email is used for login and identification
     [Required(ErrorMessage = "Email is required.")]
-    [EmailAddress(ErrorMessage = "Invalid email format.")]
-    [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters.")] // REMOVED ErrorMode
+    [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters.")]
+
+    // New: Regular expression to enforce a valid email format ending with @gmail.com
+    [RegularExpression(@"^[\w-\.]+@gmail\.com$",
+                       ErrorMessage = "Must be a valid email address ending with @gmail.com.")]
     public string Email { get; set; }
 
     // Password fields
@@ -58,7 +61,7 @@ public class RegisterVM
 
     // Corresponds to the 'Gender' property in your User entity
     [Required(ErrorMessage = "Gender is required.")]
-    [StringLength(1, ErrorMessage = "Gender must be a single character (e.g., M, F, or O).")] // REMOVED ErrorMode
+    [StringLength(1, ErrorMessage = "Gender must be a single character (e.g., M or F).")] // REMOVED ErrorMode
     public string Gender { get; set; }
 
     // Corresponds to the 'Phone' property in your User entity

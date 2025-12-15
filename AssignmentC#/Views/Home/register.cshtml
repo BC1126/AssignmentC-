@@ -52,8 +52,8 @@
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
 
                         @* 5. Gender Field *@
-                        <h6 class="mb-3 fw-bold mt-4">Gender (M/F/O)</h6>
-                        <input asp-for="Gender" class="form-control" placeholder="M, F, or O" type="text" />
+                        <h6 class="mb-3 fw-bold mt-4">Gender (M/F)</h6>
+                        <input asp-for="Gender" class="form-control" placeholder="M or F" type="text" />
                         <span asp-validation-for="Gender" class="text-danger"></span>
 
                         @* 6. Phone Field *@
@@ -71,10 +71,16 @@
                             <button type="submit" class="button d-block text-center w-100">SIGN UP</button>
                         </h6>
 
-                        <p class="mt-3 mb-0 text-center">Already have an account? <a class="fw-bold col_oran" href="login.html"> Login</a></p>
+                        <p class="mt-3 mb-0 text-center">Already have an account?<a asp-controller="User" asp-action="Login" class="fw-bold rol_oran">Login</a></p>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </section>
+
+@section Scripts {
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
+}

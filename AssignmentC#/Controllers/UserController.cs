@@ -204,7 +204,7 @@ public class UserController : Controller
         }
 
         // 2. Find the user by email
-        var user = db.Members.FirstOrDefault(u => u.Email == vm.Email);
+        var user = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
         if (user == null)
         {
@@ -226,19 +226,27 @@ public class UserController : Controller
         // 4. Authentication and Sign In
         try
         {
-            // The Role property is defined on the User class using GetType().Name (e.g., "Member")
-            hp.SignIn(user.Email, user.Role, vm.RememberMe);
+            hp.SignIn(user.Email, user.Role, vm.RememberMe); // user.Role should now be "Admin" or "Member"
 
             TempData["Info"] = $"Welcome back, {user.Name}!";
 
-            // Redirect to the appropriate dashboard or home page
-            return RedirectToAction("Index", "Home");
+            // 5. Role-Based Redirect Logic
+            if (user.Role == "Admin")
+            {
+                return RedirectToAction("AdminDashboard", "Admin"); // <-- Redirect to AdminController
+            }
+            else if (user.Role == "Staff")
+            {
+                return RedirectToAction("StaffDashboard", "Staff"); // <-- Redirect to StaffController
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home"); // Default for Members and Guests
+            }
         }
         catch (Exception ex)
         {
-            // If sign-in fails (e.g., HttpContext error)
-            ModelState.AddModelError("", "An error occurred during sign-in. Please try again.");
-            // Log the exception 'ex' here for debugging.
+            // ... (catch block) ...
         }
 
         // 5. Fallback: Return the view on failure
@@ -249,11 +257,44 @@ public class UserController : Controller
     // 3. LOGOUT ACTION
     // ====================================================================
 
-    // GET: Account/Logout
-    public async Task<IActionResult> Logout()
+    // GET: User/SignOut
+    public IActionResult SignOut()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        TempData["Info"] = "You have been successfully logged out.";
-        return RedirectToAction("Index", "Home");
+        // 1. Call your helper method to clear the authentication cookie/session
+        hp.SignOut();
+
+        // 2. Add a message confirming the sign-out
+        TempData["Info"] = "You have been successfully signed out.";
+
+        // 3. Redirect the user back to the Login page or the Home page
+        return RedirectToAction("Login", "User");
+    }
+
+    // GET: /User/Profile
+    [Authorize] // Ensure only logged-in users can access this page
+    public IActionResult Profile()
+    {
+        // 1. Get the current user's email from the claims identity
+        var userEmail = User.Identity.Name;
+
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            // Should not happen if [Authorize] is used, but good safeguard
+            return RedirectToAction("Login");
+        }
+
+        // 2. Fetch the user details from the base Users DbSet
+        // This will correctly load the Admin, Staff, or Member object via TPH.
+        var user = db.Users.FirstOrDefault(u => u.Email == userEmail);
+
+        if (user == null)
+        {
+            TempData["Error"] = "User profile could not be found.";
+            hp.SignOut(); // Log them out if the user record is missing
+            return RedirectToAction("Login");
+        }
+
+        // 3. Pass the user object to the View
+        return View(user);
     }
 }

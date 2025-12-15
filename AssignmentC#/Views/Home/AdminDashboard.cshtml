@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Administrator Dashboard";
+}
+
+<div class="container mt-5">
+    <h1>Welcome to Administrator Dashboard</h1>
+    <p>This is your central control panel for comprehensive system management.</p>
+
+    <div class="row mt-4">
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary"><i class="fa fa-users me-2"></i> User Management</h5>
+                    <p class="card-text">Create, edit, and deactivate all users, including Staff and other Admins. Access user roles and permissions.</p>
+                    <a href="/Admin/ManageUsers" class="btn btn-primary w-100 mt-2">Manage Users</a>
+                    <a href="/Admin/SystemSettings" class="btn btn-outline-secondary w-100 mt-2">System Settings</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success"><i class="fa fa-box me-2"></i> Product Management</h5>
+                    <p class="card-text">Oversee all products, manage inventory levels, and review all sales orders placed by customers.</p>
+                    <a href="/Admin/ManageProduct" class="btn btn-success w-100 mt-2">Manage Products</a>
+                    <a href="/Admin/ViewOrder" class="btn btn-outline-success w-100 mt-2">View All Orders</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger"><i class="fa fa-film me-2"></i> Movie Management</h5>
+                    <p class="card-text">Add new movies, set show schedules, and configure ticketing options for all cinema halls.</p>
+                    <a href="/Admin/ManageMovie" class="btn btn-danger w-100 mt-2">Manage Movies</a>
+                    <a href="/Admin/ViewShowTimes" class="btn btn-outline-danger w-100 mt-2">View Show Times</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

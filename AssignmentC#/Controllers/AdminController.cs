@@ -6,6 +6,7 @@ using AssignmentC_.Models;
 
 namespace AssignmentC_.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
     private readonly DB db;
@@ -15,6 +16,12 @@ public class AdminController : Controller
     {
         this.db = db;
         this.hp = hp;
+    }
+
+
+    public IActionResult AdminDashboard()
+    {
+        return View("~/Views/Home/AdminDashboard.cshtml");
     }
 
     // ========== MOVIE LIST ==========

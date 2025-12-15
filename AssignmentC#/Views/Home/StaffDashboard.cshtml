@@ -1,0 +1,44 @@
+﻿@* Views/Staff/Dashboard.cshtml *@
+
+@{
+    ViewData["Title"] = "Staff Dashboard";
+}
+
+<div class="container mt-5">
+    <h1>Welcome to Staff Dashboard</h1>
+    <p>This is your restricted dashboard for managing products, movies, and orders.</p>
+
+    <div class="row mt-4">
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary"><i class="fa fa-box me-2"></i> Product Management</h5>
+                    <p class="card-text">View and manage all active products and inventory, including concession items.</p>
+                    <a href="/Staff/ProductList" class="btn btn-primary w-100 mt-2">Go to Products</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger"><i class="fa fa-film me-2"></i> Movie & Showtimes</h5>
+                    <p class="card-text">Update movie details, manage hall assignments, and set up showtimes and pricing.</p>
+                    <a href="/Staff/ManageMovie" class="btn btn-danger w-100 mt-2">Manage Movies</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success"><i class="fa fa-receipt me-2"></i> Order Processing</h5>
+                    <p class="card-text">Review, process, track, and manage all customer ticket and product orders.</p>
+                    <a href="/Staff/OrderList" class="btn btn-success w-100 mt-2">View Orders</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

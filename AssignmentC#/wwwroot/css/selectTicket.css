@@ -111,11 +111,13 @@ body {
     font-weight: bold;
     font-size: 1.2rem;
 }
+
 .seat.selected {
     background-color: #28a745;
     border: 2px solid rgba(255, 255, 255, 0.7);
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.6), 0 0 12px rgba(255, 255, 255, 0.4);
 }
+
 #seat-map {
     perspective: 400px;
     margin-top: 30px;
@@ -182,9 +184,119 @@ body {
             background-color: #138496;
         }
 
+/* Booking sections container */
+.booking-sections-wrapper {
+    display: flex !important;
+    gap: 20px;
+    margin-top: 30px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+
 .booking-summary {
     background: #f8f9fa;
     color: black;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex: 1;
+    max-width: 400px;
+}
+
+.ticket-type-selector {
+    background: #f8f9fa;
+    color: #000;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 24px;
+    flex: 1;
+    max-width: 400px;
+    display: none; 
+}
+    .ticket-type-selector.show {
+        display: block !important;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+#ticketTypeSection h5 {
+    color: #000;
+    margin-bottom: 15px;
+}
+
+.ticket-counter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: white;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.ticket-counter-label {
+    font-weight: 500;
+    font-size: 16px;
+    color: #000;
+}
+
+.ticket-counter-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.counter-btn {
+    width: 35px;
+    height: 35px;
+    border: 2px solid #6c757d;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.2s;
+}
+
+    .counter-btn:hover:not(:disabled) {
+        background: #6c757d;
+        color: white;
+    }
+
+    .counter-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+.counter-value {
+    font-size: 20px;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+    color: #000;
+}
+
+.ticket-type-note {
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: 10px;
+}
+
+#ticketTypeSection {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .booking-sections-wrapper {
+        flex-direction: column;
+    }
+
+    .ticket-type-selector,
+    .booking-summary {
+        width: 100%;
+        min-width: unset;
+    }
 }
