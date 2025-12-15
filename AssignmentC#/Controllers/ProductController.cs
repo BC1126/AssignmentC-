@@ -336,9 +336,17 @@ public class ProductController(DB db, Helper hp) : Controller
         try
         {
             var cart = hp.GetCart();
+            var product = db.Products.Find(productId);
 
-            if (quantity >= 1 && quantity <= 10)
+            if (product == null)
+                return Redirect(Request.Headers.Referer.ToString());
+
+            int maxStock = product.Stock;
+
+            if (quantity >= 1 && quantity <= maxStock)
                 cart[productId] = quantity;
+            else if (quantity > maxStock)
+                cart[productId] = maxStock;
             else
                 cart.Remove(productId);
 
@@ -348,6 +356,7 @@ public class ProductController(DB db, Helper hp) : Controller
 
         return Redirect(Request.Headers.Referer.ToString());
     }
+
 
     public IActionResult UserIndex(string? category)
     {
@@ -368,7 +377,6 @@ public class ProductController(DB db, Helper hp) : Controller
         ViewBag.Cinema = cinema;
         ViewBag.CollectDate = HttpContext.Session.GetString("CollectDate");
 
-        // ✅ ALWAYS show all 4 categories
         ViewBag.Categories = new List<string>
     {
         "Ala cart",
@@ -384,8 +392,6 @@ public class ProductController(DB db, Helper hp) : Controller
 
         return View(products);
     }
-
-
 
     public IActionResult ShoppingCart()
     {
@@ -420,44 +426,70 @@ public class ProductController(DB db, Helper hp) : Controller
     [HttpPost]
     public IActionResult Checkout()
     {
-        // 1. Checking (shoping cart NOT empty)
         var cart = hp.GetCart();
-        if (cart.Count() == 0) return RedirectToAction("ShoppingCart");
+        if (!cart.Any())
+        {
+            TempData["Error"] = "Your cart is empty.";
+            return RedirectToAction("ShoppingCart");
+        }
 
-        // 2. Create [Order] (parent record)
+        var region = HttpContext.Session.GetString("SelectedRegion");
+        var cinema = HttpContext.Session.GetString("SelectedCinema");
+        var collectDateStr = HttpContext.Session.GetString("CollectDate");
+
+        if (region == null || cinema == null || collectDateStr == null)
+        {
+            TempData["Error"] = "Please select region, cinema, and collect date first.";
+            return RedirectToAction("UserSelectRegion");
+        }
+
         var order = new Order
         {
             Date = DateOnly.FromDateTime(DateTime.Today),
             Paid = false,
-            MemberEmail = User.Identity!.Name!,
+            Region = region,
+            Cinema = cinema,
+            CollectDate = DateOnly.Parse(collectDateStr),
+            Claim = false,
+            MemberEmail = User.Identity!.Name!
         };
+
         db.Orders.Add(order);
 
-        // 3. Create [OrderLine] (child record)
         foreach (var (productId, quantity) in cart)
         {
             var p = db.Products.Find(productId);
             if (p == null) continue;
 
-            order.OrderLines.Add(new()
+            // Stock validation
+            if (quantity > p.Stock)
             {
-                Price = p.Price,
-                Quantity = quantity,
+                TempData["Error"] = $"Not enough stock for {p.Name}. Available: {p.Stock}";
+                return RedirectToAction("ShoppingCart");
+            }
+
+            // Reduce stock
+            p.Stock -= quantity;
+
+            // Add order line
+            order.OrderLines.Add(new OrderLine
+            {
                 ProductId = productId,
+                Price = p.Price,
+                Quantity = quantity
             });
         }
 
-        // 4. Save changes + clear shopping cart
-        // TODO
-        db.SaveChanges();
-        hp.SetCart();
+        db.SaveChanges(); // Save order and updated stock
 
-        // Continue with other processing
-        // For example: payment, etc. (Using third party payment such as Stripe, Paypal)
+        hp.SetCart(); // Clear the cart
 
-        // TODO
+        TempData["Info"] = "Order placed successfully!";
         return RedirectToAction("OrderComplete", new { order.Id });
     }
+
+
+
 
     public IActionResult OrderComplete(int id)
     {
@@ -469,7 +501,6 @@ public class ProductController(DB db, Helper hp) : Controller
     [Authorize(Roles = "Member")]
     public IActionResult Order()
     {
-        //TODO
         var m = db.Orders
             .Include(o => o.OrderLines)
             .ThenInclude(ol => ol.Product)
@@ -483,7 +514,6 @@ public class ProductController(DB db, Helper hp) : Controller
     [Authorize(Roles = "Member")]
     public IActionResult OrderDetail(int id)
     {
-        // TODO
         var m = db.Orders
             .Include(o => o.OrderLines)
             .ThenInclude(ol => ol.Product)

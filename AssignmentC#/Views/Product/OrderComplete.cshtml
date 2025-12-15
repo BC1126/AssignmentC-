@@ -1,0 +1,99 @@
+﻿@{
+    ViewBag.Title = "Order Complete";
+}
+
+<style>
+    .order-complete-wrapper {
+        max-width: 520px;
+        margin: 80px auto;
+        background: #ffffff;
+        padding: 40px 30px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    .order-complete-icon {
+        font-size: 56px;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+
+    .order-complete-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .order-complete-text {
+        font-size: 16px;
+        color: #555;
+        margin-bottom: 25px;
+    }
+
+    .order-id {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+
+    .order-actions {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .btn-primary-custom {
+        padding: 10px 20px;
+        background-color: #0d6efd;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+        .btn-primary-custom:hover {
+            background-color: #084298;
+        }
+
+    .btn-outline-custom {
+        padding: 10px 20px;
+        background-color: #fff;
+        color: #0d6efd;
+        border: 2px solid #0d6efd;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+        .btn-outline-custom:hover {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+</style>
+
+<div class="order-complete-wrapper">
+    <div class="order-complete-icon">✅</div>
+
+    <div class="order-complete-title">
+        Order Completed!
+    </div>
+
+    <div class="order-complete-text">
+        Thank you for your purchase. Your order has been successfully placed.
+    </div>
+
+    <div class="order-id">
+        Order ID: <span>@ViewBag.Id</span>
+    </div>
+
+    <div class="order-actions">
+        <a href="/Product/OrderDetail/@ViewBag.Id" class="btn-primary-custom">
+            View Order
+        </a>
+
+        <a href="/Product/Order" class="btn-outline-custom">
+            Order History
+        </a>
+    </div>
+</div>

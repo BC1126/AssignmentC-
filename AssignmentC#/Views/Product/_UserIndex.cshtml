@@ -30,7 +30,7 @@
 
                         <div class="quantity-control">
                             <button type="button" class="btn-minus">−</button>
-                            <input type="number" name="Quantity" min="0" max="10" value="@quantity" />
+                            <input type="number" name="Quantity" min="0" max="@p.Stock" value="@quantity" />
                             <button type="button" class="btn-plus">+</button>
                         </div>
 
@@ -73,7 +73,7 @@
 
     .product-image-container {
         width: 100%;
-        height: 200px; /* shorter image */
+        height: 200px;
         overflow: hidden;
         position: relative;
     }
@@ -109,7 +109,7 @@
     .product-desc {
         font-size: 10px;
         color: #555;
-        height: 20px; /* shorter desc */
+        height: 20px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -169,18 +169,29 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Plus button
         $(document).on('click', '.btn-plus', function () {
             var input = $(this).siblings('input[name="Quantity"]');
-            var max = parseInt(input.attr('max')) || 10;
+            var max = parseInt(input.attr('max')) || 100;
             var val = parseInt(input.val()) || 0;
             if (val < max) input.val(val + 1);
         });
 
+        // Minus button
         $(document).on('click', '.btn-minus', function () {
             var input = $(this).siblings('input[name="Quantity"]');
             var min = parseInt(input.attr('min')) || 0;
             var val = parseInt(input.val()) || 0;
             if (val > min) input.val(val - 1);
+        });
+
+        // Optional: AJAX submit to update cart without reload
+        $(document).on('submit', '.cart-form', function (e) {
+            e.preventDefault();
+            var form = $(this);
+            $.post(form.attr('action'), form.serialize(), function() {
+                location.reload(); // reload page to update cart badge
+            });
         });
     });
 </script>

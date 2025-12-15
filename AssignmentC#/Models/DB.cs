@@ -123,6 +123,8 @@ public class Order
     public string Cinema { get; set; }
     [MaxLength(100)]
     public DateOnly CollectDate { get; set; }
+    [MaxLength(100)]
+    public bool Claim { get; set; }
 
     // Foreign Keys
     public string MemberEmail { get; set; }
