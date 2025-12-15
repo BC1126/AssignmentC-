@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251214080550_CreateDB")]
+    [Migration("20251214160723_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -124,7 +124,6 @@ namespace AssignmentC_.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MovieId"));
 
                     b.Property<string>("BannerUrl")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -146,7 +145,6 @@ namespace AssignmentC_.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PosterUrl")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -507,6 +505,9 @@ namespace AssignmentC_.Migrations
 
                     b.Property<int>("HallId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int>("MovieId")
                         .HasColumnType("int");

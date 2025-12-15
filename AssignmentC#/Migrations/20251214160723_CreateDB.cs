@@ -25,8 +25,8 @@ namespace AssignmentC_.Migrations
                     Director = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Writer = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     PremierDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PosterUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    BannerUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    PosterUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    BannerUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     TrailerUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
                 },
                 constraints: table =>
@@ -239,7 +239,8 @@ namespace AssignmentC_.Migrations
                     MovieId = table.Column<int>(type: "int", nullable: false),
                     HallId = table.Column<int>(type: "int", nullable: false),
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TicketPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    TicketPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {

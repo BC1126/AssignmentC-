@@ -1,12 +1,24 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AssignmentC_.Controllers;
 
 public class HomeController : Controller
 {
+    private readonly DB _db;
+
+    public HomeController(DB db)
+    {
+        _db = db;
+    }
     public IActionResult Index()
     {
-        return View();
+        var movies = _db.Movies
+                             .OrderByDescending(m => m.PremierDate)
+                             .Take(3)  
+                             .ToList();
+
+        return View(movies);
     }
 
     public IActionResult movie()

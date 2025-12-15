@@ -35,21 +35,28 @@ $('[type=reset]').on('click', e => {
 });
 
 $(document).ready(function () {
-    function setupPreview(inputId, previewId) {
+    function setupPreview(inputId, previewId, existingId) {
         $('#' + inputId).on('change', function () {
             const file = this.files[0];
             if (!file) return;
+
+            // hide existing image
+            $('#' + existingId).hide();
+
             const reader = new FileReader();
             reader.onload = function (e) {
-                $('#' + previewId).attr('src', e.target.result).show();
+                $('#' + previewId)
+                    .attr('src', e.target.result)
+                    .show();
             };
             reader.readAsDataURL(file);
         });
     }
 
-    setupPreview('posterInput', 'posterPreview');
-    setupPreview('bannerInput', 'bannerPreview');
+    setupPreview('posterInput', 'posterPreview', 'existingPoster');
+    setupPreview('bannerInput', 'bannerPreview', 'existingBanner');
 });
+
 
 // Check all checkboxes
 $('[data-check]').on('click', e => {
