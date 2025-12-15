@@ -330,7 +330,9 @@ public class ShowTime
     public bool IsActive { get; set; } = true;
 
     // Navigation properties
+    [ForeignKey(nameof(MovieId))]
     public Movie Movie { get; set; }
+    [ForeignKey(nameof(HallId))]
     public Hall Hall { get; set; }
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 

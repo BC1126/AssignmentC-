@@ -12,10 +12,6 @@
     </div>
 
     @* Display TempData messages (Success or Error) *@
-    @if (TempData["Info"] != null)
-    {
-        <div class="alert alert-success" role="alert">@TempData["Info"]</div>
-    }
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
