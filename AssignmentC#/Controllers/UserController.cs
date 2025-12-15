@@ -204,7 +204,7 @@ public class UserController : Controller
         }
 
         // 2. Find the user by email
-        var user = db.Members.FirstOrDefault(u => u.Email == vm.Email);
+        var user = db.Users.FirstOrDefault(u => u.Email == vm.Email);
 
         if (user == null)
         {
@@ -233,11 +233,11 @@ public class UserController : Controller
             // 5. Role-Based Redirect Logic
             if (user.Role == "Admin")
             {
-                return RedirectToAction("Dashboard", "Admin"); // <-- Redirect to AdminController
+                return RedirectToAction("AdminDashboard", "Admin"); // <-- Redirect to AdminController
             }
             else if (user.Role == "Staff")
             {
-                return RedirectToAction("Dashboard", "Staff"); // <-- Redirect to StaffController
+                return RedirectToAction("StaffDashboard", "Staff"); // <-- Redirect to StaffController
             }
             else
             {
