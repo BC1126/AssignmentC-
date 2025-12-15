@@ -61,9 +61,7 @@
 
                         <div class="@seatClass"
                              data-seat-id="@seat.SeatId"
-                             data-identifier="@seat.SeatIdentifier"
-                             data-row="@seat.Row"
-                             data-column="@seat.Column">
+                             data-identifier="@seat.SeatIdentifier">
                             @seat.SeatIdentifier
                         </div>
                     }
@@ -71,78 +69,83 @@
             }
         </div>
 
-        <!-- Ticket Type Selection (appears after seat selection) -->
-        <div id="ticketTypeSection" class="ticket-type-selector">
-            <h5 class="mb-3">Select Ticket Types</h5>
-            <p class="ticket-type-note">Total must equal <strong><span id="totalSeatsSelected">0</span></strong> selected seats</p>
+        <!-- Wrapper for side-by-side layout -->
+        <div class="booking-sections-wrapper">
 
-            <div class="ticket-counter">
-                <div class="ticket-counter-label">
-                    Children (Age 3-12)
-                    <small class="d-block text-muted">RM @Model.TicketPrice</small>
+            <!-- Ticket Type Selection (LEFT SIDE) -->
+            <div id="ticketTypeSection" class="ticket-type-selector">
+                <h5 class="mb-3">Select Ticket Types</h5>
+                <p class="ticket-type-note">Total: <strong><span id="totalSeatsSelected">0</span></strong> seats selected</p>
+
+                <div class="ticket-counter">
+                    <div class="ticket-counter-label">
+                        <div>Children (3-12)</div>
+                        <small class="text-muted">RM @Model.TicketPrice</small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" onclick="changeCount('children', -1)">−</button>
+                        <span class="counter-value" id="childrenCount">0</span>
+                        <button type="button" class="counter-btn" onclick="changeCount('children', 1)">+</button>
+                    </div>
                 </div>
-                <div class="ticket-counter-controls">
-                    <button type="button" class="counter-btn" onclick="changeCount('children', -1)">−</button>
-                    <span class="counter-value" id="childrenCount">0</span>
-                    <button type="button" class="counter-btn" onclick="changeCount('children', 1)">+</button>
+
+                <div class="ticket-counter">
+                    <div class="ticket-counter-label">
+                        <div>Adults (13-59)</div>
+                        <small class="text-muted">RM @Model.TicketPrice</small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" onclick="changeCount('adult', -1)">−</button>
+                        <span class="counter-value" id="adultCount">0</span>
+                        <button type="button" class="counter-btn" onclick="changeCount('adult', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="ticket-counter">
+                    <div class="ticket-counter-label">
+                        <div>Seniors (60+)</div>
+                        <small class="text-muted">RM @(Model.TicketPrice * 0.8m) <span style="color: #28a745;">(20% off)</span></small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" onclick="changeCount('senior', -1)">−</button>
+                        <span class="counter-value" id="seniorCount">0</span>
+                        <button type="button" class="counter-btn" onclick="changeCount('senior', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3" id="ticketWarning" style="display: none; font-size: 13px; padding: 8px;">
+                    <small>⚠️ Total must match selected seats</small>
                 </div>
             </div>
 
-            <div class="ticket-counter">
-                <div class="ticket-counter-label">
-                    Adults (Age 13-59)
-                    <small class="d-block text-muted">RM @Model.TicketPrice</small>
-                </div>
-                <div class="ticket-counter-controls">
-                    <button type="button" class="counter-btn" onclick="changeCount('adult', -1)">−</button>
-                    <span class="counter-value" id="adultCount">0</span>
-                    <button type="button" class="counter-btn" onclick="changeCount('adult', 1)">+</button>
-                </div>
-            </div>
+            <!-- Booking Summary (RIGHT SIDE) -->
+            <form asp-action="SelectTicket" method="post" id="seatForm">
+                <input type="hidden" name="showTimeId" value="@Model.ShowTimeId" />
+                <div id="seatIdsContainer"></div>
+                <input type="hidden" name="childrenCount" id="childrenCountInput" value="0" />
+                <input type="hidden" name="adultCount" id="adultCountInput" value="0" />
+                <input type="hidden" name="seniorCount" id="seniorCountInput" value="0" />
 
-            <div class="ticket-counter">
-                <div class="ticket-counter-label">
-                    Seniors (Age 60+)
-                    <small class="d-block text-muted">RM @(Model.TicketPrice * 0.8m) (20% discount)</small>
+                <div class="booking-summary card p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                Selected: <strong><span id="count">0</span></strong> seats
+                            </p>
+                            <p class="mb-0">
+                                Total: <strong>RM <span id="total">0.00</span></strong>
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-primary btn-lg" id="nextButton">
+                                Next →
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="ticket-counter-controls">
-                    <button type="button" class="counter-btn" onclick="changeCount('senior', -1)">−</button>
-                    <span class="counter-value" id="seniorCount">0</span>
-                    <button type="button" class="counter-btn" onclick="changeCount('senior', 1)">+</button>
-                </div>
-            </div>
+            </form>
 
-            <div class="alert alert-warning mt-3" id="ticketWarning" style="display: none;">
-                <small>⚠️ Total ticket count must match the number of selected seats</small>
-            </div>
         </div>
-
-        <!-- Form to submit selected seats -->
-        <form asp-action="SelectTicket" method="post" id="seatForm">
-            <input type="hidden" name="showTimeId" value="@Model.ShowTimeId" />
-            <div id="seatIdsContainer"></div>
-            <input type="hidden" name="childrenCount" id="childrenCountInput" value="0" />
-            <input type="hidden" name="adultCount" id="adultCountInput" value="0" />
-            <input type="hidden" name="seniorCount" id="seniorCountInput" value="0" />
-
-            <div class="booking-summary card p-4 mt-4">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p class="mb-1">
-                            You have selected <strong><span id="count">0</span></strong> seats
-                        </p>
-                        <p class="mb-0">
-                            Total: <strong>RM <span id="total">0</span></strong>
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <button type="submit" class="btn btn-primary btn-lg" id="nextButton">
-                            Next →
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
     </div>
 </section>
 
@@ -153,31 +156,43 @@
         const seatMap = document.getElementById("seat-map");
         const count = document.getElementById("count");
         const total = document.getElementById("total");
+        const wrapper = document.querySelector(".booking-sections-wrapper");
+        const ticketTypeSection = document.getElementById("ticketTypeSection");
+        const ticketWarning = document.getElementById("ticketWarning");
+        const nextButton = document.getElementById("nextButton");
+        const seatForm = document.getElementById("seatForm");
+        const seatIdsContainer = document.getElementById("seatIdsContainer");
 
         let childrenCount = 0;
         let adultCount = 0;
         let seniorCount = 0;
         let selectedSeatsCount = 0;
 
+        // Seat selection handler
+        seatMap.addEventListener("click", e => {
+            if (e.target.classList.contains("seat") && !e.target.classList.contains("occupied")) {
+                e.target.classList.toggle("selected");
+                updateSelectedCount();
+            }
+        });
+
         function updateSelectedCount() {
             const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
             const previousCount = selectedSeatsCount;
             selectedSeatsCount = selectedSeats.length;
+
             count.innerText = selectedSeatsCount;
+            document.getElementById("totalSeatsSelected").innerText = selectedSeatsCount;
 
-            // Show/hide ticket type section
             if (selectedSeatsCount > 0) {
-                ticketTypeSection.style.display = "block";
-                document.getElementById("totalSeatsSelected").innerText = selectedSeatsCount;
+                ticketTypeSection.classList.add("show");
 
-                // Auto-adjust adult count when seat count changes
                 const difference = selectedSeatsCount - previousCount;
                 adultCount += difference;
                 if (adultCount < 0) adultCount = 0;
-
                 updateCountDisplay();
             } else {
-                ticketTypeSection.style.display = "none";
+                ticketTypeSection.classList.remove("show");
                 resetCounts();
             }
 
@@ -187,22 +202,22 @@
 
         function changeCount(type, delta) {
             const totalTickets = childrenCount + adultCount + seniorCount;
+            const newTotal = totalTickets + delta;
+
+            // Check if we can add/remove
+            if (newTotal < 0 || newTotal > selectedSeatsCount) {
+                return;
+            }
 
             if (type === 'children') {
                 const newCount = childrenCount + delta;
-                if (newCount >= 0 && totalTickets + delta <= selectedSeatsCount) {
-                    childrenCount = newCount;
-                }
+                if (newCount >= 0) childrenCount = newCount;
             } else if (type === 'adult') {
                 const newCount = adultCount + delta;
-                if (newCount >= 0 && totalTickets + delta <= selectedSeatsCount) {
-                    adultCount = newCount;
-                }
+                if (newCount >= 0) adultCount = newCount;
             } else if (type === 'senior') {
                 const newCount = seniorCount + delta;
-                if (newCount >= 0 && totalTickets + delta <= selectedSeatsCount) {
-                    seniorCount = newCount;
-                }
+                if (newCount >= 0) seniorCount = newCount;
             }
 
             updateCountDisplay();
@@ -236,7 +251,7 @@
                 nextButton.disabled = true;
             } else {
                 ticketWarning.style.display = "none";
-                nextButton.disabled = false;
+                nextButton.disabled = selectedSeatsCount === 0;
             }
         }
 
@@ -247,18 +262,9 @@
             updateCountDisplay();
         }
 
-        // Seat selection
-        seatMap.addEventListener("click", e => {
-            if (e.target.classList.contains("seat") &&
-                !e.target.classList.contains("occupied")) {
-                e.target.classList.toggle("selected");
-                updateSelectedCount();
-            }
-        });
-
-        // Form submission - create hidden inputs for each seat ID
+        // Form submission
         seatForm.addEventListener("submit", e => {
-            const selectedSeats = [...document.querySelectorAll("#seat-map .seat.selected")];
+            const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
 
             if (selectedSeats.length === 0) {
                 e.preventDefault();
@@ -266,70 +272,25 @@
                 return;
             }
 
-            // Get seat IDs and validate
-            const seatIds = [];
-            let hasInvalidSeats = false;
-
-            selectedSeats.forEach(s => {
-                const seatIdStr = s.dataset.seatId;
-                const identifier = s.dataset.identifier;
-
-                if (!seatIdStr || seatIdStr === "0" || seatIdStr === "") {
-                    console.error(`Invalid seat ID for ${identifier}:`, seatIdStr);
-                    hasInvalidSeats = true;
-                    return;
-                }
-
-                const id = parseInt(seatIdStr);
-                if (isNaN(id) || id === 0) {
-                    console.error(`Failed to parse seat ID for ${identifier}:`, seatIdStr);
-                    hasInvalidSeats = true;
-                    return;
-                }
-
-                seatIds.push(id);
-            });
-
-            if (hasInvalidSeats || seatIds.length === 0) {
-                alert("Error: Invalid seat selection. Please refresh the page and try again.");
+            const totalTickets = childrenCount + adultCount + seniorCount;
+            if (totalTickets !== selectedSeats.length) {
+                e.preventDefault();
+                alert("Ticket type count must match the number of selected seats");
                 return;
             }
 
-            const requestData = {
-                showTimeId: showTimeId,
-                seatIds: seatIds
-            };
-
-            try {
-                const response = await fetch("/Booking/AddToCart", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(requestData)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error("Server error:", errorText);
-                    alert("Server error: " + response.status);
-                    return;
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert(result.message);
-                    window.location.href = "/Cart";
-                } else {
-                    alert(result.message || "Failed to add to cart");
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("An error occurred: " + error.message);
-            }
+            // Add seat IDs to form
+            seatIdsContainer.innerHTML = "";
+            selectedSeats.forEach(seat => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "seatIds";
+                input.value = seat.dataset.seatId;
+                seatIdsContainer.appendChild(input);
+            });
         });
 
+        // Initialize
         updateSelectedCount();
     </script>
 }
