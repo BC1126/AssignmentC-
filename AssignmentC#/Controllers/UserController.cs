@@ -257,11 +257,16 @@ public class UserController : Controller
     // 3. LOGOUT ACTION
     // ====================================================================
 
-    // GET: Account/Logout
-    public async Task<IActionResult> Logout()
+    // GET: User/SignOut
+    public IActionResult SignOut()
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        TempData["Info"] = "You have been successfully logged out.";
-        return RedirectToAction("Index", "Home");
+        // 1. Call your helper method to clear the authentication cookie/session
+        hp.SignOut();
+
+        // 2. Add a message confirming the sign-out
+        TempData["Info"] = "You have been successfully signed out.";
+
+        // 3. Redirect the user back to the Login page or the Home page
+        return RedirectToAction("Login", "User");
     }
 }
