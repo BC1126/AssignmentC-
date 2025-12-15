@@ -1,0 +1,125 @@
+﻿@model CartViewModel
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<div class="container mt-4">
+    <h2>🛒 Shopping Cart</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="alert alert-info mt-4">
+            <h4>Your cart is empty</h4>
+            <p>Add some movie tickets to get started!</p>
+            <a asp-controller="Movie" asp-action="Index" class="btn btn-primary">
+                Browse Movies
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-4">
+            <div class="col-lg-8">
+                @for (int i = 0; i < Model.Items.Count; i++)
+                {
+                    var item = Model.Items[i];
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">@item.MovieTitle</h5>
+                                    <p class="card-text text-muted mb-1">
+                                        <strong>📍</strong> @item.HallName<br>
+                                        <strong>🕐</strong> @item.ShowTimeDisplay<br>
+                                        <strong>💺</strong> Seats: @string.Join(", ", item.Seats)
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Quantity:</strong> @item.Seats.Count seat(s) × RM @item.Price.ToString("F2")
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <h4 class="text-primary mb-3">
+                                        RM @item.TotalPrice.ToString("F2")
+                                    </h4>
+                                    <form asp-action="RemoveItem" method="post" class="d-inline">
+                                        <input type="hidden" name="index" value="@i" />
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            🗑️ Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Items:</span>
+                            <strong>@Model.Items.Sum(i => i.Seats.Count)</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <strong>RM @Model.GrandTotal.ToString("F2")</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5>Total:</h5>
+                            <h5 class="text-primary">RM @Model.GrandTotal.ToString("F2")</h5>
+                        </div>
+
+                        <a asp-action="Checkout" class="btn btn-success w-100 mb-2">
+                            ✓ Proceed to Checkout
+                        </a>
+
+                        <a asp-controller="Movie" asp-action="Index" class="btn btn-outline-secondary w-100 mb-2">
+                            ← Continue Shopping
+                        </a>
+
+                        <form asp-action="Clear" method="post">
+                            <button type="submit" class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('Are you sure you want to clear your cart?')">
+                                🗑️ Clear Cart
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section foot {
+    <script>
+        // Auto-hide alerts after 3 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 3000);
+    </script>
+}

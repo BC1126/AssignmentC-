@@ -1,0 +1,110 @@
+﻿@{
+    ViewBag.Title = "Product | Index";
+}
+
+@section head {
+    <style>
+        .products {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .product {
+            border: 1px solid #333;
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+
+            .product > img {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+
+            .product > form,
+            .product > div {
+                position: absolute;
+                background: #0009;
+                color: #fff;
+                padding: 5px;
+                text-align: center;
+            }
+
+            .product > form {
+                inset: 0 0 auto auto;
+            }
+
+            .product > div {
+                inset: auto 0 0 0;
+            }
+
+        .top-bar {
+
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            margin-top:10px;
+            margin-right:10px;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            padding: 6px 12px;
+            background: #6c757d;
+            color: #fff;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+
+            .back-btn:hover {
+                background: #5a6268;
+            }
+
+        .info-bar {
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-radius: 6px;
+        }
+
+            .info-bar h3 {
+                margin: 0;
+                font-weight: 600;
+            }
+
+            .info-bar span {
+                font-weight: normal;
+            }
+
+    </style>
+}
+
+<div class="top-bar">
+    <a asp-action="UserSelectRegion" class="back-btn">← Back</a>
+</div>
+
+
+<div class="info-bar">
+    <strong>Region:</strong> @ViewBag.Region |
+    <strong>Cinema:</strong> @ViewBag.Cinema |
+    <strong>Collect Date:</strong> @ViewBag.CollectDate
+</div>
+
+
+
+<div id="target">
+    <partial name="_UserIndex">
+</div>
+
+@section foot {
+    <script>
+        $(document).on('change','select',e => {
+            $(e.target.form).submit();
+        });
+    </script>
+}

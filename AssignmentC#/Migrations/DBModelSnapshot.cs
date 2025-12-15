@@ -588,6 +588,18 @@ namespace AssignmentC_.Migrations
                     b.HasDiscriminator().HasValue("Member");
                 });
 
+
+            modelBuilder.Entity("AssignmentC_.Models.Staff", b =>
+
+                {
+                    b.HasBaseType("AssignmentC_.Models.User");
+
+                    b.HasDiscriminator().HasValue("Staff");
+                });
+
+
+
+
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
                 {
                     b.HasOne("AssignmentC_.Models.Member", "Member")

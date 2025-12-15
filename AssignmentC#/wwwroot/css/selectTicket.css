@@ -6,7 +6,7 @@
 
 body {
     background-color: #242333;
-    color: #fff;    
+    color: #fff;
     justify-content: center;
     height: 100vh;
     font-family: "Lato", sans-serif;
@@ -46,132 +46,145 @@ body {
     align-items: center;
 }
 
-.seat {
-    background-color: #444451;
-    height: 23px;
-    width: 25px;
-    margin: 3px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px; 
-}
-
-    .seat.selected {
-        background-color: #6feaf6;
-    }
-
-    .seat.occupied {
-        background-color: #fff;
-    }
-
-    .seat:nth-of-type(2) {
-        margin-right: 18px;
-    }
-
-    .seat:nth-last-of-type(2) {
-        margin-left: 18px;
-    }
-
-    .seat:not(.occupied):hover {
-        cursor: pointer;
-        transform: scale(1.2);
-    }
-
-.showcase.seat:not(.occupied):hover {
-    cursor: default;
-    transform: scale(1);
-}
-
 .showcase {
-    background-color: rgba(0, 0, 0, 0.1);
-    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 15px;
     border-radius: 5px;
-    color: #777;
     list-style-type: none;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
     .showcase li {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin: 0 10px;
+        gap: 8px;
     }
 
-        .showcase li small {
-            margin-left: 2px;
-        }
+    .showcase .seat-legend {
+        width: 20px;
+        height: 20px;
+    }
 
-.row {
+/* Legend seat styles (non-interactive) */
+.seat-legend {
+    background-color: #444451;
+    height: 20px;
+    width: 20px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
     display: flex;
+    align-items: center;
     justify-content: center;
+    font-size: 0.6rem;
 }
+
+    .seat-legend.selected {
+        background-color: #28a745;
+    }
+
+    .seat-legend.occupied {
+        background-color: #dc3545;
+    }
+
+    .seat-legend.vip {
+        background-color: #ffc107;
+    }
+
+    .seat-legend.wheelchair {
+        background-color: #17a2b8;
+    }
 
 .screen {
-    background-color: #fff;
+    background: #fff;
     height: 70px;
-    width: 300px;
-    margin: 15px 0;
+    width: 50%;
+    margin: 30px 0;
     transform: rotateX(-45deg);
     box-shadow: 0 3px 10px rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+.seat.selected {
+    background-color: #28a745;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6), 0 0 12px rgba(255, 255, 255, 0.4);
+}
+#seat-map {
+    perspective: 400px;
+    margin-top: 30px;
 }
 
-p.text {
-    margin: 5px 0;
+.seat-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
-    p.text span {
-        color: #6faef6;
-    }
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 100;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.8);
-    backdrop-filter: blur(4px);
-}
-
-.modal-content {
-    background-color: #1e1e2f;
-    margin: 10% auto;
-    padding: 20px;
-    border-radius: 10px;
-    width: 400px;
-    color: #fff;
+.row-label {
+    width: 30px;
     text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
 }
 
-    .modal-content h2 {
-        margin-bottom: 15px;
+/* Actual selectable seats */
+.seat {
+    background-color: #444451;
+    height: 35px;
+    width: 35px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: #fff;
+}
+
+    .seat:hover:not(.occupied) {
+        transform: scale(1.1);
     }
 
-    .modal-content button {
-        background-color: #6feaf6;
-        border: none;
-        padding: 10px 20px;
-        margin-top: 10px;
-        border-radius: 5px;
-        cursor: pointer;
+    .seat.selected {
+        background-color: #28a745;
     }
 
-    .modal-content .close {
-        color: #fff;
-        float: right;
-        font-size: 25px;
-        cursor: pointer;
+    .seat.occupied {
+        background-color: #dc3545;
+        cursor: not-allowed;
     }
 
-#qrCode canvas {
-    margin-top: 10px;
-    background-color: #fff;
-    border-radius: 10px;
+    .seat.vip {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+        .seat.vip.selected {
+            background-color: #ff9800;
+        }
+
+    .seat.wheelchair {
+        background-color: #17a2b8;
+    }
+
+        .seat.wheelchair.selected {
+            background-color: #138496;
+        }
+
+.booking-summary {
+    background: #f8f9fa;
+    color: black;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }

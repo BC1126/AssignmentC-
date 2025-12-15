@@ -1,8 +1,7 @@
-﻿@model IEnumerable<Member>
-@using System.Linq
+﻿@model IEnumerable<Admin>
 
 @{
-    ViewBag.Title = "Admin | UserList";
+    ViewBag.Title = "Admin | AdminList";
 }
 
 @section head {
@@ -33,7 +32,6 @@
                 <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
                 <th>@Html.DisplayNameFor(model => model.First().Email)</th>
                 <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
-                <th>@Html.DisplayNameFor(model => model.First().PhotoURL)</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -46,17 +44,6 @@
                     <td>@u.Gender</td>
                     <td>@u.Email</td>
                     <td>@u.Phone</td>
-                    <td>
-                        @* Check if the PhotoURL property exists and has a value *@
-                        @if (!string.IsNullOrEmpty(u.PhotoURL))
-                        {
-                            <img src="~/@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name">
-                        }
-                        else
-                        {
-                            <img src="~/profile_photo/default-pfp.jpg" class="user-photo-thumbnail" alt="No Profile Photo" style="background-color: #ddd;">
-                        }
-                    </td>
                     <td>
                         <button class="btn btn-sm btn-info" data-get="/User/Update/@u.UserId">Update</button>
                         <button class="btn btn-sm btn-danger" data-post="/User/Delete/@u.UserId">Delete</button>

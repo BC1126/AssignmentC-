@@ -1,4 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AssignmentC_.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Security.Claims;
 
 namespace AssignmentC_.Controllers;
 
@@ -30,10 +36,10 @@ public class UserController : Controller
         }
         catch (Exception ex)
         {
-            // Log the exception
+
         }
 
-        return View(memberList); // Now passing IEnumerable<Member>
+        return View(memberList);
     }
 
     public IActionResult StaffList()
@@ -52,10 +58,10 @@ public class UserController : Controller
         }
         catch (Exception ex)
         {
-            // Log the exception
+
         }
 
-        return View(staffList); // Now passing IEnumerable<Member>
+        return View(staffList);
     }
 
     public IActionResult AdminList()
@@ -74,10 +80,180 @@ public class UserController : Controller
         }
         catch (Exception ex)
         {
-            // Log the exception
+
         }
 
-        return View(adminList); // Now passing IEnumerable<Member>
+        return View(adminList);
+    }
+    // ====================================================================
+    // 1. REGISTER ACTIONS
+    // ====================================================================
+
+    public IActionResult Register()
+    {
+        // FIX 1: Explicitly specify the view path since the file is in Views/Home/
+        return View("~/Views/Home/Register.cshtml");
     }
 
+    // POST: User/Register (Route is /User/Register)
+    [HttpPost]
+    [ValidateAntiForgeryToken] // FIX 2: Security - Prevents CSRF Attacks
+    public IActionResult Register(RegisterVM vm)
+    {
+        // 1. Check for email existence 
+        if (ModelState.GetValidationState("Email") != ModelValidationState.Invalid &&
+            db.Members.Any(u => u.Email == vm.Email))
+        {
+            ModelState.AddModelError("Email", "Duplicated Email.");
+        }
+
+        // --- PHOTO REQUIRED LOGIC ---
+        string photoUrl = null;
+
+        // The framework handles the "is null" check via the [Required] attribute on the Photo property.
+        // We only need to run custom validation and saving if the Model Binder received a file.
+        if (vm.Photo != null)
+        {
+            // 2a. Validate photo file content/size 
+            if (ModelState.GetValidationState("Photo") != ModelValidationState.Invalid)
+            {
+                var err = hp.ValidatePhoto(vm.Photo);
+                if (err != "") ModelState.AddModelError("Photo", err);
+            }
+
+            // 2b. If photo validation passed, generate the URL/path
+            if (!ModelState.ContainsKey("Photo") || ModelState["Photo"].ValidationState != ModelValidationState.Invalid)
+            {
+                photoUrl = hp.SavePhoto(vm.Photo, "photos");
+            }
+        }
+        // --- END PHOTO LOGIC ---
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+
+                // NEW STEP: Generate the Primary Key (UserId)
+                string newUserId = hp.GenerateNextUserId("M"); // Assuming 'M' is the prefix for Member/User
+
+                // Create and add new Member
+                db.Members.Add(new Member
+                {
+                    // CRITICAL FIX: Assign the generated Primary Key
+                    UserId = newUserId,
+
+                    Email = vm.Email,
+                    PasswordHash = hp.HashPassword(vm.Password),
+                    Name = vm.Name,
+                    PhotoURL = photoUrl,
+                    Gender = vm.Gender,
+                    Phone = vm.Phone
+                });
+
+                db.SaveChanges();
+
+                TempData["Info"] = "Register successfully. Please login.";
+                return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                // Log ex here for true errors (e.g., unique constraint violations, etc.)
+            }
+            
+        }
+        return View("~/Views/Home/Register.cshtml", vm);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    // ====================================================================
+    // 2. LOGIN ACTIONS
+    // ====================================================================
+
+    // GET: Account/Login
+    public IActionResult Login()
+    {
+        return View("~/Views/Home/Login.cshtml");
+    }
+
+    // POST: Account/Login - Handles user authentication
+    // UserController.cs
+
+    // ... (existing Register actions and GET Login action) ...
+
+    // POST: User/Login
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Login(LoginVM vm)
+    {
+        // 1. Basic Model State Validation
+        if (!ModelState.IsValid)
+        {
+            // Re-display the view if client-side validation failed
+            return View("~/Views/Home/Login.cshtml", vm);
+        }
+
+        // 2. Find the user by email
+        var user = db.Members.FirstOrDefault(u => u.Email == vm.Email);
+
+        if (user == null)
+        {
+            // Check if the user exists in the base Users table (if Members is empty)
+            // Note: For a robust system, you might check the base Users table first if Admin/Staff logins are handled here too.
+            ModelState.AddModelError("Email", "Invalid login attempt.");
+            return View("~/Views/Home/Login.cshtml", vm);
+        }
+
+        // 3. Verify the password hash
+        bool passwordMatch = hp.VerifyPassword(user.PasswordHash, vm.Password);
+
+        if (!passwordMatch)
+        {
+            ModelState.AddModelError("Password", "Invalid login attempt.");
+            return View("~/Views/Home/Login.cshtml", vm);
+        }
+
+        // 4. Authentication and Sign In
+        try
+        {
+            // The Role property is defined on the User class using GetType().Name (e.g., "Member")
+            hp.SignIn(user.Email, user.Role, vm.RememberMe);
+
+            TempData["Info"] = $"Welcome back, {user.Name}!";
+
+            // Redirect to the appropriate dashboard or home page
+            return RedirectToAction("Index", "Home");
+        }
+        catch (Exception ex)
+        {
+            // If sign-in fails (e.g., HttpContext error)
+            ModelState.AddModelError("", "An error occurred during sign-in. Please try again.");
+            // Log the exception 'ex' here for debugging.
+        }
+
+        // 5. Fallback: Return the view on failure
+        return View("~/Views/Home/Login.cshtml", vm);
+    }
+
+    // ====================================================================
+    // 3. LOGOUT ACTION
+    // ====================================================================
+
+    // GET: Account/Logout
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["Info"] = "You have been successfully logged out.";
+        return RedirectToAction("Index", "Home");
+    }
 }

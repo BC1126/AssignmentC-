@@ -192,6 +192,7 @@ public class HallController(DB db, Helper hp) : Controller
             return RedirectToAction("ManageHalls");
         }
     }
+
     [HttpGet]
     public IActionResult EditHallSeats(int id)
     {
@@ -217,7 +218,10 @@ public class HallController(DB db, Helper hp) : Controller
                     SeatIdentifier = s.SeatIdentifier,
                     IsPremium = s.IsPremium,
                     IsWheelchair = s.IsWheelchair,
-                    IsActive = s.IsActive
+                    IsActive = s.IsActive,
+                    // Extract Row and Column from SeatIdentifier (e.g., "A5" -> Row="A", Column=5)
+                    Row = s.SeatIdentifier.Substring(0, 1),
+                    Column = int.Parse(s.SeatIdentifier.Substring(1))
                 }).ToList()
         };
 
@@ -243,24 +247,55 @@ public class HallController(DB db, Helper hp) : Controller
     [HttpPost]
     public IActionResult SaveAllSeats([FromBody] List<SeatUpdateRequest> seats)
     {
-        foreach (var seatData in seats)
+        // Add logging and null checks
+        Console.WriteLine("SaveAllSeats called");
+
+        if (seats == null)
         {
-            var seat = db.Seats.Find(seatData.SeatId);
-            if (seat != null)
-            {
-                seat.IsPremium = seatData.IsPremium;
-                seat.IsWheelchair = seatData.IsWheelchair;
-                seat.IsActive = seatData.IsActive;
-            }
+            Console.WriteLine("❌ Seats parameter is NULL");
+            return Json(new { success = false, message = "No seat data received" });
         }
 
-        db.SaveChanges();
+        Console.WriteLine($"Received {seats.Count} seats to update");
 
-        TempData["Info"] = "Seat layout saved successfully!";
-        return Json(new { success = true });
+        try
+        {
+            foreach (var seatData in seats)
+            {
+                if (seatData == null)
+                {
+                    Console.WriteLine("⚠️ Null seatData in list, skipping");
+                    continue;
+                }
+
+                Console.WriteLine($"Updating seat ID: {seatData.SeatId}");
+
+                var seat = db.Seats.Find(seatData.SeatId);
+                if (seat != null)
+                {
+                    seat.IsPremium = seatData.IsPremium;
+                    seat.IsWheelchair = seatData.IsWheelchair;
+                    seat.IsActive = seatData.IsActive;
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ Seat with ID {seatData.SeatId} not found");
+                }
+            }
+
+            db.SaveChanges();
+            Console.WriteLine("✅ Seats saved successfully");
+
+            TempData["Info"] = "Seat layout saved successfully!";
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error saving seats: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            return Json(new { success = false, message = ex.Message });
+        }
     }
-
-    // Helper class for receiving seat update data
     public class SeatUpdateRequest
     {
         public int SeatId { get; set; }
@@ -268,8 +303,6 @@ public class HallController(DB db, Helper hp) : Controller
         public bool IsWheelchair { get; set; }
         public bool IsActive { get; set; }
     }
-
-    // Add this to your HallController
 
     [HttpGet]
     public IActionResult EditHall(int id)

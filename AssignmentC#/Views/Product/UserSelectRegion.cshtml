@@ -1,0 +1,108 @@
+﻿@model UserSelectCinemaVM
+@{
+    ViewBag.Title = "Product | Cinema Filtering";
+}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+
+<form asp-action="UserSelectRegion" method="post" class="product-form">
+
+    <h2>Select Cinema</h2>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div>
+        <label asp-for="Region"></label>
+        <select asp-for="Region" id="region">
+            <option value="">-- Select Region --</option>
+            @foreach (var r in ViewBag.Regions)
+            {
+                <option value="@r">@r</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label asp-for="Cinema"></label>
+        <select asp-for="Cinema" id="cinema">
+            <option value="">-- Select Cinema --</option>
+        </select>
+    </div>
+
+    <div>
+        <label asp-for="Date"></label>
+        <input asp-for="Date" type="date" id="collectDate" />
+        <span asp-validation-for="Date" class="text-danger"></span>
+        <small class="text-muted">
+            You can select today up to 3 days ahead only.
+        </small>
+
+    </div>
+
+    <div class="product-actions">
+        <button type="submit">Continue</button>
+    </div>
+</form>
+
+
+@section foot {
+    <script>
+        $.validator.setDefaults({ ignore: '' });
+
+        const regionDropdown = document.getElementById('region');
+        const cinemaDropdown = document.getElementById('cinema');
+
+        function loadCinemas(region) {
+            if (!region) {
+                cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
+                return;
+            }
+
+            $.get('@Url.Action("GetCinemas", "Product")', { region }, function (data) {
+                cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
+
+                data.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.text = c.name;
+                    cinemaDropdown.appendChild(opt);
+                });
+            });
+        }
+
+        regionDropdown.addEventListener('change', function () {
+            loadCinemas(this.value);
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', function () {
+            cinemaDropdown.innerHTML = '<option value="">-- Select Cinema --</option>';
+        });
+
+        if (regionDropdown.value) {
+            loadCinemas(regionDropdown.value);
+        }
+
+             const dateInput = document.getElementById('collectDate');
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+
+        const minDate = `${yyyy}-${mm}-${dd}`;
+
+        const max = new Date(today);
+        max.setDate(max.getDate() + 3);
+
+        const maxY = max.getFullYear();
+        const maxM = String(max.getMonth() + 1).padStart(2, '0');
+        const maxD = String(max.getDate()).padStart(2, '0');
+
+        const maxDate = `${maxY}-${maxM}-${maxD}`;
+
+        dateInput.min = minDate;
+        dateInput.max = maxDate;
+    </script>
+}

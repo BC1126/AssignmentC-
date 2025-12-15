@@ -1,8 +1,7 @@
-﻿@model IEnumerable<Admin>
-@using System.Linq
+﻿@model IEnumerable<Member>
 
 @{
-    ViewBag.Title = "Admin | AdminList";
+    ViewBag.Title = "Admin | UserList";
 }
 
 @section head {
@@ -33,6 +32,7 @@
                 <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
                 <th>@Html.DisplayNameFor(model => model.First().Email)</th>
                 <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
+                <th>@Html.DisplayNameFor(model => model.First().PhotoURL)</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -45,6 +45,9 @@
                     <td>@u.Gender</td>
                     <td>@u.Email</td>
                     <td>@u.Phone</td>
+                    <td>
+                            <img src="@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name">
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-info" data-get="/User/Update/@u.UserId">Update</button>
                         <button class="btn btn-sm btn-danger" data-post="/User/Delete/@u.UserId">Delete</button>
