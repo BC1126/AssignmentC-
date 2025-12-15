@@ -1,0 +1,90 @@
+﻿@* Views/User/Profile.cshtml *@
+@model AssignmentC_.Models.User // Ensure this is your base User model
+
+@{
+    ViewData["Title"] = "My Profile";
+
+    // Default: Use a generic image path for all users
+    string photoPath = "/images/default_profile.png";
+
+    // Flag to check if the user is a Member
+    bool isMember = false;
+
+    // Check if the currently loaded model is a Member
+    if (Model is AssignmentC_.Models.Member memberModel)
+    {
+        isMember = true;
+        // If they are a Member AND have a photo path, use it.
+        if (!string.IsNullOrEmpty(memberModel.PhotoURL))
+        {
+            photoPath = memberModel.PhotoURL;
+        }
+    }
+}
+
+<link rel="stylesheet" href="~/css/profile.css" />
+
+<div class="container mt-5">
+    <h1 class="mb-4">Personal Profile</h1> 
+    <hr />
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            
+            @if (isMember)
+            {
+                <img src="@photoPath" class="img-thumbnail rounded-circle mb-4"
+                     alt="Profile Photo" style="width: 180px; height: 180px; object-fit: cover;">
+            }
+            else
+            {
+                <div class="mb-4" style="height: 180px; width: 180px; line-height: 180px; background-color: #f1f1f1; border-radius: 50%; display: inline-block; border: 6px solid white;">
+                    <i class="fa fa-user fa-5x" style="color: #ccc;"></i>
+                </div>
+            }
+            
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <h3>Account Details</h3>
+            <dl class="row border p-4 rounded shadow-sm dl-profile-card">
+
+                <dt class="col-sm-4">Full Name:</dt>
+                <dd class="col-sm-8">@Model.Name</dd>
+                
+                <dt class="col-sm-4">Email:</dt>
+                <dd class="col-sm-8">@Model.Email</dd>
+                
+                <dt class="col-sm-4">Gender:</dt>
+                <dd class="col-sm-8">
+                    @if (Model.Gender == "M")
+                    {
+                        <span class="gender-male">Male</span>
+                    }
+                    else if (Model.Gender == "F")
+                    {
+                        <span class="gender-female">Female</span>
+                    }
+                    else
+                    {
+                        <span>Not Specified</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-4">Phone Number:</dt>
+                <dd class="col-sm-8">@Model.Phone</dd>
+    </dl>
+
+    <div class="mt-4 d-flex justify-content-between">
+        <a asp-action="EditProfile" asp-controller="User" class="btn btn-warning action-btn">
+            <i class="fa fa-edit"></i> Edit Profile
+        </a>
+        <a asp-action="ChangePassword" asp-controller="User" class="btn btn-secondary action-btn">
+            <i class="fa fa-key"></i> Change Password
+        </a>
+    </div>
+</div>
+</div>
+</div>

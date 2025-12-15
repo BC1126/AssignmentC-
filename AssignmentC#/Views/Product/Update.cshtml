@@ -18,46 +18,39 @@
 
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <!-- Hidden Id -->
     <input asp-for="Id" type="hidden" />
 
     <div class="product-grid">
 
-        <!-- Product ID (readonly) -->
         <div>
             <label>Id</label>
             <b>@Model.Id</b>
         </div>
 
-        <!-- Name -->
         <div>
             <label asp-for="Name"></label>
             <input asp-for="Name" autofocus>
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
 
-        <!-- Description -->
         <div style="grid-column: span 2;">
             <label asp-for="Description"></label>
             <textarea asp-for="Description"></textarea>
             <span asp-validation-for="Description" class="text-danger"></span>
         </div>
 
-        <!-- Price -->
         <div>
             <label asp-for="Price"></label>
             <input asp-for="Price" type="number" step="0.01">
             <span asp-validation-for="Price" class="text-danger"></span>
         </div>
 
-        <!-- Stock -->
         <div>
             <label asp-for="Stock"></label>
             <input asp-for="Stock" type="number">
             <span asp-validation-for="Stock" class="text-danger"></span>
         </div>
 
-        <!-- Region -->
         <div>
             <label asp-for="Region"></label>
             <select asp-for="Region" id="region">
@@ -70,7 +63,6 @@
             <span asp-validation-for="Region" class="text-danger"></span>
         </div>
 
-        <!-- Cinema -->
         <div>
             <label asp-for="Cinema"></label>
             <select asp-for="Cinema" id="cinema">
@@ -79,7 +71,6 @@
             <span asp-validation-for="Cinema" class="text-danger"></span>
         </div>
 
-        <!-- Category -->
         <div>
             <label asp-for="Category"></label>
             <select asp-for="Category">
@@ -92,12 +83,11 @@
             <span asp-validation-for="Category" class="text-danger"></span>
         </div>
 
-        <!-- Photo -->
         <div>
             <label asp-for="Photo"></label>
             <label class="product-upload">
                 <input asp-for="Photo" accept="image/jpeg,image/png" hidden>
-                <img src="/products/@Model.PhotoURL" id="photoPreview">
+                <img src="@Model.PhotoURL" id="photoPreview">
                 <small>Click to upload</small>
             </label>
             <span asp-validation-for="Photo" class="text-danger"></span>

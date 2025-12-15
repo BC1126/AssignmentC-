@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using X.PagedList.Extensions;
 using static AssignmentC_.Models.ProductUpdateVM;
 
 namespace AssignmentC_;
 
-public class ProductController(DB db,
-                               Helper hp) : Controller
+public class ProductController(DB db, Helper hp) : Controller
 {
     private List<dynamic> GetOutlets()
     {
@@ -14,70 +15,75 @@ public class ProductController(DB db,
                  .ToList<dynamic>();
     }
 
-    public IActionResult Index(
-    string? name,
-    string sort = "Stock",
-    string dir = "asc",
-    int page = 1
-)
+    public IActionResult Index(string? name, string sort = "Stock", string dir = "asc", int page = 1)
     {
-        var query = db.Products.AsQueryable();
+        if (page < 1) page = 1;
 
-        if (!string.IsNullOrWhiteSpace(name))
+        try
         {
-            query = query.Where(p =>
-                p.Id.Contains(name) ||
-                p.Name.Contains(name) ||
-                p.Category.Contains(name) ||
-                p.Region.Contains(name) ||
-                p.Cinema.Contains(name));
+            var query = db.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                name = name.Trim();
+                query = query.Where(p =>
+                    p.Id.Contains(name) ||
+                    p.Name.Contains(name) ||
+                    p.Category.Contains(name) ||
+                    p.Region.Contains(name) ||
+                    p.Cinema.Contains(name));
+            }
+
+            query = (sort, dir) switch
+            {
+                ("Stock", "asc") => query.OrderBy(p => p.Stock),
+                ("Stock", "des") => query.OrderByDescending(p => p.Stock),
+
+                ("Name", "asc") => query.OrderBy(p => p.Name),
+                ("Name", "des") => query.OrderByDescending(p => p.Name),
+
+                ("Price", "asc") => query.OrderBy(p => p.Price),
+                ("Price", "des") => query.OrderByDescending(p => p.Price),
+
+                ("Description", "asc") => query.OrderBy(p => p.Description),
+                ("Description", "des") => query.OrderByDescending(p => p.Description),
+
+                ("Region", "asc") => query.OrderBy(p => p.Region),
+                ("Region", "des") => query.OrderByDescending(p => p.Region),
+
+                ("Cinema", "asc") => query.OrderBy(p => p.Cinema),
+                ("Cinema", "des") => query.OrderByDescending(p => p.Cinema),
+
+                ("Category", "asc") => query.OrderBy(p => p.Category),
+                ("Category", "des") => query.OrderByDescending(p => p.Category),
+
+                ("Id", "asc") => query.OrderBy(p => p.Id),
+                ("Id", "des") => query.OrderByDescending(p => p.Id),
+
+                _ => query.OrderBy(p => p.Stock)
+            };
+
+            var model = query.ToPagedList(page, 5);
+
+            ViewBag.Name = name;
+            ViewBag.Sort = sort;
+            ViewBag.Dir = dir;
+
+            if (Request.IsAjax())
+                return PartialView("_ProductTable", model);
+
+            return View(model);
         }
-
-        query = (sort, dir) switch
+        catch
         {
-            ("Stock", "asc") => query.OrderBy(p => p.Stock),
-            ("Stock", "des") => query.OrderByDescending(p => p.Stock),
-
-            ("Name", "asc") => query.OrderBy(p => p.Name),
-            ("Name", "des") => query.OrderByDescending(p => p.Name),
-
-            ("Price", "asc") => query.OrderBy(p => p.Price),
-            ("Price", "des") => query.OrderByDescending(p => p.Price),
-
-            ("Description", "asc") => query.OrderBy(p => p.Description),
-            ("Description", "des") => query.OrderByDescending(p => p.Description),
-
-            ("Region", "asc") => query.OrderBy(p => p.Region),
-            ("Region", "des") => query.OrderByDescending(p => p.Region),
-
-            ("Cinema", "asc") => query.OrderBy(p => p.Cinema),
-            ("Cinema", "des") => query.OrderByDescending(p => p.Cinema),
-
-            ("Category", "asc") => query.OrderBy(p => p.Category),
-            ("Category", "des") => query.OrderByDescending(p => p.Category),
-
-            ("Id", "asc") => query.OrderBy(p => p.Id),
-            ("Id", "des") => query.OrderByDescending(p => p.Id),
-
-            _ => query.OrderBy(p => p.Stock) // default to lowest stock
-        };
-
-        var model = query.ToPagedList(page, 5);
-
-        ViewBag.Name = name;
-        ViewBag.Sort = sort;
-        ViewBag.Dir = dir;
-
-        if (Request.IsAjax())
-            return PartialView("_ProductTable", model);
-
-        return View(model);
+            TempData["Error"] = "Failed to load product list.";
+            return View();
+        }
     }
 
-
-    // GET: Product/CheckId
     public bool CheckId(string id)
     {
+        if (string.IsNullOrEmpty(id)) return false;
         return !db.Products.Any(p => p.Id == id);
     }
 
@@ -88,7 +94,6 @@ public class ProductController(DB db,
         return (n + 1).ToString("'P'000");
     }
 
-    // GET: Product/Insert
     public IActionResult Insert()
     {
         var vm = new ProductInsertVM
@@ -98,66 +103,69 @@ public class ProductController(DB db,
         };
 
         var outlets = GetOutlets();
-
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
         ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> {
-            "Ala cart", "Drinks", "Merchandise", "Snack"
-        };
+        ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
 
         return View(vm);
     }
 
-    // POST: Product/Insert
     [HttpPost]
     public IActionResult Insert(ProductInsertVM vm)
     {
-        if (ModelState["Id"]?.Errors.Count == 0 && db.Products.Any(p => p.Id == vm.Id))
-            ModelState.AddModelError("Id", "Duplicated Id.");
-
-        if (ModelState["Photo"]?.Errors.Count == 0)
+        try
         {
-            var e = hp.ValidatePhoto(vm.Photo);
-            if (e != "") ModelState.AddModelError("Photo", e);
-        }
+            if (ModelState["Id"]?.Errors.Count == 0 && db.Products.Any(p => p.Id == vm.Id))
+                ModelState.AddModelError("Id", "Duplicated Id.");
 
-        var outlets = GetOutlets();
-
-        if (!outlets.Any(o => o.Name == vm.Cinema && o.City == vm.Region))
-            ModelState.AddModelError("Cinema", "Selected cinema does not match the selected region.");
-
-        if (ModelState.IsValid)
-        {
-            db.Products.Add(new Product
+            if (ModelState["Photo"]?.Errors.Count == 0)
             {
-                Id = vm.Id,
-                Name = vm.Name,
-                Description = vm.Description,
-                Price = vm.Price,
-                Stock = vm.Stock,
-                Region = vm.Region,
-                Cinema = vm.Cinema,
-                Category = vm.Category,
-                PhotoURL = hp.SavePhoto(vm.Photo, "products")
-            });
-            db.SaveChanges();
+                var e = hp.ValidatePhoto(vm.Photo);
+                if (e != "") ModelState.AddModelError("Photo", e);
+            }
 
-            TempData["Info"] = "Product inserted.";
-            return RedirectToAction("Index");
+            var outlets = GetOutlets();
+
+            if (!outlets.Any(o => o.Name == vm.Cinema && o.City == vm.Region))
+                ModelState.AddModelError("Cinema", "Selected cinema does not match the selected region.");
+
+            if (ModelState.IsValid)
+            {
+                db.Products.Add(new Product
+                {
+                    Id = vm.Id,
+                    Name = vm.Name,
+                    Description = vm.Description,
+                    Price = vm.Price,
+                    Stock = vm.Stock,
+                    Region = vm.Region,
+                    Cinema = vm.Cinema,
+                    Category = vm.Category,
+                    PhotoURL = hp.SavePhoto(vm.Photo, "products")
+                });
+                db.SaveChanges();
+
+                TempData["Info"] = "Product inserted.";
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
+            ViewBag.Cinemas = outlets;
+            ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
+
+            return View(vm);
         }
-
-        ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
-        ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> {
-            "Ala cart", "Drinks", "Merchandise", "Snack"
-        };
-
-        return View(vm);
+        catch
+        {
+            TempData["Error"] = "Insert failed.";
+            return View(vm);
+        }
     }
 
-    // GET: Product/Update
     public IActionResult Update(string? id)
     {
+        if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
+
         var p = db.Products.Find(id);
         if (p == null) return RedirectToAction("Index");
 
@@ -175,106 +183,118 @@ public class ProductController(DB db,
         };
 
         var outlets = GetOutlets();
-
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
         ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> {
-            "Ala cart", "Drinks", "Merchandise", "Snack"
-        };
+        ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
 
         return View(vm);
     }
 
-    // POST: Product/Update
     [HttpPost]
     public IActionResult Update(ProductUpdateVM vm)
     {
         var p = db.Products.Find(vm.Id);
         if (p == null) return RedirectToAction("Index");
 
-        if (vm.Photo != null)
+        try
         {
-            var e = hp.ValidatePhoto(vm.Photo);
-            if (e != "") ModelState.AddModelError("Photo", e);
-        }
-
-        var outlets = GetOutlets();
-
-        if (!outlets.Any(o => o.Name == vm.Cinema && o.City == vm.Region))
-            ModelState.AddModelError("Cinema", "Selected cinema does not match the selected region.");
-
-        if (ModelState.IsValid)
-        {
-            p.Name = vm.Name;
-            p.Description = vm.Description;
-            p.Price = vm.Price;
-            p.Stock = vm.Stock;
-            p.Region = vm.Region;
-            p.Cinema = vm.Cinema;
-            p.Category = vm.Category;
-
             if (vm.Photo != null)
             {
-                hp.DeletePhoto(p.PhotoURL, "products");
-                p.PhotoURL = hp.SavePhoto(vm.Photo, "products");
+                var e = hp.ValidatePhoto(vm.Photo);
+                if (e != "") ModelState.AddModelError("Photo", e);
             }
 
-            db.SaveChanges();
-            TempData["Info"] = "Product updated.";
-            return RedirectToAction("Index");
+            var outlets = GetOutlets();
+
+            if (!outlets.Any(o => o.Name == vm.Cinema && o.City == vm.Region))
+                ModelState.AddModelError("Cinema", "Selected cinema does not match the selected region.");
+
+            if (ModelState.IsValid)
+            {
+                p.Name = vm.Name;
+                p.Description = vm.Description;
+                p.Price = vm.Price;
+                p.Stock = vm.Stock;
+                p.Region = vm.Region;
+                p.Cinema = vm.Cinema;
+                p.Category = vm.Category;
+
+                if (vm.Photo != null)
+                {
+                    hp.DeletePhoto(p.PhotoURL, "products");
+                    p.PhotoURL = hp.SavePhoto(vm.Photo, "products");
+                }
+
+                db.SaveChanges();
+                TempData["Info"] = "Product updated.";
+                return RedirectToAction("Index");
+            }
+
+            ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
+            ViewBag.Cinemas = outlets;
+            ViewBag.Categories = new List<string> { "Ala cart", "Drinks", "Merchandise", "Snack" };
+
+            return View(vm);
         }
-
-        ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
-        ViewBag.Cinemas = outlets;
-        ViewBag.Categories = new List<string> {
-            "Ala cart", "Drinks", "Merchandise", "Snack"
-        };
-
-        return View(vm);
+        catch
+        {
+            TempData["Error"] = "Update failed.";
+            return View(vm);
+        }
     }
 
-    // POST: Product/Delete
     [HttpPost]
     public IActionResult Delete(string? id)
     {
-        var p = db.Products.Find(id);
+        if (string.IsNullOrEmpty(id))
+            return RedirectToAction("Index");
 
-        if (p != null)
+        try
         {
-            hp.DeletePhoto(p.PhotoURL, "products");
-            db.Products.Remove(p);
-            db.SaveChanges();
-
-            TempData["Info"] = "Product deleted.";
+            var p = db.Products.Find(id);
+            if (p != null)
+            {
+                hp.DeletePhoto(p.PhotoURL, "products");
+                db.Products.Remove(p);
+                db.SaveChanges();
+                
+            }TempData["Info"] = "Product deleted.";
+        }
+        catch
+        {
+            TempData["Error"] = "Delete failed.";
         }
 
         return RedirectToAction("Index");
     }
 
-    // AJAX: Get cinemas for selected region
     public JsonResult GetCinemas(string region)
     {
         if (string.IsNullOrEmpty(region))
             return Json(new List<dynamic>());
 
-        var cinemas = db.Outlets
-                        .Where(o => o.City.Trim().ToLower() == region.Trim().ToLower())
-                        .Select(o => new { name = o.Name.Trim() }) // lowercase
-                        .ToList();
+        try
+        {
+            var cinemas = db.Outlets
+                .Where(o => o.City.Trim().ToLower() == region.Trim().ToLower())
+                .Select(o => new { name = o.Name.Trim() })
+                .ToList();
 
-        return Json(cinemas);
+            return Json(cinemas);
+        }
+        catch
+        {
+            return Json(new List<dynamic>());
+        }
     }
 
-    // GET: Product/UserSelectRegion
     public IActionResult UserSelectRegion()
     {
         var outlets = GetOutlets();
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
-
         return View(new UserSelectCinemaVM());
     }
 
-    // POST: Product/UserSelectRegion
     [HttpPost]
     public IActionResult UserSelectRegion(UserSelectCinemaVM vm)
     {
@@ -292,10 +312,8 @@ public class ProductController(DB db,
 
         if (vm.Date < today || vm.Date > maxDate)
         {
-            ModelState.AddModelError(
-                "Date",
-                $"Collect date must be between {today:yyyy-MM-dd} and {maxDate:yyyy-MM-dd}."
-            );
+            ModelState.AddModelError("Date",
+                $"Collect date must be between {today:yyyy-MM-dd} and {maxDate:yyyy-MM-dd}.");
             return View(vm);
         }
 
@@ -305,7 +323,6 @@ public class ProductController(DB db,
             return View(vm);
         }
 
-        // ✅ Save to session
         HttpContext.Session.SetString("SelectedRegion", vm.Region);
         HttpContext.Session.SetString("SelectedCinema", vm.Cinema);
         HttpContext.Session.SetString("CollectDate", vm.Date.Value.ToString("yyyy-MM-dd"));
@@ -313,32 +330,26 @@ public class ProductController(DB db,
         return RedirectToAction("UserIndex");
     }
 
-
-
-
-
-    // POST: Product/UpdateCart
     [HttpPost]
     public IActionResult UpdateCart(string productId, int quantity)
     {
-        var cart = hp.GetCart();
-
-        if (quantity >= 1 && quantity <= 10)
+        try
         {
-            cart[productId] = quantity;
-        }
-        else
-        {
-            cart.Remove(productId);
-        }
+            var cart = hp.GetCart();
 
-        hp.SetCart(cart);
+            if (quantity >= 1 && quantity <= 10)
+                cart[productId] = quantity;
+            else
+                cart.Remove(productId);
+
+            hp.SetCart(cart);
+        }
+        catch { }
 
         return Redirect(Request.Headers.Referer.ToString());
     }
 
-    // GET: Product/UserIndex
-    public IActionResult UserIndex()
+    public IActionResult UserIndex(string? category)
     {
         ViewBag.Cart = hp.GetCart();
 
@@ -350,39 +361,137 @@ public class ProductController(DB db,
 
         var products = db.Products
             .Where(p => p.Region == region && p.Cinema == cinema)
+            .Where(p => string.IsNullOrEmpty(category) || p.Category == category)
             .ToList();
 
         ViewBag.Region = region;
         ViewBag.Cinema = cinema;
         ViewBag.CollectDate = HttpContext.Session.GetString("CollectDate");
 
+        // ✅ ALWAYS show all 4 categories
+        ViewBag.Categories = new List<string>
+    {
+        "Ala cart",
+        "Drinks",
+        "Merchandise",
+        "Snack"
+    };
+
+        ViewBag.SelectedCategory = category;
+
         if (Request.IsAjax())
-            return PartialView("_Index", products);
+            return PartialView("_UserIndex", products);
 
         return View(products);
     }
 
 
 
-    // GET: Product/ShoppingCart
     public IActionResult ShoppingCart()
     {
-        // TODO
-        var cart = hp.GetCart();
-        var m = db.Products
-          .Where(p => cart.Keys.Contains(p.Id))
-          .Select(p => new ProductCartItem
-          {
-              Product = p,
-              Quantity = cart[p.Id],
-              Subtotal = p.Price * cart[p.Id],
-          })
-          .ToList();
+        try
+        {
+            var cart = hp.GetCart();
 
-        if (Request.IsAjax()) return PartialView("_ShoppingCart", m);
+            var m = db.Products
+                .Where(p => cart.Keys.Contains(p.Id))
+                .Select(p => new ProductCartItem
+                {
+                    Product = p,
+                    Quantity = cart[p.Id],
+                    Subtotal = p.Price * cart[p.Id],
+                })
+                .ToList();
+
+            if (Request.IsAjax())
+                return PartialView("_ShoppingCart", m);
+
+            return View(m);
+        }
+        catch
+        {
+            TempData["Error"] = "Failed to load cart.";
+            return View(new List<ProductCartItem>());
+        }
+    }
+
+    // POST: Product/Checkout
+    [Authorize(Roles = "Member")]
+    [HttpPost]
+    public IActionResult Checkout()
+    {
+        // 1. Checking (shoping cart NOT empty)
+        var cart = hp.GetCart();
+        if (cart.Count() == 0) return RedirectToAction("ShoppingCart");
+
+        // 2. Create [Order] (parent record)
+        var order = new Order
+        {
+            Date = DateOnly.FromDateTime(DateTime.Today),
+            Paid = false,
+            MemberEmail = User.Identity!.Name!,
+        };
+        db.Orders.Add(order);
+
+        // 3. Create [OrderLine] (child record)
+        foreach (var (productId, quantity) in cart)
+        {
+            var p = db.Products.Find(productId);
+            if (p == null) continue;
+
+            order.OrderLines.Add(new()
+            {
+                Price = p.Price,
+                Quantity = quantity,
+                ProductId = productId,
+            });
+        }
+
+        // 4. Save changes + clear shopping cart
+        // TODO
+        db.SaveChanges();
+        hp.SetCart();
+
+        // Continue with other processing
+        // For example: payment, etc. (Using third party payment such as Stripe, Paypal)
+
+        // TODO
+        return RedirectToAction("OrderComplete", new { order.Id });
+    }
+
+    public IActionResult OrderComplete(int id)
+    {
+        ViewBag.Id = id;
+        return View();
+    }
+
+    // GET: Product/Order
+    [Authorize(Roles = "Member")]
+    public IActionResult Order()
+    {
+        //TODO
+        var m = db.Orders
+            .Include(o => o.OrderLines)
+            .ThenInclude(ol => ol.Product)
+            .Where(o => o.MemberEmail == User.Identity!.Name)
+            .OrderByDescending(o => o.Id);
 
         return View(m);
     }
 
+    // GET: Product/OrderDetail
+    [Authorize(Roles = "Member")]
+    public IActionResult OrderDetail(int id)
+    {
+        // TODO
+        var m = db.Orders
+            .Include(o => o.OrderLines)
+            .ThenInclude(ol => ol.Product)
+            .FirstOrDefault(o => o.Id == id &&
+            o.MemberEmail == User.Identity!.Name);
 
+        if (m == null) return RedirectToAction("Order");
+
+        return View(m);
+    }
 }
