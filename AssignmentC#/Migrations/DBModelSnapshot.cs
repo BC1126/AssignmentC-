@@ -503,6 +503,9 @@ namespace AssignmentC_.Migrations
                     b.Property<int>("HallId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<int>("MovieId")
                         .HasColumnType("int");
 
@@ -585,17 +588,12 @@ namespace AssignmentC_.Migrations
                     b.HasDiscriminator().HasValue("Member");
                 });
 
-
             modelBuilder.Entity("AssignmentC_.Models.Staff", b =>
-
                 {
                     b.HasBaseType("AssignmentC_.Models.User");
 
                     b.HasDiscriminator().HasValue("Staff");
                 });
-
-
-
 
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
                 {

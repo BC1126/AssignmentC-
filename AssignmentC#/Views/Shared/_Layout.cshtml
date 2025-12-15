@@ -8,6 +8,7 @@
 	<link href="/css/bootstrap.min.css" rel="stylesheet">
 	<link href="/css/font-awesome.min.css" rel="stylesheet">
 	<link href="/css/global.css" rel="stylesheet">
+	<link href="/css/movie.css" rel="stylesheet">
 	<link href="/css/index.css" rel="stylesheet">
 	<link href="/css//product.css" rel="stylesheet" />
 	<link href="https://fonts.googleapis.com/css2?family=Platypi:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
@@ -22,6 +23,7 @@
 	@RenderSection("head", false)
 </head>
 <body>
+	<div class="info">@Html.Raw(TempData["Info"])</div>
 	
 	<div class="main clearfix position-relative">
         <!-- Searching -->

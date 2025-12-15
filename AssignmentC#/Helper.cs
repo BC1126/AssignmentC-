@@ -244,4 +244,30 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
 
         return fileName;
     }
+
+    // ------------------------------------------------------------------------
+    // Shopping Cart Helper Functions
+    // ------------------------------------------------------------------------
+
+    public Dictionary<string, int> GetCart()
+    {
+        // TODO
+        return ct.HttpContext!.Session.Get<Dictionary<string, int>>("Cart") ?? [];
+    }
+
+    public void SetCart(Dictionary<string, int>? dict = null)
+    {
+        if (dict == null)
+        {
+            // TODO
+            ct.HttpContext!.Session.Remove("Cart");
+        }
+        else
+        {
+            // TODO
+            ct.HttpContext!.Session.Set("Cart", dict);
+        }
+    }
+
+
 }

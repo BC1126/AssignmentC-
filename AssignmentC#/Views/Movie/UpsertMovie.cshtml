@@ -107,7 +107,10 @@
                          @if (!string.IsNullOrEmpty(Model.PosterUrl))
                     {
                         <div class="mt-2">
-                            <img src="/uploads/@Model.PosterUrl" width="200" class="img-thumbnail" />
+                            <img id="existingPoster"
+                                 src="/uploads/@Model.PosterUrl"
+                                 width="200"
+                                 class="img-thumbnail" />
                         </div>
                     }
                     <span asp-validation-for="PosterFile" class="text-danger"></span>
@@ -120,7 +123,10 @@
                          @if (!string.IsNullOrEmpty(Model.BannerUrl))
                     {
                         <div class="mt-2">
-                            <img src="/uploads/@Model.BannerUrl" width="300" class="img-thumbnail" />
+                            <img id="existingBanner"
+                                 src="/uploads/@Model.BannerUrl"
+                                 width="300"
+                                 class="img-thumbnail" />
                         </div>
                     }
                     <span asp-validation-for="BannerFile" class="text-danger"></span>

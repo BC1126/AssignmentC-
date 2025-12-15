@@ -313,17 +313,31 @@ public class ShowTime
 {
     [Key]
     public int ShowTimeId { get; set; }
-    public int MovieId { get; set; } // Foreign Key to Movie
-    public int HallId { get; set; } // Foreign Key to Hall
-    public DateTime StartTime { get; set; } // Date and time of the showing
+
+    [Required]
+    public int MovieId { get; set; }
+
+    [Required]
+    public int HallId { get; set; }
+
+    [Required]
+    public DateTime StartTime { get; set; }
+
     [Column(TypeName = "decimal(18, 2)")]
+    [Range(0, 1000)]
     public decimal TicketPrice { get; set; }
 
-    // Navigation: Links to Movie, Hall, and Bookings
+    public bool IsActive { get; set; } = true;
+
+    // Navigation properties
     public Movie Movie { get; set; }
     public Hall Hall { get; set; }
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    [NotMapped]
+    public DateTime EndTime => StartTime.AddMinutes(Movie?.DurationMinutes ?? 0);
 }
+
 
 public class Hall
 {

@@ -1,0 +1,61 @@
+﻿@model IEnumerable<ProductCartItem>
+
+<table class="table">
+    <tr>
+        <th>Product</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Subtotal</th>
+    </tr>
+
+    @foreach (ProductCartItem i in Model)
+    {
+        // TODO
+        var list = new SelectList(Enumerable.Range(1, 10), i.Quantity);
+
+        <tr>
+            <td>
+                <img src="/products/@i.Product.PhotoURL">
+                @i.Product.Id - @i.Product.Name
+            </td>
+            <td>@i.Product.Price</td>
+            <td>
+                @* AJAX Form *@
+                <form data-ajax="true"
+                      data-ajax-update="#target"
+                      method="post"
+                      action="/Product/UpdateCart">
+                    @Html.DropDownList("Quantity", list, "")
+                    @Html.Hidden("ProductId", i.Product.Id)
+                </form>
+            </td>
+            <td>@i.Subtotal</td>
+        </tr>
+    }
+
+    <tr>
+        <td></td>
+        <td></td>
+        <td class="bold">@Model.Sum(i => i.Quantity)</td>
+        <td class="bold">@Model.Sum(i => i.Subtotal)</td>
+    </tr>
+</table>
+
+<br>
+
+@* Disable button if shopping cart empty OR not member *@
+@{
+    // TODO
+    var disabled = Model.Count() == 0 || !User.IsInRole("Member");
+}
+
+<button data-post="/Product/Checkout" disabled="@disabled">Checkout</button>
+
+@* Show message if not member *@
+@if (!User.IsInRole("Member"))
+{
+    <p>
+        <a href="/Account/Login?returnURL=/Product/ShoppingCart">Login</a>
+        with member account to proceed checkout
+    </p>
+}

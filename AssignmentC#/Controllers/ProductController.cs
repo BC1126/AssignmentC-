@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using X.PagedList.Extensions;
+using static AssignmentC_.Models.ProductUpdateVM;
 
 namespace AssignmentC_;
 
 public class ProductController(DB db,
                                Helper hp) : Controller
 {
-    // Helper: Always trim Name and City to avoid filter breaking
     private List<dynamic> GetOutlets()
     {
         return db.Outlets
@@ -13,12 +14,66 @@ public class ProductController(DB db,
                  .ToList<dynamic>();
     }
 
-    // GET: Product/Index
-    public IActionResult Index()
+    public IActionResult Index(
+    string? name,
+    string sort = "Stock",
+    string dir = "asc",
+    int page = 1
+)
     {
-        var model = db.Products;
+        var query = db.Products.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            query = query.Where(p =>
+                p.Id.Contains(name) ||
+                p.Name.Contains(name) ||
+                p.Category.Contains(name) ||
+                p.Region.Contains(name) ||
+                p.Cinema.Contains(name));
+        }
+
+        query = (sort, dir) switch
+        {
+            ("Stock", "asc") => query.OrderBy(p => p.Stock),
+            ("Stock", "des") => query.OrderByDescending(p => p.Stock),
+
+            ("Name", "asc") => query.OrderBy(p => p.Name),
+            ("Name", "des") => query.OrderByDescending(p => p.Name),
+
+            ("Price", "asc") => query.OrderBy(p => p.Price),
+            ("Price", "des") => query.OrderByDescending(p => p.Price),
+
+            ("Description", "asc") => query.OrderBy(p => p.Description),
+            ("Description", "des") => query.OrderByDescending(p => p.Description),
+
+            ("Region", "asc") => query.OrderBy(p => p.Region),
+            ("Region", "des") => query.OrderByDescending(p => p.Region),
+
+            ("Cinema", "asc") => query.OrderBy(p => p.Cinema),
+            ("Cinema", "des") => query.OrderByDescending(p => p.Cinema),
+
+            ("Category", "asc") => query.OrderBy(p => p.Category),
+            ("Category", "des") => query.OrderByDescending(p => p.Category),
+
+            ("Id", "asc") => query.OrderBy(p => p.Id),
+            ("Id", "des") => query.OrderByDescending(p => p.Id),
+
+            _ => query.OrderBy(p => p.Stock) // default to lowest stock
+        };
+
+        var model = query.ToPagedList(page, 5);
+
+        ViewBag.Name = name;
+        ViewBag.Sort = sort;
+        ViewBag.Dir = dir;
+
+        if (Request.IsAjax())
+            return PartialView("_ProductTable", model);
+
         return View(model);
     }
+
 
     // GET: Product/CheckId
     public bool CheckId(string id)
@@ -209,5 +264,125 @@ public class ProductController(DB db,
 
         return Json(cinemas);
     }
+
+    // GET: Product/UserSelectRegion
+    public IActionResult UserSelectRegion()
+    {
+        var outlets = GetOutlets();
+        ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
+
+        return View(new UserSelectCinemaVM());
+    }
+
+    // POST: Product/UserSelectRegion
+    [HttpPost]
+    public IActionResult UserSelectRegion(UserSelectCinemaVM vm)
+    {
+        var outlets = GetOutlets();
+        ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
+
+        if (vm.Date == null)
+        {
+            ModelState.AddModelError("Date", "Please select a collect date.");
+            return View(vm);
+        }
+
+        var today = DateTime.Today;
+        var maxDate = today.AddDays(3);
+
+        if (vm.Date < today || vm.Date > maxDate)
+        {
+            ModelState.AddModelError(
+                "Date",
+                $"Collect date must be between {today:yyyy-MM-dd} and {maxDate:yyyy-MM-dd}."
+            );
+            return View(vm);
+        }
+
+        if (string.IsNullOrEmpty(vm.Region) || string.IsNullOrEmpty(vm.Cinema))
+        {
+            ModelState.AddModelError("", "Please select region and cinema.");
+            return View(vm);
+        }
+
+        // ✅ Save to session
+        HttpContext.Session.SetString("SelectedRegion", vm.Region);
+        HttpContext.Session.SetString("SelectedCinema", vm.Cinema);
+        HttpContext.Session.SetString("CollectDate", vm.Date.Value.ToString("yyyy-MM-dd"));
+
+        return RedirectToAction("UserIndex");
+    }
+
+
+
+
+
+    // POST: Product/UpdateCart
+    [HttpPost]
+    public IActionResult UpdateCart(string productId, int quantity)
+    {
+        var cart = hp.GetCart();
+
+        if (quantity >= 1 && quantity <= 10)
+        {
+            cart[productId] = quantity;
+        }
+        else
+        {
+            cart.Remove(productId);
+        }
+
+        hp.SetCart(cart);
+
+        return Redirect(Request.Headers.Referer.ToString());
+    }
+
+    // GET: Product/UserIndex
+    public IActionResult UserIndex()
+    {
+        ViewBag.Cart = hp.GetCart();
+
+        var region = HttpContext.Session.GetString("SelectedRegion");
+        var cinema = HttpContext.Session.GetString("SelectedCinema");
+
+        if (region == null || cinema == null)
+            return RedirectToAction("UserSelectRegion");
+
+        var products = db.Products
+            .Where(p => p.Region == region && p.Cinema == cinema)
+            .ToList();
+
+        ViewBag.Region = region;
+        ViewBag.Cinema = cinema;
+        ViewBag.CollectDate = HttpContext.Session.GetString("CollectDate");
+
+        if (Request.IsAjax())
+            return PartialView("_Index", products);
+
+        return View(products);
+    }
+
+
+
+    // GET: Product/ShoppingCart
+    public IActionResult ShoppingCart()
+    {
+        // TODO
+        var cart = hp.GetCart();
+        var m = db.Products
+          .Where(p => cart.Keys.Contains(p.Id))
+          .Select(p => new ProductCartItem
+          {
+              Product = p,
+              Quantity = cart[p.Id],
+              Subtotal = p.Price * cart[p.Id],
+          })
+          .ToList();
+
+        if (Request.IsAjax()) return PartialView("_ShoppingCart", m);
+
+        return View(m);
+    }
+
 
 }
