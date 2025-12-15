@@ -61,9 +61,7 @@
 
                         <div class="@seatClass"
                              data-seat-id="@seat.SeatId"
-                             data-identifier="@seat.SeatIdentifier"
-                             data-row="@seat.Row"
-                             data-column="@seat.Column">
+                             data-identifier="@seat.SeatIdentifier">
                             @seat.SeatIdentifier
                         </div>
                     }
@@ -71,59 +69,202 @@
             }
         </div>
 
-        <!-- Form to submit selected seats -->
-        <form asp-action="SelectTicket" method="post" id="seatForm">
-            <input type="hidden" name="showTimeId" value="@Model.ShowTimeId" />
-            <div id="seatIdsContainer"></div>
+        <!-- Wrapper for side-by-side layout -->
+        <div class="booking-sections-wrapper">
 
-            <div class="booking-summary card p-4 mt-4">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p class="mb-1">
-                            You have selected <strong><span id="count">0</span></strong> seats
-                        </p>
-                        <p class="mb-0">
-                            Total: <strong>RM <span id="total">0</span></strong>
-                        </p>
+            <!-- Ticket Type Selection (LEFT SIDE) -->
+            <div id="ticketTypeSection" class="ticket-type-selector">
+                <h5 class="mb-3">Select Ticket Types</h5>
+                <p class="ticket-type-note">Total: <strong><span id="totalSeatsSelected">0</span></strong> seats selected</p>
+
+                <div class="ticket-counter">
+                    <div class="ticket-counter-label">
+                        <div>Children (3-12)</div>
+                        <small class="text-muted">RM @Model.TicketPrice</small>
                     </div>
-                    <div class="col-md-6 text-end">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            Next    →
-                        </button>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" onclick="changeCount('children', -1)">−</button>
+                        <span class="counter-value" id="childrenCount">0</span>
+                        <button type="button" class="counter-btn" onclick="changeCount('children', 1)">+</button>
                     </div>
                 </div>
+
+                <div class="ticket-counter">
+                    <div class="ticket-counter-label">
+                        <div>Adults (13-59)</div>
+                        <small class="text-muted">RM @Model.TicketPrice</small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" onclick="changeCount('adult', -1)">−</button>
+                        <span class="counter-value" id="adultCount">0</span>
+                        <button type="button" class="counter-btn" onclick="changeCount('adult', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="ticket-counter">
+                    <div class="ticket-counter-label">
+                        <div>Seniors (60+)</div>
+                        <small class="text-muted">RM @(Model.TicketPrice * 0.8m) <span style="color: #28a745;">(20% off)</span></small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" onclick="changeCount('senior', -1)">−</button>
+                        <span class="counter-value" id="seniorCount">0</span>
+                        <button type="button" class="counter-btn" onclick="changeCount('senior', 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3" id="ticketWarning" style="display: none; font-size: 13px; padding: 8px;">
+                    <small>⚠️ Total must match selected seats</small>
+                </div>
             </div>
-        </form>
+
+            <!-- Booking Summary (RIGHT SIDE) -->
+            <form asp-action="SelectTicket" method="post" id="seatForm">
+                <input type="hidden" name="showTimeId" value="@Model.ShowTimeId" />
+                <div id="seatIdsContainer"></div>
+                <input type="hidden" name="childrenCount" id="childrenCountInput" value="0" />
+                <input type="hidden" name="adultCount" id="adultCountInput" value="0" />
+                <input type="hidden" name="seniorCount" id="seniorCountInput" value="0" />
+
+                <div class="booking-summary card p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                Selected: <strong><span id="count">0</span></strong> seats
+                            </p>
+                            <p class="mb-0">
+                                Total: <strong>RM <span id="total">0.00</span></strong>
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-primary btn-lg" id="nextButton">
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
     </div>
 </section>
 
 @section foot {
     <script>
         const ticketPrice = @Model.TicketPrice;
+        const seniorPrice = @(Model.TicketPrice * 0.8m);
         const seatMap = document.getElementById("seat-map");
         const count = document.getElementById("count");
         const total = document.getElementById("total");
+        const wrapper = document.querySelector(".booking-sections-wrapper");
+        const ticketTypeSection = document.getElementById("ticketTypeSection");
+        const ticketWarning = document.getElementById("ticketWarning");
+        const nextButton = document.getElementById("nextButton");
         const seatForm = document.getElementById("seatForm");
         const seatIdsContainer = document.getElementById("seatIdsContainer");
 
-        function updateSelectedCount() {
-            const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
-            count.innerText = selectedSeats.length;
-            total.innerText = (selectedSeats.length * ticketPrice).toFixed(2);
-        }
+        let childrenCount = 0;
+        let adultCount = 0;
+        let seniorCount = 0;
+        let selectedSeatsCount = 0;
 
-        // Seat selection
+        // Seat selection handler
         seatMap.addEventListener("click", e => {
-            if (e.target.classList.contains("seat") &&
-                !e.target.classList.contains("occupied")) {
+            if (e.target.classList.contains("seat") && !e.target.classList.contains("occupied")) {
                 e.target.classList.toggle("selected");
                 updateSelectedCount();
             }
         });
 
-        // Form submission - create hidden inputs for each seat ID
+        function updateSelectedCount() {
+            const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
+            const previousCount = selectedSeatsCount;
+            selectedSeatsCount = selectedSeats.length;
+
+            count.innerText = selectedSeatsCount;
+            document.getElementById("totalSeatsSelected").innerText = selectedSeatsCount;
+
+            if (selectedSeatsCount > 0) {
+                ticketTypeSection.classList.add("show");
+
+                const difference = selectedSeatsCount - previousCount;
+                adultCount += difference;
+                if (adultCount < 0) adultCount = 0;
+                updateCountDisplay();
+            } else {
+                ticketTypeSection.classList.remove("show");
+                resetCounts();
+            }
+
+            updateTotal();
+            validateTicketCounts();
+        }
+
+        function changeCount(type, delta) {
+            const totalTickets = childrenCount + adultCount + seniorCount;
+            const newTotal = totalTickets + delta;
+
+            // Check if we can add/remove
+            if (newTotal < 0 || newTotal > selectedSeatsCount) {
+                return;
+            }
+
+            if (type === 'children') {
+                const newCount = childrenCount + delta;
+                if (newCount >= 0) childrenCount = newCount;
+            } else if (type === 'adult') {
+                const newCount = adultCount + delta;
+                if (newCount >= 0) adultCount = newCount;
+            } else if (type === 'senior') {
+                const newCount = seniorCount + delta;
+                if (newCount >= 0) seniorCount = newCount;
+            }
+
+            updateCountDisplay();
+            updateTotal();
+            validateTicketCounts();
+        }
+
+        function updateCountDisplay() {
+            document.getElementById("childrenCount").innerText = childrenCount;
+            document.getElementById("adultCount").innerText = adultCount;
+            document.getElementById("seniorCount").innerText = seniorCount;
+
+            document.getElementById("childrenCountInput").value = childrenCount;
+            document.getElementById("adultCountInput").value = adultCount;
+            document.getElementById("seniorCountInput").value = seniorCount;
+        }
+
+        function updateTotal() {
+            const totalAmount = (childrenCount * ticketPrice) +
+                               (adultCount * ticketPrice) +
+                               (seniorCount * seniorPrice);
+            total.innerText = totalAmount.toFixed(2);
+        }
+
+        function validateTicketCounts() {
+            const totalTickets = childrenCount + adultCount + seniorCount;
+            const isValid = totalTickets === selectedSeatsCount && selectedSeatsCount > 0;
+
+            if (selectedSeatsCount > 0 && totalTickets !== selectedSeatsCount) {
+                ticketWarning.style.display = "block";
+                nextButton.disabled = true;
+            } else {
+                ticketWarning.style.display = "none";
+                nextButton.disabled = selectedSeatsCount === 0;
+            }
+        }
+
+        function resetCounts() {
+            childrenCount = 0;
+            adultCount = 0;
+            seniorCount = 0;
+            updateCountDisplay();
+        }
+
+        // Form submission
         seatForm.addEventListener("submit", e => {
-            const selectedSeats = [...document.querySelectorAll("#seat-map .seat.selected")];
+            const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
 
             if (selectedSeats.length === 0) {
                 e.preventDefault();
@@ -131,20 +272,25 @@
                 return;
             }
 
-            // Clear previous inputs
-            seatIdsContainer.innerHTML = "";
+            const totalTickets = childrenCount + adultCount + seniorCount;
+            if (totalTickets !== selectedSeats.length) {
+                e.preventDefault();
+                alert("Ticket type count must match the number of selected seats");
+                return;
+            }
 
-            // Create a separate hidden input for each seat ID
-            // This is how ASP.NET Core binds to List<int>
+            // Add seat IDs to form
+            seatIdsContainer.innerHTML = "";
             selectedSeats.forEach(seat => {
                 const input = document.createElement("input");
                 input.type = "hidden";
-                input.name = "seatIds";  // Same name for all = binds to List
+                input.name = "seatIds";
                 input.value = seat.dataset.seatId;
                 seatIdsContainer.appendChild(input);
             });
         });
 
+        // Initialize
         updateSelectedCount();
     </script>
 }

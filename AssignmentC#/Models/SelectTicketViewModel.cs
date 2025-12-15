@@ -43,6 +43,11 @@ public class BookingSessionData
     public int TicketQuantity { get; set; }
     public decimal TicketSubtotal { get; set; }
 
+    // Ticket Type Breakdown
+    public int ChildrenCount { get; set; }
+    public int AdultCount { get; set; }
+    public int SeniorCount { get; set; }
+
     // Selected Seats
     public List<int> SelectedSeatIds { get; set; } = new();
     public List<string> SelectedSeatIdentifiers { get; set; } = new(); // e.g., ["A1", "A2", "A3"]
@@ -53,3 +58,4 @@ public class BookingSessionData
     // Auto-calculated total
     public decimal GrandTotal => TicketSubtotal + FoodBeverageTotal;
 }
+

@@ -155,4 +155,5 @@ public class BookingController : Controller
 
         return RedirectToAction("Index", "Cart");
     }
+
 }
