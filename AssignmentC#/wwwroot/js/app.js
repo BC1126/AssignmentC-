@@ -103,9 +103,9 @@ $('.upload input').on('change', e => {
 
 //Payment method
 $('[data-method]').on('click', e => {
-    const method = e.target.dataset.method;
+    const method = e.currentTarget.dataset.method;
 
-    if (method === "creditCard") {
+    if (method == "creditCard") {
         document.getElementById("payWithCard").style.display = "block";
         document.getElementById("payWithEwallet").style.display = "none";
     } else {
@@ -114,11 +114,11 @@ $('[data-method]').on('click', e => {
     }
 });
 
-$(document.getElementById('promotionBtn')).on('click', e => {
-    const promo = document.getElementById('promotionList');
+$('[data-CloseVoucher]').on('click', e => {
+    document.getElementById("voucherModal").style.display = "none";
+    document.body.classList.remove("modal-open");
+});
 
-    if (promo.style.display = "none")
-        promo.style.display = "block";
-    else
-        promo.style.display = "none";
+$('[data-OpenVoucher]').on('click', e => {
+    document.getElementById("voucherModal").style.display = "flex";
 });

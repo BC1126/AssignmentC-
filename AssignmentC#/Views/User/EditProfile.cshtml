@@ -1,0 +1,63 @@
+﻿@model EditProfileVM
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Edit Your Profile</h1>
+    <hr />
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <form asp-action="EditProfile" method="post" class="p-4 border rounded shadow-lg bg-white">
+
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Role" />
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-bold">Full Name</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label fw-bold">Email Address</label>
+                    <input asp-for="Email" class="form-control" type="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label fw-bold">Phone Number</label>
+                    <input asp-for="Phone" class="form-control" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Gender" class="form-label fw-bold">Gender</label>
+                    <select asp-for="Gender" class="form-select">
+                        <option value="">-- Select Gender --</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-5">
+                    <a asp-action="Profile" class="btn btn-secondary px-4">
+                        <i class="fa fa-arrow-left"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-warning px-4">
+                        <i class="fa fa-save"></i> Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
+}
