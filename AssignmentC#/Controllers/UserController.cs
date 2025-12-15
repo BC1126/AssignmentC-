@@ -206,19 +206,27 @@ public class UserController : Controller
         // 4. Authentication and Sign In
         try
         {
-            // The Role property is defined on the User class using GetType().Name (e.g., "Member")
-            hp.SignIn(user.Email, user.Role, vm.RememberMe);
+            hp.SignIn(user.Email, user.Role, vm.RememberMe); // user.Role should now be "Admin" or "Member"
 
             TempData["Info"] = $"Welcome back, {user.Name}!";
 
-            // Redirect to the appropriate dashboard or home page
-            return RedirectToAction("Index", "Home");
+            // 5. Role-Based Redirect Logic
+            if (user.Role == "Admin")
+            {
+                return RedirectToAction("Dashboard", "Admin"); // <-- Redirect to AdminController
+            }
+            else if (user.Role == "Staff")
+            {
+                return RedirectToAction("Dashboard", "Staff"); // <-- Redirect to StaffController
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home"); // Default for Members and Guests
+            }
         }
         catch (Exception ex)
         {
-            // If sign-in fails (e.g., HttpContext error)
-            ModelState.AddModelError("", "An error occurred during sign-in. Please try again.");
-            // Log the exception 'ex' here for debugging.
+            // ... (catch block) ...
         }
 
         // 5. Fallback: Return the view on failure

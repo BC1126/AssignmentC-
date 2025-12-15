@@ -16,6 +16,10 @@ public class AdminController : Controller
         this.db = db;
         this.hp = hp;
     }
+    public IActionResult AdminDashboard()
+    {
+        return View();
+    }
 
     // ========== MOVIE LIST ==========
     public IActionResult Movies()
