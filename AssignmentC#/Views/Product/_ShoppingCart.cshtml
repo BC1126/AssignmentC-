@@ -10,17 +10,15 @@
 
     @foreach (ProductCartItem i in Model)
     {
-        // TODO
         var list = new SelectList(Enumerable.Range(1, 10), i.Quantity);
 
         <tr>
             <td>
-                <img src="/products/@i.Product.PhotoURL">
+                <img src="@i.Product.PhotoURL">
                 @i.Product.Id - @i.Product.Name
             </td>
             <td>@i.Product.Price</td>
             <td>
-                @* AJAX Form *@
                 <form data-ajax="true"
                       data-ajax-update="#target"
                       method="post"
@@ -45,7 +43,6 @@
 
 @* Disable button if shopping cart empty OR not member *@
 @{
-    // TODO
     var disabled = Model.Count() == 0 || !User.IsInRole("Member");
 }
 
