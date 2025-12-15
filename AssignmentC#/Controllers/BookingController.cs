@@ -150,22 +150,9 @@ public class BookingController : Controller
             TicketSubtotal = showtime.TicketPrice * seats.Count
         };
 
-        /*var json = System.Text.Json.JsonSerializer.Serialize(bookingData);
-        TempData["BookingData"] = json;*/
+        var json = System.Text.Json.JsonSerializer.Serialize(bookingData);
+        TempData["BookingData"] = json;
 
-    private void SaveCart(CartViewModel cart)
-    {
-        try
-        {
-            var json = System.Text.Json.JsonSerializer.Serialize(cart);
-            Console.WriteLine($"Saving cart JSON: {json}");
-            HttpContext.Session.SetString("CART", json);
-            Console.WriteLine("✅ Cart saved to session");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error in SaveCart: {ex.Message}");
-            throw;
-        }
+        return RedirectToAction("Index", "Cart");
     }
 }
