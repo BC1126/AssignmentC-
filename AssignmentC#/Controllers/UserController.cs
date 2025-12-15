@@ -269,4 +269,32 @@ public class UserController : Controller
         // 3. Redirect the user back to the Login page or the Home page
         return RedirectToAction("Login", "User");
     }
+
+    // GET: /User/Profile
+    [Authorize] // Ensure only logged-in users can access this page
+    public IActionResult Profile()
+    {
+        // 1. Get the current user's email from the claims identity
+        var userEmail = User.Identity.Name;
+
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            // Should not happen if [Authorize] is used, but good safeguard
+            return RedirectToAction("Login");
+        }
+
+        // 2. Fetch the user details from the base Users DbSet
+        // This will correctly load the Admin, Staff, or Member object via TPH.
+        var user = db.Users.FirstOrDefault(u => u.Email == userEmail);
+
+        if (user == null)
+        {
+            TempData["Error"] = "User profile could not be found.";
+            hp.SignOut(); // Log them out if the user record is missing
+            return RedirectToAction("Login");
+        }
+
+        // 3. Pass the user object to the View
+        return View(user);
+    }
 }
