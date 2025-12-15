@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using AssignmentC_.Models;
 
 namespace AssignmentC_.Controllers;
 
@@ -165,17 +167,6 @@ public class UserController : Controller
         return View("~/Views/Home/Register.cshtml", vm);
     }
 
-
-
-
-
-
-
-
-
-
-
-
     // ====================================================================
     // 2. LOGIN ACTIONS
     // ====================================================================
@@ -296,5 +287,154 @@ public class UserController : Controller
 
         // 3. Pass the user object to the View
         return View(user);
+    }
+
+    // UserController.cs
+
+    // GET: /User/EditProfile
+    [Authorize]
+    public async Task<IActionResult> EditProfile()
+    {
+        // 1. Identify the current user via their authenticated email (Identity.Name)
+        var userEmail = User.Identity.Name;
+
+        // 2. Fetch the user details from the base Users DbSet
+        // Use FindAsync or FirstOrDefaultAsync for asynchronous operation (recommended)
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+
+        if (user == null)
+        {
+            TempData["Error"] = "User not found. Please log in again.";
+            return RedirectToAction("SignOut");
+        }
+
+        // 3. Map the User model properties to the ViewModel
+        var vm = new EditProfileVM
+        {
+            Id = user.UserId,
+            Name = user.Name,
+            Email = user.Email,
+            Phone = user.Phone,
+            Gender = user.Gender,
+            Role = user.Role // Stored for display/security checks, but not editable
+        };
+
+        return View(vm);
+    }
+
+    // POST: /User/EditProfile
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditProfile(EditProfileVM vm)
+    {
+        // 1. Check for email conflict BEFORE validating the model, 
+        // especially if you are using TPH (Table Per Hierarchy)
+
+        // Check if the user is attempting to change the email to an existing one 
+        // that belongs to *another* user (ID must be different).
+        var existingUser = await db.Users.FirstOrDefaultAsync(u =>
+            u.Email == vm.Email && u.UserId != vm.Id);
+
+        if (existingUser != null)
+        {
+            ModelState.AddModelError("Email", "This email is already registered by another user.");
+        }
+
+        // 2. Validate the ViewModel (ensures required fields, regex, etc., are met)
+        if (ModelState.IsValid)
+        {
+            var userToUpdate = await db.Users.FirstOrDefaultAsync(u => u.UserId == vm.Id);
+
+            if (userToUpdate == null)
+            {
+                TempData["Error"] = "User record could not be found for update.";
+                // Since the record might be deleted, sign out for security.
+                // Assuming 'hp' is your helper for SignOut/SignIn
+                // hp.SignOut(); 
+                return RedirectToAction("Profile");
+            }
+
+            // 3. Update properties from ViewModel to the persistent User object
+            userToUpdate.Name = vm.Name;
+
+            // Only update email if it changed (optimization, but good practice)
+            if (userToUpdate.Email != vm.Email)
+            {
+                userToUpdate.Email = vm.Email;
+            }
+
+            userToUpdate.Phone = vm.Phone;
+            userToUpdate.Gender = vm.Gender;
+
+            // 4. Save changes
+            await db.SaveChangesAsync();
+
+            // 5. Re-sign in the user if the Email or Name changed
+            // This is crucial to refresh the authentication cookie claims (User.Identity.Name)
+            // Assuming 'hp' is an injected helper/service with a SignIn method
+            // hp.SignIn(userToUpdate.Email, userToUpdate.Role, true); 
+
+            TempData["Info"] = "Your profile has been updated successfully!";
+            return RedirectToAction("Profile");
+        }
+
+        // If validation failed, return the ViewModel to the view with errors
+        return View(vm);
+    }
+
+    [Authorize]
+    public IActionResult ChangePassword()
+    {
+        return View();
+    }
+
+    // POST: Account/UpdatePassword
+    // UserController.cs (assuming this is where the action resides)
+
+    // POST: /User/ChangePassword
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken] // Recommended best practice for security
+    public async Task<IActionResult> ChangePassword(ChangePasswordVM vm)
+    {
+        // 1. Retrieve the user's email from the authentication claim
+        var userEmail = User.Identity?.Name;
+
+        // 2. CRITICAL FIX: Use FirstOrDefaultAsync to query by Email
+        var u = await db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+
+        // If the user is null, redirect (this handles the primary key mismatch you had)
+        if (u == null)
+        {
+            TempData["Error"] = "User record could not be found. Please log in again.";
+            // Assuming hp.SignOut() and redirection to login is necessary
+            // hp.SignOut();
+            return RedirectToAction("Login", "Account");
+        }
+
+        // 3. Verify Current Password
+        // Check if ModelState is already invalid before doing further checks (for performance)
+        if (ModelState.IsValid)
+        {
+            // 4. Verification Check
+            if (!hp.VerifyPassword(u.PasswordHash, vm.Current))
+            {
+                ModelState.AddModelError("Current", "Current Password not matched.");
+                // If verification fails, we must return the view immediately
+                return View(vm);
+            }
+
+            // 5. Update and Save
+            u.PasswordHash = hp.HashPassword(vm.New);
+            await db.SaveChangesAsync(); // Use the asynchronous SaveChanges
+
+            TempData["Info"] = "Password updated.";
+            // Redirect to the Profile page or another suitable location
+            return RedirectToAction("Profile");
+        }
+
+        // If ModelState was invalid from the start (e.g., New/Confirm mismatch)
+        return View(vm);
     }
 }

@@ -7,7 +7,8 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.IO; // Required for FileStream and Path operations and Directory.CreateDirectory
 using System.Linq;
-using Microsoft.AspNetCore.Hosting; // Required for IWebHostEnvironment
+using Microsoft.AspNetCore.Hosting;
+using System.Reflection.Metadata.Ecma335; // Required for IWebHostEnvironment
 
 namespace AssignmentC_;
 
@@ -140,8 +141,9 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
     public bool VerifyPassword(string hash, string password)
     {
         return ph.VerifyHashedPassword(0, hash, password)
-            == PasswordVerificationResult.Success;
+               == PasswordVerificationResult.Success;
     }
+
 
     public void SignIn(string email, string role, bool rememberMe)
     {
