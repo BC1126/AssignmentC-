@@ -37,8 +37,6 @@
         <div id="seat-map">
             @{
                 var groupedSeats = Model.Seats.GroupBy(s => s.Row).OrderBy(g => g.Key);
-                var rowCount = groupedSeats.Count();
-                Console.WriteLine($"Total rows: {rowCount}");
             }
             @foreach (var rowGroup in groupedSeats)
             {
@@ -73,33 +71,40 @@
             }
         </div>
 
-        <div class="booking-summary card p-4 mt-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="mb-1">
-                        You have selected <strong><span id="count">0</span></strong> seats
-                    </p>
-                    <p class="mb-0">
-                        Total: <strong>RM <span id="total">0</span></strong>
-                    </p>
-                </div>
-                <div class="col-md-6 text-end">
-                    <button id="addToCart" class="btn btn-primary btn-lg">
-                        🛒 Add to Cart
-                    </button>
+        <!-- Form to submit selected seats -->
+        <form asp-action="SelectTicket" method="post" id="seatForm">
+            <input type="hidden" name="showTimeId" value="@Model.ShowTimeId" />
+            <div id="seatIdsContainer"></div>
+
+            <div class="booking-summary card p-4 mt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-1">
+                            You have selected <strong><span id="count">0</span></strong> seats
+                        </p>
+                        <p class="mb-0">
+                            Total: <strong>RM <span id="total">0</span></strong>
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Next    →
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </section>
 
 @section foot {
     <script>
-        const showTimeId = @Model.ShowTimeId;
         const ticketPrice = @Model.TicketPrice;
         const seatMap = document.getElementById("seat-map");
         const count = document.getElementById("count");
         const total = document.getElementById("total");
+        const seatForm = document.getElementById("seatForm");
+        const seatIdsContainer = document.getElementById("seatIdsContainer");
 
         function updateSelectedCount() {
             const selectedSeats = document.querySelectorAll("#seat-map .seat.selected");
@@ -116,77 +121,28 @@
             }
         });
 
-        // Add to cart
-        document.getElementById("addToCart").addEventListener("click", async () => {
+        // Form submission - create hidden inputs for each seat ID
+        seatForm.addEventListener("submit", e => {
             const selectedSeats = [...document.querySelectorAll("#seat-map .seat.selected")];
 
             if (selectedSeats.length === 0) {
+                e.preventDefault();
                 alert("Please select at least one seat");
                 return;
             }
 
-            // Get seat IDs and validate
-            const seatIds = [];
-            let hasInvalidSeats = false;
+            // Clear previous inputs
+            seatIdsContainer.innerHTML = "";
 
-            selectedSeats.forEach(s => {
-                const seatIdStr = s.dataset.seatId;
-                const identifier = s.dataset.identifier;
-
-                if (!seatIdStr || seatIdStr === "0" || seatIdStr === "") {
-                    console.error(`Invalid seat ID for ${identifier}:`, seatIdStr);
-                    hasInvalidSeats = true;
-                    return;
-                }
-
-                const id = parseInt(seatIdStr);
-                if (isNaN(id) || id === 0) {
-                    console.error(`Failed to parse seat ID for ${identifier}:`, seatIdStr);
-                    hasInvalidSeats = true;
-                    return;
-                }
-
-                seatIds.push(id);
+            // Create a separate hidden input for each seat ID
+            // This is how ASP.NET Core binds to List<int>
+            selectedSeats.forEach(seat => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "seatIds";  // Same name for all = binds to List
+                input.value = seat.dataset.seatId;
+                seatIdsContainer.appendChild(input);
             });
-
-            if (hasInvalidSeats || seatIds.length === 0) {
-                alert("Error: Invalid seat selection. Please refresh the page and try again.");
-                return;
-            }
-
-            const requestData = {
-                showTimeId: showTimeId,
-                seatIds: seatIds
-            };
-
-            try {
-                const response = await fetch("/Booking/AddToCart", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(requestData)
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error("Server error:", errorText);
-                    alert("Server error: " + response.status);
-                    return;
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert(result.message);
-                    window.location.href = "/Cart";
-                } else {
-                    alert(result.message || "Failed to add to cart");
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("An error occurred: " + error.message);
-            }
         });
 
         updateSelectedCount();
