@@ -15,11 +15,13 @@ public class UserController : Controller
 {
     private readonly DB db;
     private readonly Helper hp;
+    private readonly IWebHostEnvironment en;
 
-    public UserController(DB db, Helper hp)
+    public UserController(DB db, Helper hp, IWebHostEnvironment en)
     {
         this.db = db;
         this.hp = hp;
+        this.en = en;
     }
 
     // In AdminController.cs
@@ -111,24 +113,28 @@ public class UserController : Controller
         }
 
         // --- PHOTO REQUIRED LOGIC ---
-        string photoUrl = null;
+        string photoUrl;
 
-        // The framework handles the "is null" check via the [Required] attribute on the Photo property.
-        // We only need to run custom validation and saving if the Model Binder received a file.
         if (vm.Photo != null)
         {
-            // 2a. Validate photo file content/size 
-            if (ModelState.GetValidationState("Photo") != ModelValidationState.Invalid)
-            {
-                var err = hp.ValidatePhoto(vm.Photo);
-                if (err != "") ModelState.AddModelError("Photo", err);
-            }
+            // Use your existing helper for uploads
+            photoUrl = hp.SavePhoto(vm.Photo, "photos");
+        }
+        else
+        {
+            // 1. Generate a unique name just like your helper does
+            string fileName = Guid.NewGuid().ToString("n") + ".jpg";
 
-            // 2b. If photo validation passed, generate the URL/path
-            if (!ModelState.ContainsKey("Photo") || ModelState["Photo"].ValidationState != ModelValidationState.Invalid)
-            {
-                photoUrl = hp.SavePhoto(vm.Photo, "photos");
-            }
+            // 2. Define where the master default is and where the new user photo goes
+            string sourceFile = Path.Combine(en.WebRootPath, "img", "default.jpg"); // Path to your original
+            string destFolder = Path.Combine(en.WebRootPath, "photos");
+            string destFile = Path.Combine(destFolder, fileName);
+
+            // 3. Ensure folder exists and copy
+            if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
+            System.IO.File.Copy(sourceFile, destFile);
+
+            photoUrl = $"/photos/{fileName}";
         }
         // --- END PHOTO LOGIC ---
 
@@ -309,28 +315,53 @@ public class UserController : Controller
     [Authorize]
     public async Task<IActionResult> EditProfile()
     {
-        // 1. Identify the current user via their authenticated email (Identity.Name)
-        var userEmail = User.Identity.Name;
+        var userEmail = User.Identity?.Name;
 
-        // 2. Fetch the user details from the base Users DbSet
-        // Use FindAsync or FirstOrDefaultAsync for asynchronous operation (recommended)
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
-
-        if (user == null)
+        // Check 1: Ensure user is logged in (should be handled by [Authorize], but good safety)
+        if (string.IsNullOrEmpty(userEmail))
         {
-            TempData["Error"] = "User not found. Please log in again.";
-            return RedirectToAction("SignOut");
+            // If somehow the identity is missing, redirect to login
+            return RedirectToAction("Login", "Account");
         }
 
-        // 3. Map the User model properties to the ViewModel
+        // 1. Fetch the User record based on logged-in email
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+
+        // Check 2: Handle case where User record doesn't exist
+        if (user == null)
+        {
+            TempData["Error"] = "Error: Your User record was not found in the system. Contact IT.";
+            // Log out the user as their authentication cookie is invalid
+            // await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme); 
+            return RedirectToAction("Login", "Account");
+        }
+
+        // 2. Fetch the associated Member record using the UserId
+        // This is the CRITICAL point of failure for Admin accounts
+        var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == user.UserId);
+
+        // Check 3: Handle case where Member record doesn't exist (e.g., Admin was created manually)
+        if (member == null)
+        {
+            // If the Member record is missing, you must redirect to an action that can create it, 
+            // or show an error and prompt them to contact support.
+            TempData["Error"] = "Error: Your profile data is incomplete. Member record missing.";
+            return RedirectToAction("Profile", "User"); // Redirect to profile view or dashboard
+        }
+
+        // 3. Map entities to ViewModel (NOW SAFE because user and member are not null)
         var vm = new EditProfileVM
         {
             Id = user.UserId,
             Name = user.Name,
             Email = user.Email,
-            Phone = user.Phone,
-            Gender = user.Gender,
-            Role = user.Role // Stored for display/security checks, but not editable
+            Role = user.Role,
+
+            // Assuming Phone and Gender are on the Member entity
+            Phone = member.Phone,
+            Gender = member.Gender,
+
+            CurrentPhotoUrl = member.PhotoURL
         };
 
         return View(vm);
@@ -342,11 +373,7 @@ public class UserController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditProfile(EditProfileVM vm)
     {
-        // 1. Check for email conflict BEFORE validating the model, 
-        // especially if you are using TPH (Table Per Hierarchy)
-
-        // Check if the user is attempting to change the email to an existing one 
-        // that belongs to *another* user (ID must be different).
+        // 1. Email Uniqueness Check (Your existing logic)
         var existingUser = await db.Users.FirstOrDefaultAsync(u =>
             u.Email == vm.Email && u.UserId != vm.Id);
 
@@ -355,45 +382,77 @@ public class UserController : Controller
             ModelState.AddModelError("Email", "This email is already registered by another user.");
         }
 
-        // 2. Validate the ViewModel (ensures required fields, regex, etc., are met)
+        // IMPORTANT: Check if the user is attempting to save the default photo URL back
+        if (vm.NewPhoto == null && string.IsNullOrEmpty(vm.CurrentPhotoUrl))
+        {
+            // If they cleared the photo and didn't upload a new one, force the default.jpg path
+            vm.CurrentPhotoUrl = "/img/default.jpg";
+        }
+
+        // 2. Validate the ViewModel
         if (ModelState.IsValid)
         {
             var userToUpdate = await db.Users.FirstOrDefaultAsync(u => u.UserId == vm.Id);
+            // CRITICAL: Fetch the Member record
+            var memberToUpdate = await db.Members.FirstOrDefaultAsync(m => m.UserId == vm.Id);
 
-            if (userToUpdate == null)
+            if (userToUpdate == null || memberToUpdate == null)
             {
-                TempData["Error"] = "User record could not be found for update.";
-                // Since the record might be deleted, sign out for security.
-                // Assuming 'hp' is your helper for SignOut/SignIn
+                TempData["Error"] = "User profile record could not be found for update.";
                 // hp.SignOut(); 
                 return RedirectToAction("Profile");
             }
 
-            // 3. Update properties from ViewModel to the persistent User object
-            userToUpdate.Name = vm.Name;
-
-            // Only update email if it changed (optimization, but good practice)
-            if (userToUpdate.Email != vm.Email)
+            // --- PHOTO UPLOAD AND DELETE LOGIC ---
+            if (vm.NewPhoto != null)
             {
-                userToUpdate.Email = vm.Email;
+                // a. Delete old photo (if not the default)
+                if (memberToUpdate.PhotoURL != "/img/default.jpg" && !string.IsNullOrEmpty(memberToUpdate.PhotoURL))
+                {
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", memberToUpdate.PhotoURL.TrimStart('~', '/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                // b. Save new photo
+                // Generate a unique file name using UserId and a tick/timestamp
+                var fileName = $"{userToUpdate.UserId}_{DateTime.Now.Ticks}_{Path.GetExtension(vm.NewPhoto.FileName)}";
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await vm.NewPhoto.CopyToAsync(stream);
+                }
+
+                // c. Update PhotoUrl in Member table
+                memberToUpdate.PhotoURL = $"/img/{fileName}";
             }
+            // --- END PHOTO UPLOAD/DELETE LOGIC ---
 
-            userToUpdate.Phone = vm.Phone;
-            userToUpdate.Gender = vm.Gender;
 
-            // 4. Save changes
+            // 3. Update properties on User and Member entities
+            userToUpdate.Name = vm.Name;
+            userToUpdate.Email = vm.Email;
+
+            // Assuming Phone and Gender are on the Member table (adjust if they are on User)
+            memberToUpdate.Phone = vm.Phone;
+            memberToUpdate.Gender = vm.Gender;
+
+            // 4. Save changes (will save changes to both User and Member records tracked by the context)
             await db.SaveChangesAsync();
 
-            // 5. Re-sign in the user if the Email or Name changed
-            // This is crucial to refresh the authentication cookie claims (User.Identity.Name)
-            // Assuming 'hp' is an injected helper/service with a SignIn method
-            // hp.SignIn(userToUpdate.Email, userToUpdate.Role, true); 
+            // 5. Re-sign in the user if the Email or Name changed (if required)
+            // hp.SignIn(userToUpdate.Email, userToUpdate.Role, true); // Uncomment if Sign In logic is handled here
 
             TempData["Info"] = "Your profile has been updated successfully!";
             return RedirectToAction("Profile");
         }
 
         // If validation failed, return the ViewModel to the view with errors
+        // Note: You must ensure vm.CurrentPhotoUrl is populated correctly here if validation fails.
+        // Since CurrentPhotoUrl is a hidden field in the view, it should persist on failure.
         return View(vm);
     }
 

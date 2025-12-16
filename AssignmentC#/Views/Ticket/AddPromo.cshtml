@@ -1,0 +1,95 @@
+﻿@model VoucherViewModel
+
+<h2>Create Voucher (Admin)</h2>
+
+
+@if (ViewBag.Message != null)
+{
+    <p style="color: green">@ViewBag.Message</p>
+}
+
+
+<form method="post">
+    <div>
+        <label>Voucher Code</label><br />
+        <input type="text" name="VoucherCode" />
+    </div>
+
+
+    <div>
+        <label>Discount Type</label><br />
+        <select name="DiscountType">
+            <option value="fixed">Fixed Amount</option>
+            <option value="percentage">Percentage</option>
+        </select>
+    </div>
+
+
+    <div>
+        <label>Discount Value</label><br />
+        <input type="number" step="0.01" name="DiscountValue" />
+    </div>
+
+
+    <hr />
+
+
+    <div>
+        <label>Eligibility Mode</label><br />
+        <select name="EligibilityMode">
+            <option value="open">Open to all</option>
+            <option value="condition">Condition-based</option>
+            <option value="assigned">Assigned user only</option>
+            <option value="both">Assigned + Condition</option>
+        </select>
+    </div>
+
+
+    <h3>Conditions (if using condition mode)</h3>
+    <div>
+        <label>Min Age</label><br />
+        <input type="number" name="MinAge" />
+    </div>
+    <div>
+        <label>Max Age</label><br />
+        <input type="number" name="MaxAge" />
+    </div>
+    <div>
+        <label>Minimum Spend</label><br />
+        <input type="number" step="0.01" name="MinSpend" />
+    </div>
+    <div>
+        <label>First Purchase Only</label><br />
+        <input type="checkbox" name="IsFirstPurchaseOnly" />
+    </div>
+    <div>
+        <label>Allowed Days (hold Ctrl to select multiple)</label><br />
+        <select name="AllowedDays" multiple>
+            @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+            {
+                <option value="@day">@day</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label>Allowed Birth Months (hold Ctrl to select multiple)</label><br />
+        <select name="AllowedBirthMonths" multiple>
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m">@m</option>
+            }
+        </select>
+    </div>
+
+
+    <h3>Assigned User (if using assigned mode)</h3>
+    <div>
+        <label>Assigned User ID</label><br />
+        <input type="number" name="AssignedUserId" />
+    </div>
+
+
+    <br />
+    <button type="submit">Create Voucher</button>
+</form>
+

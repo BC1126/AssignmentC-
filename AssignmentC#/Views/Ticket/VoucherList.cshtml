@@ -1,0 +1,31 @@
+﻿@model IEnumerable<dynamic>
+
+
+<h2>Voucher List</h2>
+
+
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Promotion ID</th>
+            <th>Voucher Code</th>
+            <th>Discount Type</th>
+            <th>Discount Value</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var v in Model)
+        {
+            <tr>
+                <td>@v.PromotionId</td>
+                <td>@v.VoucherCode</td>
+                <td>@v.DiscountType</td>
+                <td>@v.DiscountValue</td>
+                <td>@v.StartDate.ToString("yyyy-MM-dd")</td>
+                <td>@v.EndDate.ToString("yyyy-MM-dd")</td>
+            </tr>
+        }
+    </tbody>
+</table>

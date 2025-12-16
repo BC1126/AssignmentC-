@@ -1,0 +1,72 @@
+﻿@model AddUserVM
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            @* The title changes based on whether the URL had ?role=Staff or ?role=Member *@
+            <h2 class="mb-4">Add New @Model.Role</h2>
+
+            <form asp-action="AdminAddUser" asp-controller="Admin" method="post" class="border p-4 rounded shadow-sm bg-light">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                @* Hidden field ensures the Role is sent back to the [HttpPost] action *@
+                <input type="hidden" asp-for="Role" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">@Model.Role ID (Auto-generated)</label>
+                    <input class="form-control bg-light" readonly placeholder="@(Model.Role == "Staff" ? "SXXXX" : "MXXXX")" />
+                    <small class="text-muted">The system will assign the next available ID.</small>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-bold"></label>
+                    <input asp-for="Name" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label fw-bold"></label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="example@gmail.com" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                @* Gender Field *@
+                <div class="mb-3">
+                    <label asp-for="Gender" class="form-label fw-bold"></label>
+                    <select asp-for="Gender" class="form-select">
+                        <option value="">-- Select Gender --</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                @* Phone Field *@
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label fw-bold">Phone Number</label>
+                    <input asp-for="Phone" class="form-control" placeholder="01XXXXXXXX" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+
+                @* Show Member-specific info only if Role is Member *@
+                @if (Model.Role == "Member")
+                {
+                    <div class="alert alert-info border-0 shadow-sm">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Note:</strong> A unique copy of the default profile picture will be assigned to this member.
+                    </div>
+                }
+
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn @(Model.Role == "Staff" ? "btn-success" : "btn-primary") px-4">
+                        Create @Model.Role
+                    </button>
+
+                    @* Dynamic Cancel link: Staff goes to StaffList, Member goes to MemberList *@
+                    <a asp-action="@(Model.Role == "Staff" ? "StaffList" : "MemberList")"
+                       asp-controller="User" class="btn btn-secondary px-4 ms-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

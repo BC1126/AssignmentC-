@@ -1,0 +1,126 @@
+﻿@model AdminEditUserVM
+@{
+    ViewData["Title"] = "Admin Edit User";
+}
+
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Edit User: @Model.Id</h1>
+    <hr />
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+
+            <form asp-action="AdminEditUser" method="post" enctype="multipart/form-data"
+                  class="p-4 border rounded shadow-lg bg-white">
+
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Role" />
+                <input type="hidden" asp-for="CurrentPhotoUrl" />
+
+                @if (Model.Role != "Staff")
+                {
+                    <h5 class="mb-3 fw-bold">Profile Photo</h5>
+                    <div id="photoUploadArea" style="cursor: pointer; position: relative;">
+                        <input asp-for="NewPhoto" class="form-control" id="profilePhotoInput" type="file"
+                               accept="image/*" style="position: absolute; opacity: 0; width: 0; height: 0;" />
+                        <span asp-validation-for="NewPhoto" class="text-danger"></span>
+
+                        <div class="mt-3 text-center">
+                            <img id="profilePhotoPreview"
+                                 src="@Model.CurrentPhotoUrl"
+                                 alt="Click to Change Photo"
+                                 style="width: 150px; height: 150px; border: 3px solid #007bff; object-fit: cover; border-radius: 50%;" />
+                            <p class="mt-2 text-muted small">Click photo to change</p>
+                        </div>
+                    </div>
+                    <hr class="my-4" />
+                }
+                else
+                {
+
+                }
+
+                <hr class="my-4" />
+                <h5 class="mb-3 fw-bold">User Details</h5>
+
+                @* Name *@
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-bold">Full Name</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                @* Email - Keep readonly if admins shouldn't change the login identifier *@
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label fw-bold">Email Address</label>
+                    <input asp-for="Email" class="form-control" type="email" readonly />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                @* Phone *@
+                <div class="mb-3">
+                    <label asp-for="Phone" class="form-label fw-bold">Phone Number</label>
+                    <input asp-for="Phone" class="form-control" />
+                    <span asp-validation-for="Phone" class="text-danger"></span>
+                </div>
+
+                @* Gender *@
+                <div class="mb-3">
+                    <label asp-for="Gender" class="form-label fw-bold">Gender</label>
+                    <select asp-for="Gender" class="form-select">
+                        <option value="">-- Select Gender --</option>
+                        <option value="M">Male</option>
+                        <option value="F">Female</option>
+                    </select>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-5">
+                    <a href="@(Context.Request.Query["returnUrl"].ToString() ?? Url.Action("MemberList", "User"))"
+                       class="btn btn-secondary px-4">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('profilePhotoInput');
+            const preview = document.getElementById('profilePhotoPreview');
+            const uploadArea = document.getElementById('photoUploadArea');
+
+            // Updated to use CurrentPhotoUrl
+            const defaultPhotoUrl = '@Model.CurrentPhotoUrl';
+
+            if (uploadArea) {
+                uploadArea.addEventListener('click', function() {
+                    input.click();
+                });
+            }
+
+            if (input) {
+                input.addEventListener('change', function(event) {
+                    if (input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            preview.src = e.target.result;
+                        }
+                        reader.readAsDataURL(input.files[0]);
+                    } else {
+                        preview.src = defaultPhotoUrl;
+                    }
+                });
+            }
+        });
+    </script>
+}

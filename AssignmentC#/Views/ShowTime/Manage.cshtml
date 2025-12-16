@@ -1,0 +1,148 @@
+﻿@model AssignmentC_.Models.ShowTimeManageVM
+
+@{
+    ViewData["Title"] = "Manage ShowTimes";
+}
+
+<br />
+<br />
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="mb-3">Filter ShowTimes</h5>
+
+        <form method="get" asp-action="Manage" class="row g-3">
+            <!-- Outlet -->
+            <div class="col-md-4">
+                <label class="form-label">Outlet</label>
+                <select name="outletId" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Select Outlet --</option>
+                    @foreach (var outlet in Model.Outlets)
+                    {
+                        <option value="@outlet.OutletId"
+                                selected="@(Model.OutletId == outlet.OutletId)">
+                            @outlet.Name (@outlet.City)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Hall -->
+            <div class="col-md-4">
+                <label class="form-label">Hall</label>
+                <select name="hallId" class="form-select" onchange="this.form.submit()"
+                        @(Model.Halls == null ? "disabled" : "")>
+                    <option value="">-- Select Hall --</option>
+                    @if (Model.Halls != null)
+                    {
+                        @foreach (var hall in Model.Halls)
+                        {
+                            <option value="@hall.HallId"
+                                    selected="@(Model.HallId == hall.HallId)">
+                                @hall.Name
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Date -->
+            <div class="col-md-4">
+                <label class="form-label">Date</label>
+                <input type="date"
+                       name="date"
+                       value="@Model.Date.ToString("yyyy-MM-dd")"
+                       class="form-control"
+                       onchange="this.form.submit()" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h4>Showtimes for @Model.Date.ToString("dddd, MMMM dd, yyyy")</h4>
+
+        @if (Model.ExistingShowTimes == null || !Model.ExistingShowTimes.Any())
+        {
+            <div class="alert alert-info mb-0">
+                No showtimes scheduled for this hall on this date.
+            </div>
+        }
+        else
+        {
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Movie</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var st in Model.ExistingShowTimes)
+                    {
+                        <tr class="table-warning">
+                            <td>@st.Movie.Title</td>
+                            <td>@st.StartTime.ToString("HH:mm")</td>
+                            <td>@st.EndTime.ToString("HH:mm")</td>
+                            <td>RM @st.TicketPrice</td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        }
+    </div>
+</div>
+
+@if (Model.HallId > 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="mb-3">Add New ShowTime</h5>
+
+            <form asp-action="CreateShowTime" method="post" class="row g-3">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="OutletId" value="@Model.OutletId" />
+                <input type="hidden" name="HallId" value="@Model.HallId" />
+                <input type="hidden" name="Date" value="@Model.Date" />
+
+                <!-- Movie -->
+                <div class="col-md-4">
+                    <label class="form-label">Movie</label>
+                    <select name="MovieId" class="form-select" required>
+                        <option value="">-- Select Movie --</option>
+                        @foreach (var movie in Model.Movies)
+                        {
+                            <option value="@movie.MovieId">
+                                @movie.Title
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Start Time -->
+                <div class="col-md-4">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" name="StartTime" class="form-control" required />
+                </div>
+
+                <!-- Price -->
+                <div class="col-md-4">
+                    <label class="form-label">Ticket Price (RM)</label>
+                    <input type="number" name="TicketPrice"
+                           step="0.01" min="0"
+                           class="form-control" required />
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        Add Showtime
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}

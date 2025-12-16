@@ -68,18 +68,6 @@ namespace AssignmentC_.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Promotion",
-                columns: table => new
-                {
-                    PromotionId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Promotion", x => x.PromotionId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -178,37 +166,6 @@ namespace AssignmentC_.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductReviews",
-                columns: table => new
-                {
-                    ProductReviewId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
-                    ProductId = table.Column<string>(type: "nvarchar(4)", maxLength: 4, nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Rating = table.Column<int>(type: "int", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsApproved = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProductReviews", x => x.ProductReviewId);
-                    table.ForeignKey(
-                        name: "FK_ProductReviews_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductReviews_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Seats",
                 columns: table => new
                 {
@@ -297,7 +254,7 @@ namespace AssignmentC_.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Payment",
+                name: "Payments",
                 columns: table => new
                 {
                     PaymentId = table.Column<int>(type: "int", nullable: false)
@@ -306,26 +263,19 @@ namespace AssignmentC_.Migrations
                     status = table.Column<bool>(type: "bit", nullable: false),
                     date = table.Column<DateOnly>(type: "date", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(5)", nullable: true),
-                    OrderId = table.Column<int>(type: "int", nullable: false),
-                    PromotionId = table.Column<int>(type: "int", nullable: false)
+                    OrderId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Payment", x => x.PaymentId);
+                    table.PrimaryKey("PK_Payments", x => x.PaymentId);
                     table.ForeignKey(
-                        name: "FK_Payment_Orders_OrderId",
+                        name: "FK_Payments_Orders_OrderId",
                         column: x => x.OrderId,
                         principalTable: "Orders",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Payment_Promotion_PromotionId",
-                        column: x => x.PromotionId,
-                        principalTable: "Promotion",
-                        principalColumn: "PromotionId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Payment_Users_UserId",
+                        name: "FK_Payments_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "UserId");
@@ -361,6 +311,35 @@ namespace AssignmentC_.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Promotions",
+                columns: table => new
+                {
+                    PromotionId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PaymentId = table.Column<int>(type: "int", nullable: false),
+                    Discriminator = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
+                    points = table.Column<int>(type: "int", nullable: true),
+                    VoucherCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    VoucherType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    DiscountValue = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    EligibilityMode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedTime = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Promotions", x => x.PromotionId);
+                    table.ForeignKey(
+                        name: "FK_Promotions_Payments_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payments",
+                        principalColumn: "PaymentId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "BookingSeats",
                 columns: table => new
                 {
@@ -384,6 +363,57 @@ namespace AssignmentC_.Migrations
                         principalTable: "Seats",
                         principalColumn: "SeatId",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VoucherAssignments",
+                columns: table => new
+                {
+                    AssignmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PromotionId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(5)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VoucherAssignments", x => x.AssignmentId);
+                    table.ForeignKey(
+                        name: "FK_VoucherAssignments_Promotions_PromotionId",
+                        column: x => x.PromotionId,
+                        principalTable: "Promotions",
+                        principalColumn: "PromotionId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_VoucherAssignments_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VoucherConditions",
+                columns: table => new
+                {
+                    ConditionId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ConditionType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    MinAge = table.Column<int>(type: "int", nullable: true),
+                    MaxAge = table.Column<int>(type: "int", nullable: true),
+                    MinSpend = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    IsFirstPurchase = table.Column<bool>(type: "bit", nullable: true),
+                    BirthMonth = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PromotionId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VoucherConditions", x => x.ConditionId);
+                    table.ForeignKey(
+                        name: "FK_VoucherConditions_Promotions_PromotionId",
+                        column: x => x.PromotionId,
+                        principalTable: "Promotions",
+                        principalColumn: "PromotionId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -442,29 +472,19 @@ namespace AssignmentC_.Migrations
                 column: "MemberUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payment_OrderId",
-                table: "Payment",
+                name: "IX_Payments_OrderId",
+                table: "Payments",
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payment_PromotionId",
-                table: "Payment",
-                column: "PromotionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Payment_UserId",
-                table: "Payment",
+                name: "IX_Payments_UserId",
+                table: "Payments",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductReviews_ProductId",
-                table: "ProductReviews",
-                column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductReviews_UserId",
-                table: "ProductReviews",
-                column: "UserId");
+                name: "IX_Promotions_PaymentId",
+                table: "Promotions",
+                column: "PaymentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Seats_HallId",
@@ -480,6 +500,21 @@ namespace AssignmentC_.Migrations
                 name: "IX_ShowTimes_MovieId",
                 table: "ShowTimes",
                 column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VoucherAssignments_PromotionId",
+                table: "VoucherAssignments",
+                column: "PromotionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VoucherAssignments_UserId",
+                table: "VoucherAssignments",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VoucherConditions_PromotionId",
+                table: "VoucherConditions",
+                column: "PromotionId");
         }
 
         /// <inheritdoc />
@@ -495,10 +530,10 @@ namespace AssignmentC_.Migrations
                 name: "OrderLines");
 
             migrationBuilder.DropTable(
-                name: "Payment");
+                name: "VoucherAssignments");
 
             migrationBuilder.DropTable(
-                name: "ProductReviews");
+                name: "VoucherConditions");
 
             migrationBuilder.DropTable(
                 name: "Bookings");
@@ -507,19 +542,16 @@ namespace AssignmentC_.Migrations
                 name: "Seats");
 
             migrationBuilder.DropTable(
-                name: "Orders");
-
-            migrationBuilder.DropTable(
-                name: "Promotion");
-
-            migrationBuilder.DropTable(
                 name: "Products");
+
+            migrationBuilder.DropTable(
+                name: "Promotions");
 
             migrationBuilder.DropTable(
                 name: "ShowTimes");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Halls");
@@ -528,7 +560,13 @@ namespace AssignmentC_.Migrations
                 name: "Movies");
 
             migrationBuilder.DropTable(
+                name: "Orders");
+
+            migrationBuilder.DropTable(
                 name: "Outlets");
+
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

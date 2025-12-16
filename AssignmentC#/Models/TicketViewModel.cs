@@ -43,4 +43,26 @@ namespace AssignmentC_.Models
     {
         public TimerViewModel Timer { get; set; }
     }
+
+    public class VoucherViewModel
+    {
+        public int PromotionId { get; set; }
+        public string VoucherCode { get; set; }
+        public string DiscountType { get; set; }
+        public decimal DiscountValue { get; set; }
+
+        public string EligibilityMode { get; set; }
+
+        public DateTime StartDate {  get; set; }
+        public DateTime EndDate { get; set; }
+
+        // Condition
+        public int? MaxAge { get; set; }
+        public int? MinAge { get; set; }
+        public decimal? MinSpend { get; set; }
+        public bool? IsFirstPurchase { get; set; }
+        public List<int> BirthMonth { get; set; } = new List<int>();
+        // Assigned User use
+        public int? AssignedUserId { get; set; }
+    }
 }

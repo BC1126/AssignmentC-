@@ -1,0 +1,118 @@
+﻿@model AssignmentC_.Models.ShowTimeManageVM
+
+<h4 class="mb-4">Edit Showtime</h4>
+
+<div class="card shadow-sm p-4 my-4">
+    <form asp-action="EditShowTime" method="post" class="needs-validation" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ShowTimeId" />
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="OutletId" class="form-label">Outlet</label>
+                <select asp-for="OutletId" class="form-select" id="outletSelect" required>
+                    <option value="">-- Select Outlet --</option>
+                    @foreach (var outlet in Model.Outlets)
+                    {
+                        <option value="@outlet.OutletId" selected="@(Model.OutletId == outlet.OutletId)">
+                            @outlet.Name (@outlet.City)
+                        </option>
+                    }
+                </select>
+                <span asp-validation-for="OutletId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="HallId" class="form-label">Hall</label>
+                <select asp-for="HallId" class="form-select" id="hallSelect" required>
+                    <option value="">-- Select Hall --</option>
+                    @foreach (var hall in Model.Halls)
+                    {
+                        <option value="@hall.HallId" selected="@(Model.HallId == hall.HallId)">
+                            @hall.Name
+                        </option>
+                    }
+                </select>
+                <span asp-validation-for="HallId" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="MovieId" class="form-label">Movie</label>
+                <select asp-for="MovieId" class="form-select" required>
+                    <option value="">-- Select Movie --</option>
+                    @foreach (var movie in Model.Movies)
+                    {
+                        <option value="@movie.MovieId" selected="@(Model.MovieId == movie.MovieId)">
+                            @movie.Title
+                        </option>
+                    }
+                </select>
+                <span asp-validation-for="MovieId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Date" class="form-label">Date</label>
+                <input type="date" asp-for="Date" class="form-control" required />
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="StartTime" class="form-label">Time</label>
+                <input type="time" asp-for="StartTime" class="form-control" required />
+                <span asp-validation-for="StartTime" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="TicketPrice" class="form-label">Ticket Price</label>
+                <input type="number" asp-for="TicketPrice" class="form-control" step="0.01" min="0" required />
+                <span asp-validation-for="TicketPrice" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-action="ShowTimeManage" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(function() {
+            // Load halls when outlet changes
+            $('#outletSelect').change(function () {
+                var outletId = $(this).val();
+                $('#hallSelect').html('<option>Loading...</option>');
+
+                if (!outletId) {
+                    $('#hallSelect').html('<option value="">-- Select Hall --</option>');
+                    return;
+                }
+
+                $.get('@Url.Action("GetHalls")', { outletId: outletId }, function (data) {
+                    var options = '<option value="">-- Select Hall --</option>';
+                    $.each(data, function (i, hall) {
+                        options += `<option value="${hall.hallId}">${hall.name}</option>`;
+                    });
+                    $('#hallSelect').html(options);
+                });
+            });
+
+            (function () {
+                'use strict';
+                var forms = document.querySelectorAll('.needs-validation');
+                Array.prototype.slice.call(forms).forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            })();
+        });
+    </script>
+}
