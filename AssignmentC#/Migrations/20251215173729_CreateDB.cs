@@ -163,6 +163,7 @@ namespace AssignmentC_.Migrations
                     Region = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Cinema = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CollectDate = table.Column<DateOnly>(type: "date", maxLength: 100, nullable: false),
+                    Claim = table.Column<bool>(type: "bit", maxLength: 100, nullable: false),
                     MemberEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MemberUserId = table.Column<string>(type: "nvarchar(5)", nullable: true)
                 },

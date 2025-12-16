@@ -1,0 +1,23 @@
+﻿@model TimerViewModel
+
+<div class="flex gap-3 time">
+    @if (Model.Expired)
+    {
+        <script>
+            alert("Payment Session Expired");
+            window.location.href = "/Home/Index"
+        </script>
+    }
+    else
+    {
+        <div class="timeMins">
+            <span class="text-black text-xl font-bold font-mono" id="min">@Model.Minutes.ToString("00")</span>
+            <span class="text-text-secondary text-[10px] uppercase tracking-wider py-2">Mins</span>
+        </div>
+        <div class="text-black-50">:</div>
+        <div class="timeSecs">
+            <span class="text-black text-xl font-bold font-mono" id="sec">@Model.Seconds.ToString("00")</span>
+            <span class="text-text-secondary text-[10px] uppercase tracking-wider py-2">Secs</span>
+        </div> 
+    }
+</div>

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251215012917_CreateDB")]
+    [Migration("20251215173729_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -235,6 +235,10 @@ namespace AssignmentC_.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("Claim")
+                        .HasMaxLength(100)
+                        .HasColumnType("bit");
 
                     b.Property<DateOnly>("CollectDate")
                         .HasMaxLength(100)
