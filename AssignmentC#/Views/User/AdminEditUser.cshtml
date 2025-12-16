@@ -14,29 +14,33 @@
                   class="p-4 border rounded shadow-lg bg-white">
 
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
+                <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="Role" />
                 <input type="hidden" asp-for="CurrentPhotoUrl" />
 
-                <h5 class="mb-3 fw-bold">Profile Photo</h5>
+                @if (Model.Role != "Staff")
+                {
+                    <h5 class="mb-3 fw-bold">Profile Photo</h5>
+                    <div id="photoUploadArea" style="cursor: pointer; position: relative;">
+                        <input asp-for="NewPhoto" class="form-control" id="profilePhotoInput" type="file"
+                               accept="image/*" style="position: absolute; opacity: 0; width: 0; height: 0;" />
+                        <span asp-validation-for="NewPhoto" class="text-danger"></span>
 
-                <div id="photoUploadArea" style="cursor: pointer; position: relative;">
-
-                    <input asp-for="NewPhoto" class="form-control" id="profilePhotoInput" type="file"
-                           accept="image/*" style="position: absolute; opacity: 0; width: 0; height: 0;" />
-
-                    <span asp-validation-for="NewPhoto" class="text-danger"></span>
-
-                    <div class="mt-3 text-center">
-                        <img id="profilePhotoPreview"
-                             src="@Model.CurrentPhotoUrl"
-                             alt="Click to Change Photo"
-                             style="width: 150px; height: 150px; border: 3px solid #007bff; object-fit: cover; border-radius: 50%;" />
-
-                        <p class="mt-2 text-muted small">Click photo to change</p>
+                        <div class="mt-3 text-center">
+                            <img id="profilePhotoPreview"
+                                 src="@Model.CurrentPhotoUrl"
+                                 alt="Click to Change Photo"
+                                 style="width: 150px; height: 150px; border: 3px solid #007bff; object-fit: cover; border-radius: 50%;" />
+                            <p class="mt-2 text-muted small">Click photo to change</p>
+                        </div>
                     </div>
-                </div>
+                    <hr class="my-4" />
+                }
+                else
+                {
+
+                }
 
                 <hr class="my-4" />
                 <h5 class="mb-3 fw-bold">User Details</h5>
@@ -74,12 +78,11 @@
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-5">
-                    <a asp-action="MemberList" asp-controller="User" class="btn btn-secondary px-4">
-                        <i class="fa fa-arrow-left"></i> Cancel
+                    <a href="@(Context.Request.Query["returnUrl"].ToString() ?? Url.Action("MemberList", "User"))"
+                       class="btn btn-secondary px-4">
+                        Cancel
                     </a>
-                    <button type="submit" class="btn btn-primary px-4">
-                        <i class="fa fa-save"></i> Save Changes
-                    </button>
+                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
                 </div>
 
             </form>

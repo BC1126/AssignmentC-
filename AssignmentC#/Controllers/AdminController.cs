@@ -42,29 +42,46 @@ public class AdminController : Controller
             return RedirectToAction("MemberList");
         }
 
-        var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == id);
+        // Initialize temporary variables to hold profile data
+        string phone = "";
+        string gender = "";
+        string photo = "/img/default.jpg";
 
-        // If Member record is missing, create a temp object for the VM
-        if (member == null)
+        // --- MODIFIED PART: ROLE-BASED DATA RETRIEVAL ---
+        if (user.Role == "Staff")
         {
-            member = new Member
+            // Try to get data from Staff table
+            var staff = await db.Staffs.FirstOrDefaultAsync(s => s.UserId == id);
+            if (staff != null)
             {
-                UserId = user.UserId,
-                Phone = "",
-                Gender = "",
-                PhotoURL = "/img/default.jpg"
-            };
+                phone = staff.Phone;
+                gender = staff.Gender;
+            }
+            // Staff photo is ALWAYS forced to default as per your request
+            photo = "/img/default.jpg";
         }
+        else
+        {
+            // Try to get data from Member table
+            var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == id);
+            if (member != null)
+            {
+                phone = member.Phone;
+                gender = member.Gender;
+                photo = member.PhotoURL;
+            }
+        }
+        // --- END OF MODIFIED PART ---
 
         var vm = new AdminEditUserVM
         {
-            Id = user.UserId, // Matches new VM property name
+            Id = user.UserId,
             Name = user.Name,
             Email = user.Email,
             Role = user.Role,
-            Phone = member.Phone,
-            Gender = member.Gender,
-            CurrentPhotoUrl = member.PhotoURL // Matches new VM property name
+            Phone = phone,
+            Gender = gender,
+            CurrentPhotoUrl = photo
         };
 
         return View("~/Views/User/AdminEditUser.cshtml", vm);
@@ -72,7 +89,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AdminEditUser(AdminEditUserVM vm)
+    public async Task<IActionResult> AdminEditUser(AdminEditUserVM vm, string returnUrl)
     {
         // 1. Validation Check
         if (!ModelState.IsValid)
@@ -81,66 +98,79 @@ public class AdminController : Controller
             return View("~/Views/User/AdminEditUser.cshtml", vm);
         }
 
-        // 2. Fetch current entities using vm.Id
+        // 2. Fetch User first to check the Role
         var userToUpdate = await db.Users.FirstOrDefaultAsync(u => u.UserId == vm.Id);
-        var memberToUpdate = await db.Members.FirstOrDefaultAsync(m => m.UserId == vm.Id);
-
         if (userToUpdate == null)
         {
             TempData["Error"] = "Error: User not found.";
-            return RedirectToAction("MemberList","User");
+            return RedirectToAction("MemberList", "User");
         }
 
-        // 3. Handle Member record creation if it doesn't exist
-        bool isNewMember = false;
-        if (memberToUpdate == null)
-        {
-            memberToUpdate = new Member { UserId = vm.Id, PhotoURL = "/img/default.jpg" };
-            db.Members.Add(memberToUpdate);
-            isNewMember = true;
-        }
-
-        // 4. Photo Upload Logic (NewPhoto)
-        if (vm.NewPhoto != null && vm.NewPhoto.Length > 0)
-        {
-            var wwwRootPath = he.WebRootPath;
-
-            // Delete old file if it's not the default
-            if (memberToUpdate.PhotoURL != "/img/default.jpg" && !string.IsNullOrEmpty(memberToUpdate.PhotoURL))
-            {
-                var oldPath = Path.Combine(wwwRootPath, memberToUpdate.PhotoURL.TrimStart('/'));
-                if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
-            }
-
-            // Save new file
-            var fileName = $"{vm.Id}_{DateTime.Now.Ticks}{Path.GetExtension(vm.NewPhoto.FileName)}";
-            var uploadDir = Path.Combine(wwwRootPath, "img");
-            if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
-
-            var filePath = Path.Combine(uploadDir, fileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await vm.NewPhoto.CopyToAsync(stream);
-            }
-
-            memberToUpdate.PhotoURL = $"/img/{fileName}";
-        }
-
-        // 5. Update Properties
+        // 3. Update common User info
         userToUpdate.Name = vm.Name;
         userToUpdate.Email = vm.Email;
-        memberToUpdate.Phone = vm.Phone;
-        memberToUpdate.Gender = vm.Gender;
+
+        // --- MODIFIED PART: IF-ELSE FOR STAFF VS MEMBER ---
+        if (userToUpdate.Role == "Staff")
+        {
+            // Get existing Staff record
+            var staffToUpdate = await db.Staffs.FirstOrDefaultAsync(s => s.UserId == vm.Id);
+            if (staffToUpdate != null)
+            {
+                staffToUpdate.Phone = vm.Phone;
+                staffToUpdate.Gender = vm.Gender;
+            }
+        }
+        else
+        {
+            // Get existing Member record
+            var memberToUpdate = await db.Members.FirstOrDefaultAsync(m => m.UserId == vm.Id);
+
+            // If member doesn't exist, create it (avoiding the tracking error)
+            if (memberToUpdate == null)
+            {
+                memberToUpdate = new Member { UserId = vm.Id, PhotoURL = "/img/default.jpg" };
+                db.Members.Add(memberToUpdate);
+            }
+
+            memberToUpdate.Phone = vm.Phone;
+            memberToUpdate.Gender = vm.Gender;
+
+            // Photo Upload Logic for regular members
+            if (vm.NewPhoto != null && vm.NewPhoto.Length > 0)
+            {
+                var wwwRootPath = he.WebRootPath;
+                if (memberToUpdate.PhotoURL != "/img/default.jpg" && !string.IsNullOrEmpty(memberToUpdate.PhotoURL))
+                {
+                    var oldPath = Path.Combine(wwwRootPath, memberToUpdate.PhotoURL.TrimStart('/'));
+                    if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+                }
+
+                var fileName = $"{vm.Id}_{DateTime.Now.Ticks}{Path.GetExtension(vm.NewPhoto.FileName)}";
+                var uploadDir = Path.Combine(wwwRootPath, "img");
+                if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+
+                var filePath = Path.Combine(uploadDir, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await vm.NewPhoto.CopyToAsync(stream);
+                }
+                memberToUpdate.PhotoURL = $"/img/{fileName}";
+            }
+        }
+        // --- END OF MODIFIED PART ---
 
         // 6. Save Changes
         try
         {
-            db.Users.Update(userToUpdate);
-            if (!isNewMember) db.Members.Update(memberToUpdate);
-
+            // SaveChangesAsync handles both Users and Members/Staff updates automatically
             await db.SaveChangesAsync();
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
             TempData["Info"] = "User updated successfully!";
-            return RedirectToAction("MemberList","User");
+            return RedirectToAction("MemberList", "User");
         }
         catch (Exception ex)
         {
@@ -151,7 +181,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AdminDeleteUser(string id)
+    public async Task<IActionResult> AdminDeleteUser(string id, string returnUrl)
     {
         if (string.IsNullOrEmpty(id))
         {
@@ -190,6 +220,10 @@ public class AdminController : Controller
         catch (Exception ex)
         {
             TempData["Error"] = "Delete failed: " + ex.Message;
+        }
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
         }
 
         return RedirectToAction("MemberList", "User");
