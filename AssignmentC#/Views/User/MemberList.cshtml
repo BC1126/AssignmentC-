@@ -7,21 +7,29 @@
 
 @section head {
     <style>
-        /* Styles for the user photo thumbnail */
         .user-photo-thumbnail {
-            width: 50px; /* Reduced size for cleaner table */
+            width: 50px;
             height: 50px;
             object-fit: cover;
-            border-radius: 5px; /* Optional: Make it look a bit nicer */
+            border-radius: 5px;
         }
-        /* Style for the table to improve readability */
+
         .table th, .table td {
             vertical-align: middle;
+        }
+        /* Optional: Add a subtle shadow to the table container */
+        .table-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
     </style>
 }
 
+@* Everything is now inside this container for consistent side spacing *@
 <div class="container mt-4">
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>User Management</h2>
 
@@ -41,64 +49,72 @@
             </a>
         </div>
     </div>
+
+    <div class="d-flex justify-content-end mb-3">
+        <a asp-action="AdminAddUser" asp-controller="Admin" asp-route-role="Member" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg"></i> Add New Member
+        </a>
+    </div>
+
+    @if (Model != null)
+    {
+        <div class="table-container border">
+            <p class="text-muted">Showing @Model.Count() user record(s)</p>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Photo</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            <tr>
+                                <td><strong>@u.UserId</strong></td>
+                                <td>@u.Name</td>
+                                <td>@u.Gender</td>
+                                <td>@u.Email</td>
+                                <td>@u.Phone</td>
+                                <td>
+                                    @* Fallback to /images/default.jpg which is our master file *@
+                                    <img src="@u.PhotoURL" class="user-photo-thumbnail border" alt="User Photo"
+                                         onerror="this.onerror=null; this.src='/images/default.jpg';" />
+                                </td>
+                                <td class="text-center">
+                                    <a asp-controller="Admin" asp-action="AdminEditUser"
+                                       asp-route-id="@u.UserId"
+                                       asp-route-returnUrl="@currentUrl"
+                                       class="btn btn-sm btn-info text-white">
+                                        Update
+                                    </a>
+
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="openDeleteModal('@u.UserId', '@u.Name')">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">No user data available or an error occurred loading the data.</div>
+    }
 </div>
-<div class="d-flex justify-content-end mb-3 px-5">
-    <a asp-action="AdminAddUser" asp-controller="Admin" asp-route-role="Member" class="btn btn-primary">
-        Add New Member
-    </a>
-</div>
 
-@if (Model != null)
-{
-    <p>@Model.Count() user record(s)</p>
 
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.First().UserId)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Name)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Email)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
-                <th>@Html.DisplayNameFor(model => model.First().PhotoURL)</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var u in Model)
-            {
-                <tr>
-                    <td>@u.UserId</td>
-                    <td>@u.Name</td>
-                    <td>@u.Gender</td>
-                    <td>@u.Email</td>
-                    <td>@u.Phone</td>
-                    <td>
-                        <img src="@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name"
-                             onerror="this.onerror=null; this.src='/img/default.jpg';" /> @* Added fallback for broken images *@
-                    </td>
-                    <td>
-                        <a asp-controller="Admin" asp-action="AdminEditUser"
-                           asp-route-id="@u.UserId"
-                           asp-route-returnUrl="@currentUrl"
-                           class="btn btn-sm btn-info text-white">
-                            Update
-                        </a>
-
-                        <button type="button" class="btn btn-sm btn-danger"
-                                onclick="openDeleteModal('@u.UserId', '@u.Name')">
-                            Delete
-                        </button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p class="alert alert-warning">No user data available or an error occurred loading the data.</p>
-}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
