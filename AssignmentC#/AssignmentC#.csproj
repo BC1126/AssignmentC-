@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Migrations\" />
     <Folder Include="Views\Account\" />
     <Folder Include="Views\Hall\" />
     <Folder Include="wwwroot\products\" />

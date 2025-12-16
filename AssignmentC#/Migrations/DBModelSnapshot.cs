@@ -349,7 +349,7 @@ namespace AssignmentC_.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Payment");
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>
@@ -400,52 +400,6 @@ namespace AssignmentC_.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.ProductReview", b =>
-                {
-                    b.Property<int>("ProductReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductReviewId"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("nvarchar(4)");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
-                    b.HasKey("ProductReviewId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ProductReviews");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
                 {
                     b.Property<int>("PromotionId")
@@ -459,7 +413,7 @@ namespace AssignmentC_.Migrations
                         .HasMaxLength(13)
                         .HasColumnType("nvarchar(13)");
 
-                    b.Property<int?>("PaymentId")
+                    b.Property<int>("PaymentId")
                         .HasColumnType("int");
 
                     b.HasKey("PromotionId");
@@ -659,8 +613,8 @@ namespace AssignmentC_.Migrations
                 {
                     b.HasBaseType("AssignmentC_.Models.Promotion");
 
-                    b.Property<DateOnly>("CreatedTime")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("CreatedTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("DiscountValue")
                         .HasColumnType("decimal(18,2)");
@@ -669,11 +623,11 @@ namespace AssignmentC_.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("VoucherCode")
                         .IsRequired()
@@ -824,7 +778,7 @@ namespace AssignmentC_.Migrations
                         .IsRequired();
 
                     b.HasOne("AssignmentC_.Models.User", "User")
-                        .WithMany("Payment")
+                        .WithMany()
                         .HasForeignKey("UserId");
 
                     b.Navigation("Order");
@@ -832,30 +786,15 @@ namespace AssignmentC_.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.ProductReview", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Product", "Product")
-                        .WithMany("Reviews")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AssignmentC_.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
                 {
-                    b.HasOne("AssignmentC_.Models.Payment", null)
-                        .WithMany("Promotion")
-                        .HasForeignKey("PaymentId");
+                    b.HasOne("AssignmentC_.Models.Payment", "Payment")
+                        .WithMany("Promotions")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -949,24 +888,17 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
                 {
-                    b.Navigation("Promotion");
+                    b.Navigation("Promotions");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>
                 {
                     b.Navigation("Lines");
-
-                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>
                 {
                     b.Navigation("Bookings");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.User", b =>
-                {
-                    b.Navigation("Payment");
                 });
 #pragma warning restore 612, 618
         }

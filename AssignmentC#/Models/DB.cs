@@ -24,7 +24,7 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<ShowTime> ShowTimes { get; set; }
     public DbSet<Outlet> Outlets { get; set; }
     public DbSet<MovieReview> MovieReviews { get; set; }
-    public DbSet<ProductReview> ProductReviews { get; set; }
+    public DbSet<Payment> Payments { get; set; }
     public DbSet<Promotion> Promotions { get; set; }
     public DbSet<Memberpoints> Memberpoints { get; set; }
     public DbSet<Voucher> Voucher { get; set; }
@@ -69,10 +69,6 @@ public class User
     [MaxLength(11)]
     public string Phone { get; set; }
     public string Role => GetType().Name;
-
-
-    // Navigation Properties
-    public List<Payment> Payment { get; set; } = [];
 }
 
 public class Admin : User
@@ -166,13 +162,15 @@ public class Payment
     //FK
     public User User { get; set; }
     public Order Order { get; set; }
-    public List<Promotion> Promotion { get; set; } = [];
+    public List<Promotion> Promotions { get; set; } = [];
 }
 
 public class Promotion
 {
     [Key]
     public int PromotionId { get; set; }
+
+    public Payment Payment { get; set; }
 }
 
 public class Memberpoints : Promotion

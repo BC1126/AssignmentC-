@@ -361,3 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/AssignmentC#/Migrations/20251216132433_CreateDB.cs
