@@ -1,0 +1,116 @@
+﻿@model AssignmentC_.Models.ShowTimeManageVM
+
+@{
+    ViewData["Title"] = "Manage ShowTimes";
+}
+
+
+<br />
+<br />
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h4>ShowTime Management</h4>
+
+        <!-- Filters -->
+        <form id="filterForm" method="get" asp-action="ShowTimeManage" class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label class="form-label">Outlet</label>
+                <select name="outletId" id="outletSelect" class="form-select">
+                    <option value="">-- All Outlets --</option>
+                    @foreach (var outlet in Model.Outlets)
+                    {
+                        <option value="@outlet.OutletId" selected="@(Model.OutletId == outlet.OutletId)">
+                            @outlet.Name (@outlet.City)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Hall</label>
+                <select name="hallId" id="hallSelect" class="form-select" disabled>
+                    <option value="">-- Select Hall --</option>
+                </select>
+
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input type="date"
+                       name="date"
+                       id="dateSelect"
+                       value="@Model.Date.ToString("yyyy-MM-dd")"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end">
+                <a asp-action="Manage" class="btn btn-success w-100">Add New ShowTime</a>
+            </div>
+        </form>
+
+        <!-- ShowTime Table -->
+        <div id="showtimeTable">
+            @if (Model.ExistingShowTimes == null || !Model.ExistingShowTimes.Any())
+            {
+                <div class="alert alert-info">
+                    No showtimes scheduled for the selected filters.
+                </div>
+            }
+            else
+            {
+                @Html.Partial("_ShowTimeTable", Model.ExistingShowTimes)
+            }
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(function () {
+
+            function loadShowTimes() {
+                $.get('@Url.Action("FilterShowTimes")',
+                    $('#filterForm').serialize(),
+                    function (data) {
+                        $('#showtimeTable').html(data);
+                    }
+                );
+            }
+
+            // Outlet change → load halls + refresh table
+        $('#outletSelect').on('change', function () {
+            let outletId = $(this).val();
+
+            $('#hallSelect')
+                .prop('disabled', true)
+                .html('<option value="">Loading...</option>');
+
+            if (!outletId) {
+                $('#hallSelect').html('<option value="">-- Select Hall --</option>');
+                loadShowTimes(); // SHOW ALL showtimes if no outlet
+                return;
+            }
+
+            $.get('@Url.Action("GetHalls")', { outletId }, function (data) {
+                let options = '<option value="">-- Select Hall --</option>';
+                $.each(data, function (i, hall) {
+                    options += `<option value="${hall.hallId}">${hall.name}</option>`;
+                });
+                $('#hallSelect').html(options).prop('disabled', false);
+
+                loadShowTimes(); // 🔥 IMPORTANT: filter table by selected outlet immediately
+            });
+        });
+
+
+            // Hall OR Date change → refresh table
+                   $('#hallSelect, #dateSelect').on('change', function () {
+            loadShowTimes(); 
+        });
+
+
+        });
+    </script>
+}

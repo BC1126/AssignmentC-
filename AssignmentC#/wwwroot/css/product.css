@@ -113,7 +113,7 @@
 }
 
     .info:not(:empty) {
-        animation: fade 5s;
+        animation: fade 8s;
     }
 
 @keyframes fade {
