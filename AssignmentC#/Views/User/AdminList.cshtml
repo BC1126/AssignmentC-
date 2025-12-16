@@ -6,20 +6,20 @@
 
 @section head {
     <style>
-        /* Styles for the user photo thumbnail */
-        .user-photo-thumbnail {
-            width: 50px; /* Reduced size for cleaner table */
-            height: 50px;
-            object-fit: cover;
-            border-radius: 5px; /* Optional: Make it look a bit nicer */
-        }
-        /* Style for the table to improve readability */
         .table th, .table td {
             vertical-align: middle;
+        }
+        /* Consistent container styling for all list views */
+        .table-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
     </style>
 }
 
+@* Everything is wrapped in this container for consistent side spacing *@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>User Management</h2>
@@ -40,37 +40,44 @@
             </a>
         </div>
     </div>
+
+    @* Admin list usually doesn't have an "Add" button for security, 
+       but if it did, it would go here to match the others. *@
+
+    @if (Model != null)
+    {
+        <div class="table-container border">
+            <p class="text-muted">Showing @Model.Count() admin record(s)</p>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>@Html.DisplayNameFor(model => model.First().UserId)</th>
+                            <th>@Html.DisplayNameFor(model => model.First().Name)</th>
+                            <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
+                            <th>@Html.DisplayNameFor(model => model.First().Email)</th>
+                            <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model)
+                        {
+                            <tr>
+                                <td><strong>@u.UserId</strong></td>
+                                <td>@u.Name</td>
+                                <td>@u.Gender</td>
+                                <td>@u.Email</td>
+                                <td>@u.Phone</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning shadow-sm">No admin data available or an error occurred loading the data.</div>
+    }
 </div>
-
-@if (Model != null)
-{
-    <p>@Model.Count() user record(s)</p>
-
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.First().UserId)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Name)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Email)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var u in Model)
-            {
-                <tr>
-                    <td>@u.UserId</td>
-                    <td>@u.Name</td>
-                    <td>@u.Gender</td>
-                    <td>@u.Email</td>
-                    <td>@u.Phone</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p class="alert alert-warning">No user data available or an error occurred loading the data.</p>
-}

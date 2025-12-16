@@ -14,12 +14,13 @@ public class UserController : Controller
 {
     private readonly DB db;
     private readonly Helper hp;
+    private readonly IWebHostEnvironment en;
 
-
-    public UserController(DB db, Helper hp)
+    public UserController(DB db, Helper hp, IWebHostEnvironment en)
     {
         this.db = db;
         this.hp = hp;
+        this.en = en;
     }
 
     // In AdminController.cs
@@ -111,24 +112,28 @@ public class UserController : Controller
         }
 
         // --- PHOTO REQUIRED LOGIC ---
-        string photoUrl = null;
+        string photoUrl;
 
-        // The framework handles the "is null" check via the [Required] attribute on the Photo property.
-        // We only need to run custom validation and saving if the Model Binder received a file.
         if (vm.Photo != null)
         {
-            // 2a. Validate photo file content/size 
-            if (ModelState.GetValidationState("Photo") != ModelValidationState.Invalid)
-            {
-                var err = hp.ValidatePhoto(vm.Photo);
-                if (err != "") ModelState.AddModelError("Photo", err);
-            }
+            // Use your existing helper for uploads
+            photoUrl = hp.SavePhoto(vm.Photo, "photos");
+        }
+        else
+        {
+            // 1. Generate a unique name just like your helper does
+            string fileName = Guid.NewGuid().ToString("n") + ".jpg";
 
-            // 2b. If photo validation passed, generate the URL/path
-            if (!ModelState.ContainsKey("Photo") || ModelState["Photo"].ValidationState != ModelValidationState.Invalid)
-            {
-                photoUrl = hp.SavePhoto(vm.Photo, "photos");
-            }
+            // 2. Define where the master default is and where the new user photo goes
+            string sourceFile = Path.Combine(en.WebRootPath, "img", "default.jpg"); // Path to your original
+            string destFolder = Path.Combine(en.WebRootPath, "photos");
+            string destFile = Path.Combine(destFolder, fileName);
+
+            // 3. Ensure folder exists and copy
+            if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
+            System.IO.File.Copy(sourceFile, destFile);
+
+            photoUrl = $"/photos/{fileName}";
         }
         // --- END PHOTO LOGIC ---
 

@@ -13,13 +13,13 @@ public class AdminController : Controller
 {
     private readonly DB db;
     private readonly Helper hp;
-    private readonly IWebHostEnvironment he;
+    private readonly IWebHostEnvironment en;
 
-    public AdminController(DB db, Helper hp, IWebHostEnvironment he)
+    public AdminController(DB db, Helper hp, IWebHostEnvironment en)
     {
         this.db = db;
         this.hp = hp;
-        this.he = he;
+        this.en = en;
     }
 
     public IActionResult AdminDashboard()
@@ -140,7 +140,7 @@ public class AdminController : Controller
             // Photo Upload Logic for regular members
             if (vm.NewPhoto != null && vm.NewPhoto.Length > 0)
             {
-                var wwwRootPath = he.WebRootPath;
+                var wwwRootPath = en.WebRootPath;
                 if (memberToUpdate.PhotoURL != "/img/default.jpg" && !string.IsNullOrEmpty(memberToUpdate.PhotoURL))
                 {
                     var oldPath = Path.Combine(wwwRootPath, memberToUpdate.PhotoURL.TrimStart('/'));
@@ -204,7 +204,7 @@ public class AdminController : Controller
             // 1. Delete the physical photo file if it's not the default
             if (member != null && !string.IsNullOrEmpty(member.PhotoURL) && member.PhotoURL != "/img/default.jpg")
             {
-                var filePath = Path.Combine(he.WebRootPath, member.PhotoURL.TrimStart('/'));
+                var filePath = Path.Combine(en.WebRootPath, member.PhotoURL.TrimStart('/'));
                 if (System.IO.File.Exists(filePath))
                 {
                     System.IO.File.Delete(filePath);
@@ -229,18 +229,24 @@ public class AdminController : Controller
 
         return RedirectToAction("MemberList", "User");
     }
-    // GET: Show the Add Staff form
+
     [HttpGet]
-    public IActionResult AdminAddStaff()
+    public IActionResult AdminAddUser(string role)
     {
-        return View("~/Views/User/AdminAddStaff.cshtml", new AddStaffVM());
+        // Default to Staff if nothing is passed, or handle errors
+        var vm = new AddUserVM
+        {
+            Role = role ?? "Staff"
+        };
+
+        return View("~/Views/User/AdminAddUser.cshtml", vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult AdminAddStaff(AddStaffVM vm)
+    public IActionResult AdminAddUser(AddUserVM vm)
     {
-        // 1. Check for email existence in the Users table
+        // 1. Check for email existence
         if (ModelState.GetValidationState("Email") != ModelValidationState.Invalid &&
             db.Users.Any(u => u.Email == vm.Email))
         {
@@ -251,42 +257,65 @@ public class AdminController : Controller
         {
             try
             {
-                // 2. Generate the Primary Key (UserId) using the "S" prefix
-                string newUserId = hp.GenerateNextUserId("S");
-
-                // 3. Create a NEW STAFF object (Inherits from User)
-                // Creating 'new Staff' ensures the Discriminator is set to "Staff"
-                var newStaff = new Staff
+                if (vm.Role == "Staff")
                 {
-                    UserId = newUserId, //
-                    Name = vm.Name, //
-                    Email = vm.Email, //
-                    Phone = vm.Phone ?? "", //
+                    var newStaff = new Staff
+                    {
+                        UserId = hp.GenerateNextUserId("S"),
+                        Name = vm.Name,
+                        Email = vm.Email,
+                        Phone = vm.Phone ?? "",
+                        PasswordHash = hp.HashPassword("Default123!"),
+                        Gender = vm.Gender.Substring(0, 1).ToUpper()
+                    };
+                    db.Users.Add(newStaff);
+                }
+                else // Role is Member
+                {
+                    // --- PHOTO LOGIC: Only for Members ---
+                    string photoUrl = "";
+                    string fileName = Guid.NewGuid().ToString("n") + ".jpg";
+                    string sourceFile = Path.Combine(en.WebRootPath, "img", "default.jpg");
+                    string destFolder = Path.Combine(en.WebRootPath, "photos");
+                    string destFile = Path.Combine(destFolder, fileName);
 
-                    // Using a default password for admin-created staff
-                    PasswordHash = hp.HashPassword("Default123!"),
+                    if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
 
-                    // Ensure Gender matches your MaxLength(1) constraint
-                    Gender = vm.Gender.Substring(0, 1).ToUpper()
-                };
+                    if (System.IO.File.Exists(sourceFile))
+                    {
+                        System.IO.File.Copy(sourceFile, destFile);
+                        photoUrl = $"/photos/{fileName}";
+                    }
 
-                // 4. Add the staff object to the main Users set
-                db.Users.Add(newStaff);
-                db.SaveChanges(); //
+                    var newMember = new Member
+                    {
+                        UserId = hp.GenerateNextUserId("M"),
+                        Name = vm.Name,
+                        Email = vm.Email,
+                        Phone = vm.Phone ?? "",
+                        PasswordHash = hp.HashPassword("Default123!"),
+                        Gender = vm.Gender.Substring(0, 1).ToUpper(),
+                        PhotoURL = photoUrl
+                    };
+                    db.Users.Add(newMember);
+                }
 
-                TempData["Info"] = $"Staff {newUserId} added successfully!";
-                return RedirectToAction("StaffList", "User");
+                db.SaveChanges();
+
+                TempData["Info"] = $"{vm.Role} added successfully!";
+
+                return vm.Role == "Staff"
+                    ? RedirectToAction("StaffList", "User")
+                    : RedirectToAction("MemberList", "User");
             }
             catch (Exception ex)
             {
-                // Capture the real database error if SaveChanges fails
                 var error = ex.InnerException?.Message ?? ex.Message;
                 ModelState.AddModelError("", "Database Error: " + error);
             }
         }
 
-        // If we got here, something failed; redisplay the form
-        return View("~/Views/User/AdminAddStaff.cshtml", vm);
+        return View("~/Views/Admin/AdminAddUser.cshtml", vm);
     }
 
 
