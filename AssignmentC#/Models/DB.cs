@@ -169,8 +169,6 @@ public class Promotion
 {
     [Key]
     public int PromotionId { get; set; }
-
-    public Payment Payment { get; set; }
 }
 
 public class Memberpoints : Promotion

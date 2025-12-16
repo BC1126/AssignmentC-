@@ -1,4 +1,4 @@
-﻿.term{
+﻿.term {
     width: 68%;
     padding: 20px;
     margin: 25px;
@@ -7,7 +7,7 @@
     color: rgb(250, 250, 250);
 }
 
-.checkoutbtn{
+.checkoutbtn {
     background: yellow;
     border: none;
     padding: 20px;
@@ -15,19 +15,19 @@
     border-radius: 20px;
 }
 
-.checkoutbtn > *{
-    margin: 8px;
-}
+    .checkoutbtn > * {
+        margin: 8px;
+    }
 
-.changeRow{
+.changeRow {
     display: flex;
 }
 
-.changeRow > *{
-    width: 50%;
-}
+    .changeRow > * {
+        width: 50%;
+    }
 
-.displayPrice{
+.displayPrice {
     text-align: right;
 }
 
@@ -38,7 +38,6 @@
     --surface-2: rgba(50,50,50. 0.6);
     --border: #2e3658;
     --text-muted: black;
-
     --surface-soft: #161a2c;
     --success: #2dd4bf;
 }
@@ -119,12 +118,12 @@ h1 {
     display: flex;
 }
 
-.card h3 {
-    font-size: 1.1rem;
-    width: 90%;
-}
+    .card h3 {
+        font-size: 1.1rem;
+        width: 90%;
+    }
 
-.btnAppend{
+.btnAppend {
     width: 5%;
     border: none;
     background: none;
@@ -158,9 +157,9 @@ input[type=text], input[type=month], input[type=password] {
     color: black;
 }
 
-    input::placeholder {
-        color: #6b7280
-    }
+input::placeholder {
+    color: #6b7280
+}
 
 .form-row {
     display: grid;
@@ -221,12 +220,12 @@ input[type=text], input[type=month], input[type=password] {
     font-weight: 800;
 }
 
-.summary-total span:last-child {
-    color: var(--primary);
-    font-size: 1.2rem
-}
+    .summary-total span:last-child {
+        color: var(--primary);
+        font-size: 1.2rem
+    }
 
-.methodCard{
+.methodCard {
     border: 1px solid black;
     padding: 10px 15px;
     margin-right: 10px;
@@ -234,7 +233,7 @@ input[type=text], input[type=month], input[type=password] {
     display: flex;
 }
 
-.paymentSelect{
+.paymentSelect {
     display: flex;
 }
 
@@ -245,43 +244,43 @@ input[type=text], input[type=month], input[type=password] {
 /* =========================
    Time Header
 ========================= */
-.timeHeader, .time, .flex{
+.timeHeader, .time, .flex {
     display: flex;
 }
 
-.timeHeader > p{
-    width: 95%;
-}
+    .timeHeader > p {
+        width: 95%;
+    }
 
-.promoCode > div{
+.promoCode > div {
     width: 85%;
 }
 
-.promoCode > button{
+.promoCode > button {
     border-radius: 10px;
     width: 15%;
     color: white;
     background-color: var(--primary);
 }
 
-.memberPoint{
-   width: 100%;
+.memberPoint {
+    width: 100%;
 }
 
-.memberPoint > div{
-    width: 95%;
-}
+    .memberPoint > div {
+        width: 95%;
+    }
 
-.memberPoint button {
-    border: none;
-    background-color: var(--surface);
-}
+    .memberPoint button {
+        border: none;
+        background-color: var(--surface);
+    }
 
 .arrowRight {
     font-size: 30px;
 }
 
-.actions > a{
+.actions > a {
     text-align: center;
     padding: 15px;
 }
@@ -506,9 +505,9 @@ td {
     margin: auto;
 }
 
-.receiptBtn .btn-primary{
-    width: 450px;
-}
+    .receiptBtn .btn-primary {
+        width: 450px;
+    }
 
 /* =======================
    PRINT
@@ -563,7 +562,7 @@ td {
 }
 
 .voucher-card input:checked + .voucher-content,
-.methodBtn input:checked + .methodCard{
+.methodBtn input:checked + .methodCard {
     background: gray;
     border: 1px solid black;
 }
@@ -596,3 +595,136 @@ td {
     background: none;
     border: none;
 }
+
+a {
+    text-decoration: none;
+    color: inherit
+}
+
+/* ========== MAIN ========== */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Content */
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+}
+
+.container {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    background-color: lightgray;
+    padding: 60px;
+    border-radius: 30px;
+}
+
+.voucherHeader {
+    margin-top: -35px;
+    margin-bottom: -35px;
+}
+
+/* Headings */
+h1 {
+    font-size: 36px;
+    font-weight: 800
+}
+
+h3 {
+    font-size: 18px;
+    font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 1px solid black;
+}
+
+p.subtitle {
+    color: #909acb;
+}
+
+/* ========== FORM ========== */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 32px
+}
+
+.sectionVoucher {
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px
+}
+
+    .grid-2 > div {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px
+    }
+
+label {
+    font-size: 14px;
+    font-weight: 500
+}
+
+input,
+textarea,
+select {
+    background: transparent;
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: black;
+    outline: none;
+}
+
+    input:focus,
+    textarea:focus,
+    select:focus textarea {
+        resize: none
+    }
+
+.hint {
+    font-size: 12px;
+    color: #909acb
+}
+
+/* Action bar */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid black;
+}
+
+.btn {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+    .btn.secondary {
+        background: transparent;
+        color: black
+    }
+
+    .btn.primary {
+        background: #d96c2c;
+        color: #fff;
+        box-shadow: 0 5px 30px rgba(242, 135, 13, 0.35);
+    }

@@ -105,13 +105,13 @@ public class TicketController(DB db) : Controller
     }
 
     [HttpGet]
-    public IActionResult AddPromo()
+    public IActionResult Voucher()
     {
         return View();
     }
 
     [HttpPost]
-    public IActionResult AddPromo(VoucherViewModel model)
+    public IActionResult Voucher(VoucherViewModel model)
     {
         var voucher = new Voucher
         {
