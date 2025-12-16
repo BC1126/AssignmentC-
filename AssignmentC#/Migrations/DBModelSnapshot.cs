@@ -233,6 +233,10 @@ namespace AssignmentC_.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("Claim")
+                        .HasMaxLength(100)
+                        .HasColumnType("bit");
+
                     b.Property<DateOnly>("CollectDate")
                         .HasMaxLength(100)
                         .HasColumnType("date");

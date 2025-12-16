@@ -1,21 +1,304 @@
 ﻿using AssignmentC_;
+using AssignmentC_.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using AssignmentC_.Models;
+using Microsoft.Extensions.Hosting;
 
 namespace AssignmentC_.Controllers;
 
+[Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
     private readonly DB db;
     private readonly Helper hp;
+    private readonly IWebHostEnvironment he;
 
-    public AdminController(DB db, Helper hp)
+    public AdminController(DB db, Helper hp, IWebHostEnvironment he)
     {
         this.db = db;
         this.hp = hp;
+        this.he = he;
     }
+
+    public IActionResult AdminDashboard()
+    {
+        return View("~/Views/Home/AdminDashboard.cshtml");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> AdminEditUser(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            TempData["Error"] = "User ID not specified.";
+            return RedirectToAction("MemberList");
+        }
+
+        var user = await db.Users.FirstOrDefaultAsync(u => u.UserId == id);
+        if (user == null)
+        {
+            TempData["Error"] = $"User with ID {id} not found.";
+            return RedirectToAction("MemberList");
+        }
+
+        // Initialize temporary variables to hold profile data
+        string phone = "";
+        string gender = "";
+        string photo = "/img/default.jpg";
+
+        // --- MODIFIED PART: ROLE-BASED DATA RETRIEVAL ---
+        if (user.Role == "Staff")
+        {
+            // Try to get data from Staff table
+            var staff = await db.Staffs.FirstOrDefaultAsync(s => s.UserId == id);
+            if (staff != null)
+            {
+                phone = staff.Phone;
+                gender = staff.Gender;
+            }
+            // Staff photo is ALWAYS forced to default as per your request
+            photo = "/img/default.jpg";
+        }
+        else
+        {
+            // Try to get data from Member table
+            var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == id);
+            if (member != null)
+            {
+                phone = member.Phone;
+                gender = member.Gender;
+                photo = member.PhotoURL;
+            }
+        }
+        // --- END OF MODIFIED PART ---
+
+        var vm = new AdminEditUserVM
+        {
+            Id = user.UserId,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            Phone = phone,
+            Gender = gender,
+            CurrentPhotoUrl = photo
+        };
+
+        return View("~/Views/User/AdminEditUser.cshtml", vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminEditUser(AdminEditUserVM vm, string returnUrl)
+    {
+        // 1. Validation Check
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Validation failed. Please check your inputs.";
+            return View("~/Views/User/AdminEditUser.cshtml", vm);
+        }
+
+        // 2. Fetch User first to check the Role
+        var userToUpdate = await db.Users.FirstOrDefaultAsync(u => u.UserId == vm.Id);
+        if (userToUpdate == null)
+        {
+            TempData["Error"] = "Error: User not found.";
+            return RedirectToAction("MemberList", "User");
+        }
+
+        // 3. Update common User info
+        userToUpdate.Name = vm.Name;
+        userToUpdate.Email = vm.Email;
+
+        // --- MODIFIED PART: IF-ELSE FOR STAFF VS MEMBER ---
+        if (userToUpdate.Role == "Staff")
+        {
+            // Get existing Staff record
+            var staffToUpdate = await db.Staffs.FirstOrDefaultAsync(s => s.UserId == vm.Id);
+            if (staffToUpdate != null)
+            {
+                staffToUpdate.Phone = vm.Phone;
+                staffToUpdate.Gender = vm.Gender;
+            }
+        }
+        else
+        {
+            // Get existing Member record
+            var memberToUpdate = await db.Members.FirstOrDefaultAsync(m => m.UserId == vm.Id);
+
+            // If member doesn't exist, create it (avoiding the tracking error)
+            if (memberToUpdate == null)
+            {
+                memberToUpdate = new Member { UserId = vm.Id, PhotoURL = "/img/default.jpg" };
+                db.Members.Add(memberToUpdate);
+            }
+
+            memberToUpdate.Phone = vm.Phone;
+            memberToUpdate.Gender = vm.Gender;
+
+            // Photo Upload Logic for regular members
+            if (vm.NewPhoto != null && vm.NewPhoto.Length > 0)
+            {
+                var wwwRootPath = he.WebRootPath;
+                if (memberToUpdate.PhotoURL != "/img/default.jpg" && !string.IsNullOrEmpty(memberToUpdate.PhotoURL))
+                {
+                    var oldPath = Path.Combine(wwwRootPath, memberToUpdate.PhotoURL.TrimStart('/'));
+                    if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+                }
+
+                var fileName = $"{vm.Id}_{DateTime.Now.Ticks}{Path.GetExtension(vm.NewPhoto.FileName)}";
+                var uploadDir = Path.Combine(wwwRootPath, "img");
+                if (!Directory.Exists(uploadDir)) Directory.CreateDirectory(uploadDir);
+
+                var filePath = Path.Combine(uploadDir, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await vm.NewPhoto.CopyToAsync(stream);
+                }
+                memberToUpdate.PhotoURL = $"/img/{fileName}";
+            }
+        }
+        // --- END OF MODIFIED PART ---
+
+        // 6. Save Changes
+        try
+        {
+            // SaveChangesAsync handles both Users and Members/Staff updates automatically
+            await db.SaveChangesAsync();
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            TempData["Info"] = "User updated successfully!";
+            return RedirectToAction("MemberList", "User");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Save failed: " + ex.Message;
+            return View("~/Views/User/AdminEditUser.cshtml", vm);
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminDeleteUser(string id, string returnUrl)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            TempData["Error"] = "User ID not specified.";
+            return RedirectToAction("MemberList", "User");
+        }
+
+        var user = await db.Users.FirstOrDefaultAsync(u => u.UserId == id);
+        var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == id);
+
+        if (user == null)
+        {
+            TempData["Error"] = "User not found.";
+            return RedirectToAction("MemberList", "User");
+        }
+
+        try
+        {
+            // 1. Delete the physical photo file if it's not the default
+            if (member != null && !string.IsNullOrEmpty(member.PhotoURL) && member.PhotoURL != "/img/default.jpg")
+            {
+                var filePath = Path.Combine(he.WebRootPath, member.PhotoURL.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+            }
+
+            // 2. Remove records from database
+            if (member != null) db.Members.Remove(member);
+            db.Users.Remove(user);
+
+            await db.SaveChangesAsync();
+            TempData["Info"] = $"User {id} deleted successfully.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "Delete failed: " + ex.Message;
+        }
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction("MemberList", "User");
+    }
+    // GET: Show the Add Staff form
+    [HttpGet]
+    public IActionResult AdminAddStaff()
+    {
+        return View("~/Views/User/AdminAddStaff.cshtml", new AddStaffVM());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult AdminAddStaff(AddStaffVM vm)
+    {
+        // 1. Check for email existence in the Users table
+        if (ModelState.GetValidationState("Email") != ModelValidationState.Invalid &&
+            db.Users.Any(u => u.Email == vm.Email))
+        {
+            ModelState.AddModelError("Email", "Duplicated Email.");
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                // 2. Generate the Primary Key (UserId) using the "S" prefix
+                string newUserId = hp.GenerateNextUserId("S");
+
+                // 3. Create a NEW STAFF object (Inherits from User)
+                // Creating 'new Staff' ensures the Discriminator is set to "Staff"
+                var newStaff = new Staff
+                {
+                    UserId = newUserId, //
+                    Name = vm.Name, //
+                    Email = vm.Email, //
+                    Phone = vm.Phone ?? "", //
+
+                    // Using a default password for admin-created staff
+                    PasswordHash = hp.HashPassword("Default123!"),
+
+                    // Ensure Gender matches your MaxLength(1) constraint
+                    Gender = vm.Gender.Substring(0, 1).ToUpper()
+                };
+
+                // 4. Add the staff object to the main Users set
+                db.Users.Add(newStaff);
+                db.SaveChanges(); //
+
+                TempData["Info"] = $"Staff {newUserId} added successfully!";
+                return RedirectToAction("StaffList", "User");
+            }
+            catch (Exception ex)
+            {
+                // Capture the real database error if SaveChanges fails
+                var error = ex.InnerException?.Message ?? ex.Message;
+                ModelState.AddModelError("", "Database Error: " + error);
+            }
+        }
+
+        // If we got here, something failed; redisplay the form
+        return View("~/Views/User/AdminAddStaff.cshtml", vm);
+    }
+
+
+
+
+
+
+
+
+
+
+
 
     // ========== MOVIE LIST ==========
     public IActionResult Movies()

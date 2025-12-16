@@ -1,0 +1,163 @@
+﻿@model Order
+
+@{
+    ViewBag.Title = "Product | Order Detail";
+}
+
+@section head {
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            margin-bottom: 20px;
+        }
+
+            .back-btn button {
+                background-color: #0d6efd;
+                color: #fff;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+        .order-info {
+            margin-bottom: 20px;
+        }
+
+            .order-info label {
+                font-weight: bold;
+                margin-right: 10px;
+            }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #fff;
+            margin-left: 5px;
+        }
+
+        .badge-paid {
+            background-color: #198754;
+        }
+        /* green */
+        .badge-unpaid {
+            background-color: #dc3545;
+        }
+        /* red */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+        td img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        td.product-info {
+            text-align: left;
+        }
+
+        tr.summary td {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+    </style>
+}
+
+<div class="container">
+
+    <div class="back-btn">
+        <button type="button" data-get="/Product/Order">
+            ← Back
+        </button>
+    </div>
+
+    <div class="order-info">
+        <p>
+            <label>Order Id:</label> <span>@Model.Id</span>
+        </p>
+        <p>
+            <label>Date:</label> <span>@Model.Date.ToString("yyyy-MM-dd")</span>
+        </p>
+        <p>
+            <label>Paid:</label>
+            <span class="badge @(Model.Paid ? "badge-paid" : "badge-unpaid")">
+                @(Model.Paid ? "Paid" : "Unpaid")
+            </span>
+        </p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int count = 0;
+                decimal total = 0.00m;
+            }
+
+            @foreach (var ol in Model.OrderLines)
+            {
+                decimal subtotal = ol.Price * ol.Quantity;
+                count += ol.Quantity;
+                total += subtotal;
+
+                <tr>
+                    <td>@ol.Id</td>
+                    <td class="product-info">
+                        <img src="@ol.Product.PhotoURL" alt="@ol.Product.Name" />
+                        @ol.Product.Id - @ol.Product.Name
+                    </td>
+                    <td>@ol.Price</td>
+                    <td>@ol.Quantity</td>
+                    <td>@subtotal</td>
+                </tr>
+            }
+
+            <tr class="summary">
+                <td colspan="3">Total</td>
+                <td>@count</td>
+                <td>@total:C</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
