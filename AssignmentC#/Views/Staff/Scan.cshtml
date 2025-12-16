@@ -1,0 +1,142 @@
+﻿@{
+    ViewBag.Title = "Scan Order QR";
+}
+
+<div style="max-width:400px;margin:50px auto;text-align:center;font-family:Arial,sans-serif;">
+    <button data-get="/"
+            style="background-color:#0d6efd;color:#fff;padding:8px 16px;border:none;border-radius:5px;cursor:pointer;margin-bottom:20px;">
+        ← Back
+    </button>
+    
+    <h2>Scan QR Code</h2>
+
+    <video id="video" width="300" height="300" style="border:1px solid #ccc;margin-bottom:20px;"></video>
+    <canvas id="canvas" hidden></canvas>
+</div>
+
+<!-- Modal for order details -->
+<div id="orderModal" class="modal">
+    <div class="modal-content">
+        <span id="closeModal" class="close">&times;</span>
+        <div id="orderDetails"></div>
+        <button id="completeBtn" class="btn btn-success" style="margin-top:10px;">Complete</button>
+    </div>
+</div>
+
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+        .close:hover {
+            color: black;
+        }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+<script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const orderModal = document.getElementById("orderModal");
+    const orderDetailsDiv = document.getElementById("orderDetails");
+    const completeBtn = document.getElementById("completeBtn");
+    const closeModal = document.getElementById("closeModal");
+
+    let scannedOrderId = null;
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(stream => {
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true);
+        video.play();
+        requestAnimationFrame(scanFrame);
+    })
+    .catch(err => alert("Cannot access camera: " + err));
+
+    function scanFrame() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                try {
+                    const data = JSON.parse(code.data);
+
+                    // Show order details in modal
+                    let html = `<h3>Order #${data.OrderId}</h3>`;
+                    html += `<p>Collect Date: ${data.CollectDate}</p>`;
+                    html += "<ul>";
+                    data.Items.forEach(i => {
+                        html += `<li>${i.ProductName} × ${i.Quantity} (RM ${i.Price})</li>`;
+                    });
+                    html += "</ul>";
+
+                    orderDetailsDiv.innerHTML = html;
+                    scannedOrderId = data.OrderId;
+
+                    orderModal.style.display = "block";
+                    return;
+                } catch(err) {
+                    console.error("Invalid QR JSON:", err);
+                }
+            }
+        }
+        requestAnimationFrame(scanFrame);
+    }
+
+    completeBtn.addEventListener("click", function() {
+        if (!scannedOrderId) return;
+
+        fetch('@Url.Action("CompleteClaim", "Staff")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'orderId=' + encodeURIComponent(scannedOrderId)
+        })
+        .then(r => {
+            if (r.ok) {
+                alert("Order marked as claimed!");
+                orderModal.style.display = "none";
+                scannedOrderId = null;
+            } else {
+                alert("Error completing order.");
+            }
+        })
+        .catch(err => alert("Error completing order: " + err));
+    });
+
+    closeModal.onclick = function() { orderModal.style.display = "none"; }
+    window.onclick = function(event) { if (event.target == orderModal) orderModal.style.display = "none"; }
+</script>

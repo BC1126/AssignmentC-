@@ -112,14 +112,27 @@
 
     <div class="product-action btn-center">
 
-        <a asp-controller="Product"
-           asp-action="Order"
-           class="order-history-btn">
-            Order History
-        </a>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-controller="Product"
+               asp-action="Order"
+               class="order-history-btn">
+                Order History
+            </a>
+        }
+        else
+        {
+            <a asp-controller="User"
+               asp-action="Login"
+               asp-route-returnUrl="@Url.Action("Order", "Product")"
+               class="order-history-btn">
+                Order History
+            </a>
+        }
 
         <button type="submit" class="continue-btn">Continue</button>
     </div>
+
 
 
 </form>

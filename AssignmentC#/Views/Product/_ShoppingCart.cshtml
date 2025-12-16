@@ -1,58 +1,96 @@
 ﻿@model IEnumerable<ProductCartItem>
 
-<table class="table">
-    <tr>
-        <th>Product</th>
-        <th>Price</th>
-        <th>Quantity</th>
-        <th>Subtotal</th>
-    </tr>
+<div class="container">
 
-    @foreach (ProductCartItem i in Model)
-    {
-        var list = new SelectList(Enumerable.Range(1, 10), i.Quantity);
+    <!-- Back button -->
+    <button data-get="/Product/UserIndex" class="btn-back">← Back</button>
 
-        <tr>
-            <td>
-                <img src="@i.Product.PhotoURL">
-                @i.Product.Id - @i.Product.Name
-            </td>
-            <td>@i.Product.Price</td>
-            <td>
-                <form data-ajax="true"
-                      data-ajax-update="#target"
-                      method="post"
-                      action="/Product/UpdateCart">
-                    @Html.DropDownList("Quantity", list, "")
-                    @Html.Hidden("ProductId", i.Product.Id)
-                </form>
-            </td>
-            <td>@i.Subtotal</td>
-        </tr>
+    <h2>Shopping Cart</h2>
+
+    <!-- Table -->
+    <table class="cart-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var i in Model)
+            {
+                <tr>
+                    <td class="product-info">
+                        <img src="@i.Product.PhotoURL" alt="@i.Product.Name" />
+                        <span>@i.Product.Id - @i.Product.Name</span>
+                    </td>
+
+                    <td>RM @i.Product.Price</td>
+
+                    <td>
+                        <form data-ajax="true"
+                              data-ajax-update="#target"
+                              method="post"
+                              action="/Product/UpdateCart"
+                              class="cart-form">
+                            <input type="hidden" name="ProductId" value="@i.Product.Id" />
+
+                            <div class="quantity-control">
+                                <button type="button" class="btn-minus">−</button>
+                                <input type="number"
+                                       name="Quantity"
+                                       min="0"
+                                       max="@i.Product.Stock"
+                                       value="@i.Quantity"
+                                       class="qty-input" />
+                                <button type="button" class="btn-plus">+</button>
+                            </div>
+                        </form>
+                    </td>
+
+                    <td>RM @i.Subtotal</td>
+
+                    <td>
+                        <form data-ajax="true"
+                              data-ajax-update="#target"
+                              method="post"
+                              action="/Product/RemoveFromCart"
+                              class="remove-form">
+                            <input type="hidden" name="ProductId" value="@i.Product.Id" />
+                            <button type="submit" class="btn-remove">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+
+            <tr class="cart-total">
+                <td colspan="2" class="text-right bold">Total</td>
+                <td class="bold">@Model.Sum(i => i.Quantity)</td>
+                <td class="bold">RM @Model.Sum(i => i.Subtotal)</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <br />
+
+    @* Checkout button *@
+    @{
+        var disabled = !Model.Any() || !User.IsInRole("Member");
     }
 
-    <tr>
-        <td></td>
-        <td></td>
-        <td class="bold">@Model.Sum(i => i.Quantity)</td>
-        <td class="bold">@Model.Sum(i => i.Subtotal)</td>
-    </tr>
-</table>
+    <button data-post="/Product/Checkout" disabled="@disabled" class="btn-checkout">
+        Checkout
+    </button>
 
-<br>
-
-@* Disable button if shopping cart empty OR not member *@
-@{
-    var disabled = Model.Count() == 0 || !User.IsInRole("Member");
-}
-
-<button data-post="/Product/Checkout" disabled="@disabled">Checkout</button>
-
-@* Show message if not member *@
-@if (!User.IsInRole("Member"))
-{
-    <p>
-        <a href="/Account/Login?returnURL=/Product/ShoppingCart">Login</a>
-        with member account to proceed checkout
-    </p>
-}
+    @if (!User.IsInRole("Member"))
+    {
+        <p class="login-msg">
+            <a href="/Account/Login?returnURL=/Product/ShoppingCart">Login</a>
+            with member account to proceed checkout
+        </p>
+    }
+</div>

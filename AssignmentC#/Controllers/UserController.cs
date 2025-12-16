@@ -10,6 +10,7 @@ using AssignmentC_.Models;
 
 namespace AssignmentC_.Controllers;
 
+#nullable disable warnings
 public class UserController : Controller
 {
     private readonly DB db;
@@ -172,10 +173,17 @@ public class UserController : Controller
     // ====================================================================
 
     // GET: Account/Login
-    public IActionResult Login()
+    public IActionResult Login(string returnUrl = null)
     {
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            TempData["Info"] = "Please Login First";
+        }
+
+        ViewBag.ReturnUrl = returnUrl;
         return View("~/Views/Home/Login.cshtml");
     }
+
 
     // POST: Account/Login - Handles user authentication
     // UserController.cs
@@ -259,6 +267,12 @@ public class UserController : Controller
 
         // 3. Redirect the user back to the Login page or the Home page
         return RedirectToAction("Login", "User");
+    }
+
+    // GET: Account/AccessDenied
+    public IActionResult AccessDenied(string? returnURL)
+    {
+        return View();
     }
 
     // GET: /User/Profile

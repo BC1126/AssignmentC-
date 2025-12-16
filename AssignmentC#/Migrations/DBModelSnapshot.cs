@@ -282,8 +282,18 @@ namespace AssignmentC_.Migrations
                         .HasColumnType("decimal(6,2)");
 
                     b.Property<string>("ProductId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(4)");
+
+                    b.Property<string>("ProductId1")
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductPhotoURL")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -293,6 +303,8 @@ namespace AssignmentC_.Migrations
                     b.HasIndex("OrderId");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductId1");
 
                     b.ToTable("OrderLines");
                 });
@@ -685,10 +697,13 @@ namespace AssignmentC_.Migrations
                         .IsRequired();
 
                     b.HasOne("AssignmentC_.Models.Product", "Product")
-                        .WithMany("Lines")
+                        .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("AssignmentC_.Models.Product", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("ProductId1");
 
                     b.Navigation("Order");
 

@@ -1,0 +1,49 @@
+﻿@model Order
+@using System.Text.Json
+
+@{
+    ViewBag.Title = "Claim QR Code";
+
+    var qrDataObj = new
+    {
+        OrderId = Model.Id,
+        Email = Model.MemberEmail,
+        CollectDate = Model.CollectDate.ToString("yyyy-MM-dd"),
+        Items = Model.OrderLines.Select(ol => new
+        {
+            ol.ProductName,
+            ol.Quantity,
+            ol.Price
+        })
+    };
+
+    var qrText = JsonSerializer.Serialize(qrDataObj, new JsonSerializerOptions
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    });
+}
+
+<div style="max-width:400px;margin:50px auto;text-align:center;font-family:Arial,sans-serif;">
+
+    <button data-get="/Product/Order"
+            style="background-color:#0d6efd;color:#fff;padding:8px 16px;border:none;border-radius:5px;cursor:pointer;">
+        ← Back
+    </button>
+
+    <h2>Show this QR Code to staff</h2>
+
+    <canvas id="qrcodeCanvas" width="300" height="300" style="border:1px solid #ccc;margin-bottom:20px;"></canvas>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+    const qrData = '@Html.Raw(qrText)';
+
+    QRCode.toCanvas(document.getElementById('qrcodeCanvas'), qrData, {
+        width: 300,
+        color: { dark: "#000000", light: "#ffffff" }
+    }, function(error) {
+        if (error) console.error("QR generation error:", error);
+    });
+</script>

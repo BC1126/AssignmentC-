@@ -143,20 +143,18 @@
 
                 <tr>
                     <td>@ol.Id</td>
-                    <td class="product-info">
-                        <img src="@ol.Product.PhotoURL" alt="@ol.Product.Name" />
-                        @ol.Product.Id - @ol.Product.Name
-                    </td>
+                    <td>@ol.ProductName</td>
                     <td>@ol.Price</td>
                     <td>@ol.Quantity</td>
                     <td>@subtotal</td>
                 </tr>
             }
 
+
             <tr class="summary">
                 <td colspan="3">Total</td>
                 <td>@count</td>
-                <td>@total:C</td>
+                <td>@total</td>
             </tr>
         </tbody>
     </table>

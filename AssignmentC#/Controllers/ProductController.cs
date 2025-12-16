@@ -15,6 +15,7 @@ public class ProductController(DB db, Helper hp) : Controller
                  .ToList<dynamic>();
     }
 
+    //[Authorize(Roles = "Admin,Staff")]
     public IActionResult Index(string? name, string sort = "Stock", string dir = "asc", int page = 1)
     {
         if (page < 1) page = 1;
@@ -94,6 +95,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return (n + 1).ToString("'P'000");
     }
 
+    //[Authorize(Roles = "Admin,Staff")]
     public IActionResult Insert()
     {
         var vm = new ProductInsertVM
@@ -110,6 +112,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
+    //[Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public IActionResult Insert(ProductInsertVM vm)
     {
@@ -162,6 +165,7 @@ public class ProductController(DB db, Helper hp) : Controller
         }
     }
 
+    //[Authorize(Roles = "Admin,Staff")]
     public IActionResult Update(string? id)
     {
         if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
@@ -190,6 +194,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
+    //[Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public IActionResult Update(ProductUpdateVM vm)
     {
@@ -243,6 +248,7 @@ public class ProductController(DB db, Helper hp) : Controller
         }
     }
 
+    //[Authorize(Roles = "Admin")]
     [HttpPost]
     public IActionResult Delete(string? id)
     {
@@ -357,7 +363,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return Redirect(Request.Headers.Referer.ToString());
     }
 
-
+    //GET
     public IActionResult UserIndex(string? category)
     {
         ViewBag.Cart = hp.GetCart();
@@ -475,9 +481,12 @@ public class ProductController(DB db, Helper hp) : Controller
             order.OrderLines.Add(new OrderLine
             {
                 ProductId = productId,
+                ProductName = p.Name,
+                ProductPhotoURL = p.PhotoURL,
                 Price = p.Price,
                 Quantity = quantity
             });
+
         }
 
         db.SaveChanges(); // Save order and updated stock
@@ -490,7 +499,7 @@ public class ProductController(DB db, Helper hp) : Controller
 
 
 
-
+    [Authorize(Roles = "Member")]
     public IActionResult OrderComplete(int id)
     {
         ViewBag.Id = id;
@@ -499,16 +508,38 @@ public class ProductController(DB db, Helper hp) : Controller
 
     // GET: Product/Order
     [Authorize(Roles = "Member")]
-    public IActionResult Order()
+    public IActionResult Order(string search, string sort = "Id", string dir = "asc", int page = 1)
     {
-        var m = db.Orders
-            .Include(o => o.OrderLines)
-            .ThenInclude(ol => ol.Product)
-            .Where(o => o.MemberEmail == User.Identity!.Name)
-            .OrderByDescending(o => o.Id);
+        var m = db.Orders.Include(o => o.OrderLines).ThenInclude(ol => ol.Product)
+            .Where(o => o.MemberEmail == User.Identity!.Name);
 
-        return View(m);
+        if (!string.IsNullOrEmpty(search))
+        {
+            m = m.Where(o => o.Id.ToString().Contains(search) || o.Cinema.Contains(search));
+        }
+
+        m = (sort, dir) switch
+        {
+            ("Date", "asc") => m.OrderBy(o => o.Date),
+            ("Date", "des") => m.OrderByDescending(o => o.Date),
+            ("Id", "asc") => m.OrderBy(o => o.Id),
+            ("Id", "des") => m.OrderByDescending(o => o.Id),
+            _ => m.OrderByDescending(o => o.Id)
+        };
+
+        var model = m.ToPagedList(page, 5);
+
+        ViewBag.Sort = sort;
+        ViewBag.Dir = dir;
+        ViewBag.Search = search;
+
+        if (Request.IsAjax())
+            return PartialView("_OrderTable", model);
+
+        return View(model);
     }
+
+
 
     // GET: Product/OrderDetail
     [Authorize(Roles = "Member")]
@@ -524,4 +555,106 @@ public class ProductController(DB db, Helper hp) : Controller
 
         return View(m);
     }
+
+    [Authorize(Roles = "Member")]
+    [HttpPost]
+    public IActionResult CancelOrder(int id)
+    {
+        var order = db.Orders
+            .Include(o => o.OrderLines)
+            .FirstOrDefault(o => o.Id == id && o.MemberEmail == User.Identity!.Name);
+
+        if (order == null)
+        {
+            TempData["Error"] = "Order not found.";
+            return RedirectToAction("Order");
+        }
+
+        if (order.Paid)
+        {
+            TempData["Error"] = "Cannot cancel a paid order.";
+            return RedirectToAction("Order");
+        }
+
+        foreach (var ol in order.OrderLines)
+        {
+            var product = db.Products.Find(ol.ProductId);
+            if (product != null)
+            {
+                product.Stock += ol.Quantity;
+            }
+        }
+
+        db.Orders.Remove(order);
+        db.SaveChanges();
+
+        TempData["Info"] = "Order cancelled successfully.";
+        return RedirectToAction("Order");
+    }
+
+    [Authorize(Roles = "Member")]
+    [HttpPost]
+    public IActionResult ClaimOrder(int id)
+    {
+        var order = db.Orders
+            .Include(o => o.OrderLines)
+            .FirstOrDefault(o =>
+                o.Id == id &&
+                o.MemberEmail == User.Identity!.Name);
+
+        if (order == null)
+        {
+            TempData["Error"] = "Order not found.";
+            return RedirectToAction("Order");
+        }
+
+        if (!order.Paid || order.Claim)
+        {
+            TempData["Error"] = "Order cannot be claimed.";
+            return RedirectToAction("Order");
+        }
+
+        if (order.CollectDate != DateOnly.FromDateTime(DateTime.Today))
+        {
+            TempData["Error"] = "Order can only be claimed on the collect date.";
+            return RedirectToAction("Order");
+        }
+
+        return RedirectToAction("ClaimQR", new { id });
+    }
+
+    [Authorize(Roles = "Member")]
+    public IActionResult ClaimQR(int id)
+    {
+        var order = db.Orders
+            .Include(o => o.OrderLines)
+            .FirstOrDefault(o =>
+                o.Id == id &&
+                o.MemberEmail == User.Identity!.Name);
+
+        if (order == null)
+            return RedirectToAction("Order");
+
+        return View(order);
+    }
+
+    [HttpPost]
+    public IActionResult RemoveFromCart(string productId)
+    {
+        try
+        {
+            var cart = hp.GetCart();
+            if (cart.ContainsKey(productId))
+                cart.Remove(productId);
+
+            hp.SetCart(cart);
+        }
+        catch { }
+
+        return Redirect(Request.Headers.Referer.ToString());
+    }
+
+
+
+
 }
