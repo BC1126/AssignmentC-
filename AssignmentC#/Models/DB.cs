@@ -24,7 +24,6 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<ShowTime> ShowTimes { get; set; }
     public DbSet<Outlet> Outlets { get; set; }
     public DbSet<MovieReview> MovieReviews { get; set; }
-    public DbSet<ProductReview> ProductReviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -108,7 +107,6 @@ public class Product
 
     // Navigation Properties
     public List<OrderLine> Lines { get; set; } = [];
-    public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
 }
 
 public class Order
@@ -249,42 +247,6 @@ public class MovieReview
     public User User { get; set; }
     public Movie Movie { get; set; }
 }
-
-public class ProductReview
-{
-    [Key]
-    public int ProductReviewId { get; set; }
-
-    [Required]
-    [MaxLength(5)]
-    public string UserId { get; set; }
-
-    [Required(ErrorMessage = "The review must be linked to a product.")]
-    [MaxLength(4)]
-    public string ProductId { get; set; }
-
-    [Required(ErrorMessage = "A title is required.")]
-    [MaxLength(100)]
-    public string Title { get; set; }
-
-    [Required(ErrorMessage = "A comment is required.")]
-    [StringLength(500, MinimumLength = 10, ErrorMessage = "Review must be between 10 and 500 characters.")]
-    public string Comment { get; set; }
-
-    [Required(ErrorMessage = "A rating is required.")]
-    [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5.")]
-    public int Rating { get; set; }
-
-    [Required]
-    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
-
-    public bool IsApproved { get; set; } = false;
-
-    // --- Navigation Properties ---
-    public User User { get; set; }
-    public Product Product { get; set; }
-}
-
 public class Movie{
     [Key]
     public int MovieId { get; set; }
