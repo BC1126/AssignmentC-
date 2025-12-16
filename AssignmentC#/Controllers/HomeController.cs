@@ -15,7 +15,7 @@ public class HomeController : Controller
     {
         var movies = _db.Movies
                              .OrderByDescending(m => m.PremierDate)
-                             .Take(3)  
+                             .Take(5)  
                              .ToList();
 
         return View(movies);
