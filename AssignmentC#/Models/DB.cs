@@ -247,6 +247,7 @@ public class MovieReview
     public User User { get; set; }
     public Movie Movie { get; set; }
 }
+
 public class Movie{
     [Key]
     public int MovieId { get; set; }

@@ -28,9 +28,8 @@ public class LoginVM
 public class RegisterVM
 {
     // 1. Photo Property 
-    [Required(ErrorMessage = "Please upload a profile photo.")]
     [Display(Name = "Profile Photo")]
-    public IFormFile Photo { get; set; }
+    public IFormFile? Photo { get; set; }
 
     // Corresponds to the 'Name' property in your User entity
     [Required(ErrorMessage = "Full Name is required.")]

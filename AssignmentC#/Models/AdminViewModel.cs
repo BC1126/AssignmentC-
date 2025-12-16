@@ -39,7 +39,7 @@ public class AdminEditUserVM
     public IFormFile? NewPhoto { get; set; }
 }
 
-public class AddStaffVM
+public class AddUserVM
 {
     // UserId is included but usually marked as readonly in the View 
     // because your helper generates it automatically.
@@ -55,8 +55,7 @@ public class AddStaffVM
     [RegularExpression(@"^[\w-\.]+@gmail\.com$", ErrorMessage = "Must be a valid @gmail.com address.")]
     public string Email { get; set; }
 
-    // Admin-created staff often don't need "Confirm Password" 
-    // because the controller sets a default password like "Default123!".
+    public string Role { get; set; }
 
     [Required(ErrorMessage = "Gender is required.")]
     [StringLength(1, ErrorMessage = "Gender must be M or F.")]

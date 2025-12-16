@@ -1,0 +1,117 @@
+﻿@model RegisterVM
+
+@{
+    ViewBag.Title = "Account | Register";
+}
+
+@section title {
+    <section id="center" class="centre_o pt-5 pb-5">
+        <div class="container-xl">
+            <div class="row centre_o1 text-center">
+                <div class="col-md-12">
+                    <h1 class="text-white font_60">Register</h1>
+                    <h5 class="mb-0 mt-3 fw-normal col_oran">
+                        <a class="text-light" href="#">Home</a>
+                        <span class="mx-2 text-muted">/</span> Register
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section id="login" class="p_3">
+    <div class="container-xl">
+        <div class="row login_1">
+            <div class="col-md-12">
+                <form asp-controller="User" asp-action="Register" method="post" enctype="multipart/form-data">
+                    <div class="login_1m p-5 px-4 w-50 mx-auto bg-light">
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <h6 class="mb-3 fw-bold">Full Name</h6>
+                        <input asp-for="Name" class="form-control" placeholder="Full Name" type="text" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+
+                        <h6 class="mb-3 fw-bold mt-4">Email</h6>
+                        <input asp-for="Email" class="form-control" placeholder="Email Address" type="email" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+
+                        <h6 class="mb-3 fw-bold mt-4">Password</h6>
+                        <input asp-for="Password" class="form-control" placeholder="Password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+
+                        <h6 class="mb-3 fw-bold mt-4">Confirm Password</h6>
+                        <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm Password" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+
+                        <h6 class="mb-3 fw-bold mt-4">Gender (M/F)</h6>
+                        <input asp-for="Gender" class="form-control" placeholder="M or F" type="text" />
+                        <span asp-validation-for="Gender" class="text-danger"></span>
+
+                        <h6 class="mb-3 fw-bold mt-4">Phone Number</h6>
+                        <input asp-for="Phone" class="form-control" placeholder="Phone Number (Max 11 digits)" type="tel" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+
+                        <h6 class="mb-3 fw-bold mt-4">Profile Photo (Optional)</h6>
+
+                        <div id="photoUploadArea" style="cursor: pointer; position: relative;">
+
+                            <input asp-for="Photo" class="form-control" id="profilePhotoInput" type="file"
+                                   accept="image/*" style="position: absolute; opacity: 0; width: 0; height: 0;" />
+
+                            <span asp-validation-for="Photo" class="text-danger"></span>
+
+                            <div class="mt-3 text-center">
+                                <img id="profilePhotoPreview"
+                                     src="~/img/default.jpg"
+                                     alt="Click to Upload Photo"
+                                     style="width: 150px; height: 150px; border: 3px solid #007bff; object-fit: cover; border-radius: 50%;" />
+
+                                <p class="mt-2 text-muted small">Click photo to upload</p>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-3 center_sm">
+                            <button type="submit" class="button d-block text-center w-100">SIGN UP</button>
+                        </h6>
+
+                        <p class="mt-3 mb-0 text-center">Already have an account?<a asp-controller="User" asp-action="Login" class="fw-bold rol_oran">Login</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
+    <script>
+        const input = document.getElementById('profilePhotoInput');
+        const preview = document.getElementById('profilePhotoPreview');
+        const uploadArea = document.getElementById('photoUploadArea');
+
+        // 1. Make the preview area clickable
+        uploadArea.addEventListener('click', function() {
+            input.click(); // Trigger the hidden file input
+        });
+
+        // 2. Handle file selection for preview
+        input.addEventListener('change', function(event) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                }
+
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                // Reset to default image if user cancels selection
+                preview.src = '/img/default.jpg';
+            }
+        });
+    </script>
+}
