@@ -19,6 +19,7 @@ public class MovieController : Controller
 
     }
 
+    //admin
     // ========== MOVIE LIST ==========
     public IActionResult Movies()
         {
@@ -218,6 +219,45 @@ public class MovieController : Controller
 
         TempData["Info"] = "Movie deleted successfully.";
         return RedirectToAction("Movies");
+    }
+
+
+    // ======================
+    // USER / GUEST
+    // ======================
+
+    // Movie listing for users
+    public IActionResult Index(int page = 1)
+    {
+        int pageSize = 8; // movies per page
+
+        var totalMovies = db.Movies.Count();
+        var movies = db.Movies
+            .OrderBy(m => m.PremierDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var vm = new MovieListVM
+        {
+            Movies = movies,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalCount = totalMovies
+        };
+
+        return View(vm);
+    }
+
+
+    public IActionResult Details(int id)
+    {
+        var movie = db.Movies.FirstOrDefault(m => m.MovieId == id);
+
+        if (movie == null)
+            return NotFound();
+
+        return View(movie);
     }
 
 }
