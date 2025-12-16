@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251215173729_CreateDB")]
+    [Migration("20251216132433_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -334,9 +334,6 @@ namespace AssignmentC_.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(5)");
 
@@ -352,8 +349,6 @@ namespace AssignmentC_.Migrations
                     b.HasKey("PaymentId");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("PromotionId");
 
                     b.HasIndex("UserId");
 
@@ -462,9 +457,23 @@ namespace AssignmentC_.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionId"));
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("int");
+
                     b.HasKey("PromotionId");
 
-                    b.ToTable("Promotion");
+                    b.HasIndex("PaymentId");
+
+                    b.ToTable("Promotions");
+
+                    b.HasDiscriminator().HasValue("Promotion");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -574,6 +583,117 @@ namespace AssignmentC_.Migrations
                     b.HasDiscriminator().HasValue("User");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.VoucherAssignment", b =>
+                {
+                    b.Property<int>("AssignmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentId"));
+
+                    b.Property<int>("PromotionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(5)");
+
+                    b.HasKey("AssignmentId");
+
+                    b.HasIndex("PromotionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("VoucherAssignments");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.VoucherCondition", b =>
+                {
+                    b.Property<int>("ConditionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ConditionId"));
+
+                    b.PrimitiveCollection<string>("BirthMonth")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ConditionType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool?>("IsFirstPurchase")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MaxAge")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MinAge")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MinSpend")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PromotionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ConditionId");
+
+                    b.HasIndex("PromotionId");
+
+                    b.ToTable("VoucherConditions");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.Memberpoints", b =>
+                {
+                    b.HasBaseType("AssignmentC_.Models.Promotion");
+
+                    b.Property<int>("points")
+                        .HasColumnType("int");
+
+                    b.HasDiscriminator().HasValue("Memberpoints");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.Voucher", b =>
+                {
+                    b.HasBaseType("AssignmentC_.Models.Promotion");
+
+                    b.Property<DateOnly>("CreatedTime")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("EligibilityMode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("VoucherCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("VoucherType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasDiscriminator().HasValue("Voucher");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Admin", b =>
@@ -706,19 +826,11 @@ namespace AssignmentC_.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AssignmentC_.Models.Promotion", "Promotion")
-                        .WithMany()
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("AssignmentC_.Models.User", "User")
                         .WithMany("Payment")
                         .HasForeignKey("UserId");
 
                     b.Navigation("Order");
-
-                    b.Navigation("Promotion");
 
                     b.Navigation("User");
                 });
@@ -740,6 +852,13 @@ namespace AssignmentC_.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Payment", null)
+                        .WithMany("Promotion")
+                        .HasForeignKey("PaymentId");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -772,6 +891,36 @@ namespace AssignmentC_.Migrations
                     b.Navigation("Movie");
                 });
 
+            modelBuilder.Entity("AssignmentC_.Models.VoucherAssignment", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Promotion", "promotion")
+                        .WithMany()
+                        .HasForeignKey("PromotionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentC_.Models.User", "user")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("promotion");
+
+                    b.Navigation("user");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.VoucherCondition", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Promotion", "promotion")
+                        .WithMany()
+                        .HasForeignKey("PromotionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("promotion");
+                });
+
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
                 {
                     b.Navigation("BookingSeats");
@@ -799,6 +948,11 @@ namespace AssignmentC_.Migrations
             modelBuilder.Entity("AssignmentC_.Models.Outlet", b =>
                 {
                     b.Navigation("Halls");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
+                {
+                    b.Navigation("Promotion");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>

@@ -25,6 +25,11 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Outlet> Outlets { get; set; }
     public DbSet<MovieReview> MovieReviews { get; set; }
     public DbSet<ProductReview> ProductReviews { get; set; }
+    public DbSet<Promotion> Promotions { get; set; }
+    public DbSet<Memberpoints> Memberpoints { get; set; }
+    public DbSet<Voucher> Voucher { get; set; }
+    public DbSet<VoucherAssignment> VoucherAssignments { get; set; }
+    public DbSet<VoucherCondition> VoucherConditions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -155,7 +160,6 @@ public class Payment
 {
     [Key]
     public int PaymentId { get; set; }
-
     public int amount { get; set; }
     public bool status { get; set; }
     public DateOnly date {  get; set; }
@@ -163,11 +167,12 @@ public class Payment
     //FK
     public User User { get; set; }
     public Order Order { get; set; }
-    public Promotion Promotion {  get; set; }
+    public List<Promotion> Promotion { get; set; } = [];
 }
 
 public class Promotion
 {
+    [Key]
     public int PromotionId { get; set; }
 }
 
@@ -178,8 +183,50 @@ public class Memberpoints : Promotion
 
 public class Voucher : Promotion
 {
-    public DateOnly StartDate { get; set; }
-    public DateOnly EndDate { get; set; }
+    [MaxLength(50)]
+    public string VoucherCode { get; set; }
+
+    [MaxLength(20)]
+    public string VoucherType { get; set; }
+
+    public decimal DiscountValue { get; set; }
+
+    public string EligibilityMode { get; set; }
+
+    [MaxLength(10)]
+    public string status { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public DateTime CreatedTime { get; set; }
+
+}
+
+public class VoucherCondition
+{
+    [Key]
+    public int ConditionId { get; set; }
+
+    [MaxLength(100)]
+    public string ConditionType { get; set; }
+
+    public int? MinAge { get; set; }
+    public int? MaxAge { get; set; }
+    public decimal? MinSpend { get; set;}
+    public bool? IsFirstPurchase { get; set; }
+    public List<int> BirthMonth { get; set; } = new List<int>();
+
+    // FK
+    public Promotion promotion { get; set; }
+}
+
+public class VoucherAssignment
+{
+    [Key]
+    public int AssignmentId { get; set; }
+
+    //FK
+    public Promotion promotion { get; set; }
+    public User user { get; set; }
 }
 
 

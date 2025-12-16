@@ -7,7 +7,7 @@ namespace AssignmentC_.Controllers;
 
 public class TicketController(DB db) : Controller
 {
-    private const int TIME_LIMIT = 8 * 60;
+    private const int TIME_LIMIT = 1 * 60;
 
     public IActionResult Checkout()
     {
@@ -102,6 +102,87 @@ public class TicketController(DB db) : Controller
         */
 
         return View();
+    }
+
+    [HttpGet]
+    public IActionResult AddPromo()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public IActionResult AddPromo(VoucherViewModel model)
+    {
+        var voucher = new Voucher
+        {
+            VoucherCode = model.VoucherCode,
+            VoucherType = model.DiscountType,
+            DiscountValue = model.DiscountValue,
+            EligibilityMode = model.EligibilityMode,
+            StartDate = model.StartDate,
+            EndDate = model.EndDate,
+            CreatedTime = DateTime.Today
+        };
+
+        db.Voucher.Add(voucher);
+        db.SaveChanges();
+
+        int promoId = voucher.PromotionId;
+        var promo = db.Promotions.Find(promoId);
+
+        // Condition
+        if (model.EligibilityMode == "condition" || model.EligibilityMode == "both")
+        {
+
+            var condition = new VoucherCondition
+            {
+                promotion = promo,
+                ConditionType = "CUSTOM",
+                MinAge = model.MinAge,
+                MaxAge = model.MaxAge,
+                MinSpend = model.MinSpend,
+                IsFirstPurchase  = model.IsFirstPurchase,
+                BirthMonth = model.BirthMonth ?? new System.Collections.Generic.List<int>(),
+            };
+
+            db.VoucherConditions.Add(condition);
+            db.SaveChanges();
+        }
+        // Assigned User
+        else if (model.EligibilityMode == "assigned" || model.EligibilityMode == "both")
+        {
+            // Change user here
+            var user = db.Users.Find(model.AssignedUserId);
+
+            var assignment = new VoucherAssignment
+            {
+                promotion = promo,
+                user = user,
+            };
+
+            db.VoucherAssignments.Add(assignment);
+            db.SaveChanges();
+        }
+
+        ViewBag.Message = "Voucher Created Successfully";
+        return View();
+    }
+
+    public IActionResult VoucherList()
+    {
+        var vouchers = db.Promotions
+        .OfType<Voucher>()
+        .Select(v => new VoucherViewModel
+        {
+            PromotionId = v.PromotionId,
+            VoucherCode = v.VoucherCode,
+            DiscountType = v.VoucherType,
+            DiscountValue = v.DiscountValue,
+            StartDate = v.StartDate,
+            EndDate = v.EndDate,
+        })
+        .ToList();
+        return View(vouchers);
     }
 
     public IActionResult Receipt()
