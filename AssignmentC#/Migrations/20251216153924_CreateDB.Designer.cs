@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251215173729_CreateDB")]
+    [Migration("20251216153924_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -408,52 +408,6 @@ namespace AssignmentC_.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.ProductReview", b =>
-                {
-                    b.Property<int>("ProductReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductReviewId"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("nvarchar(4)");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
-                    b.HasKey("ProductReviewId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ProductReviews");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
                 {
                     b.Property<int>("PromotionId")
@@ -723,25 +677,6 @@ namespace AssignmentC_.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.ProductReview", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Product", "Product")
-                        .WithMany("Reviews")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AssignmentC_.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
                 {
                     b.HasOne("AssignmentC_.Models.Hall", "Hall")
@@ -804,8 +739,6 @@ namespace AssignmentC_.Migrations
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>
                 {
                     b.Navigation("Lines");
-
-                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>

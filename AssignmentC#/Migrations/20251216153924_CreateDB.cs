@@ -178,37 +178,6 @@ namespace AssignmentC_.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductReviews",
-                columns: table => new
-                {
-                    ProductReviewId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
-                    ProductId = table.Column<string>(type: "nvarchar(4)", maxLength: 4, nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Rating = table.Column<int>(type: "int", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsApproved = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProductReviews", x => x.ProductReviewId);
-                    table.ForeignKey(
-                        name: "FK_ProductReviews_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductReviews_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Seats",
                 columns: table => new
                 {
@@ -444,16 +413,6 @@ namespace AssignmentC_.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProductReviews_ProductId",
-                table: "ProductReviews",
-                column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductReviews_UserId",
-                table: "ProductReviews",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Seats_HallId",
                 table: "Seats",
                 column: "HallId");
@@ -485,22 +444,19 @@ namespace AssignmentC_.Migrations
                 name: "Payment");
 
             migrationBuilder.DropTable(
-                name: "ProductReviews");
-
-            migrationBuilder.DropTable(
                 name: "Bookings");
 
             migrationBuilder.DropTable(
                 name: "Seats");
 
             migrationBuilder.DropTable(
+                name: "Products");
+
+            migrationBuilder.DropTable(
                 name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "Promotion");
-
-            migrationBuilder.DropTable(
-                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "ShowTimes");
