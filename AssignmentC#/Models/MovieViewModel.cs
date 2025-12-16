@@ -49,13 +49,13 @@ public class MovieViewModel
     // ------------------------
     // FILE UPLOADS (FORM ONLY)
     // ------------------------
-    public IFormFile PosterFile { get; set; }
-    public IFormFile BannerFile { get; set; }
+    public IFormFile? PosterFile { get; set; }
+    public IFormFile? BannerFile { get; set; }
 
     // ------------------------
     // STORED FILENAMES (DB)
     // ❌ NOT REQUIRED
     // ------------------------
-    public string PosterUrl { get; set; }
-    public string BannerUrl { get; set; }
+    public string? PosterUrl { get; set; }
+    public string? BannerUrl { get; set; }
 }

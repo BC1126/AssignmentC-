@@ -1,0 +1,45 @@
+﻿@model List<AssignmentC_.Models.ShowTime>
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Movie</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || !Model.Any())
+        {
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    No showtimes scheduled for this date.
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var st in Model)
+            {
+                <tr>
+                    <td>@st.Movie.Title</td>
+                    <td>@st.StartTime.ToString("HH:mm")</td>
+                    <td>@st.EndTime.ToString("HH:mm")</td>
+                    <td>RM @st.TicketPrice</td>
+                    <td>
+                        <a asp-action="EditShowTime" asp-route-id="@st.ShowTimeId" class="btn btn-sm btn-warning">Edit</a>
+                        <form asp-action="DeleteShowTime" asp-route-id="@st.ShowTimeId" method="post" style="display:inline"
+                              onsubmit="return confirm('Are you sure you want to delete this showtime?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+

@@ -2,6 +2,7 @@
 using AssignmentC_.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
@@ -228,7 +229,65 @@ public class AdminController : Controller
 
         return RedirectToAction("MemberList", "User");
     }
+    // GET: Show the Add Staff form
+    [HttpGet]
+    public IActionResult AdminAddStaff()
+    {
+        return View("~/Views/User/AdminAddStaff.cshtml", new AddStaffVM());
+    }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult AdminAddStaff(AddStaffVM vm)
+    {
+        // 1. Check for email existence in the Users table
+        if (ModelState.GetValidationState("Email") != ModelValidationState.Invalid &&
+            db.Users.Any(u => u.Email == vm.Email))
+        {
+            ModelState.AddModelError("Email", "Duplicated Email.");
+        }
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                // 2. Generate the Primary Key (UserId) using the "S" prefix
+                string newUserId = hp.GenerateNextUserId("S");
+
+                // 3. Create a NEW STAFF object (Inherits from User)
+                // Creating 'new Staff' ensures the Discriminator is set to "Staff"
+                var newStaff = new Staff
+                {
+                    UserId = newUserId, //
+                    Name = vm.Name, //
+                    Email = vm.Email, //
+                    Phone = vm.Phone ?? "", //
+
+                    // Using a default password for admin-created staff
+                    PasswordHash = hp.HashPassword("Default123!"),
+
+                    // Ensure Gender matches your MaxLength(1) constraint
+                    Gender = vm.Gender.Substring(0, 1).ToUpper()
+                };
+
+                // 4. Add the staff object to the main Users set
+                db.Users.Add(newStaff);
+                db.SaveChanges(); //
+
+                TempData["Info"] = $"Staff {newUserId} added successfully!";
+                return RedirectToAction("StaffList", "User");
+            }
+            catch (Exception ex)
+            {
+                // Capture the real database error if SaveChanges fails
+                var error = ex.InnerException?.Message ?? ex.Message;
+                ModelState.AddModelError("", "Database Error: " + error);
+            }
+        }
+
+        // If we got here, something failed; redisplay the form
+        return View("~/Views/User/AdminAddStaff.cshtml", vm);
+    }
 
 
 

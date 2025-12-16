@@ -21,8 +21,9 @@ public class AdminEditUserVM
                        ErrorMessage = "Email must be a valid address ending with @gmail.com.")]
     public string Email { get; set; }
 
-    [Phone(ErrorMessage = "Invalid phone number format.")]
-    [StringLength(11)] // Adjusted to 11 to match User.Phone MaxLength
+    [Required(ErrorMessage = "Phone number is required.")]
+    [StringLength(11, ErrorMessage = "Phone number must be between 10 and 11 digits.")]
+    [RegularExpression(@"^01\d{8,9}$", ErrorMessage = "Must be a valid Malaysian phone number.")]
     public string Phone { get; set; }
 
     [StringLength(1)]
@@ -36,4 +37,33 @@ public class AdminEditUserVM
     // New property for photo upload (IFormFile is used for incoming files)
     [Display(Name = "Change Profile Photo")]
     public IFormFile? NewPhoto { get; set; }
+}
+
+public class AddStaffVM
+{
+    // UserId is included but usually marked as readonly in the View 
+    // because your helper generates it automatically.
+    public string? UserId { get; set; }
+
+    [Required(ErrorMessage = "Full Name is required.")]
+    [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters.")]
+    [Display(Name = "Full Name")]
+    public string Name { get; set; }
+
+    [Required(ErrorMessage = "Email is required.")]
+    [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters.")]
+    [RegularExpression(@"^[\w-\.]+@gmail\.com$", ErrorMessage = "Must be a valid @gmail.com address.")]
+    public string Email { get; set; }
+
+    // Admin-created staff often don't need "Confirm Password" 
+    // because the controller sets a default password like "Default123!".
+
+    [Required(ErrorMessage = "Gender is required.")]
+    [StringLength(1, ErrorMessage = "Gender must be M or F.")]
+    public string Gender { get; set; }
+
+    [Required(ErrorMessage = "Phone number is required.")]
+    [StringLength(11, ErrorMessage = "Phone number must be between 10 and 11 digits.")]
+    [RegularExpression(@"^01\d{8,9}$", ErrorMessage = "Must be a valid Malaysian phone number.")]
+    public string Phone { get; set; }
 }
