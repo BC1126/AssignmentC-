@@ -49,6 +49,13 @@ public class DB(DbContextOptions options) : DbContext(options)
             .HasForeignKey(bs => bs.SeatId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        //Prevent Delete the Product also deleting the OrderLine Item
+        modelBuilder.Entity<OrderLine>()
+           .HasOne(ol => ol.Product)
+           .WithMany()
+           .HasForeignKey(ol => ol.ProductId)
+           .OnDelete(DeleteBehavior.SetNull);
+
         // Must call the base method last
         base.OnModelCreating(modelBuilder);
     }
@@ -138,18 +145,26 @@ public class OrderLine
 {
     [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
+
     [Precision(6, 2)]
     public decimal Price { get; set; }
     public int Quantity { get; set; }
 
     // Foreign Keys
     public int OrderId { get; set; }
-    public string ProductId { get; set; }
+    public string? ProductId { get; set; }  // make nullable, in case product deleted
 
     // Navigation Properties
     public Order Order { get; set; }
-    public Product Product { get; set; }
+    public Product? Product { get; set; }   // nullable
+
+    // Snapshot info
+    public string ProductName { get; set; } = "";
+    public string ProductPhotoURL { get; set; } = "";
 }
+
+
+
 
 public class Payment
 {

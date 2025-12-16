@@ -1,0 +1,102 @@
+﻿@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<Order>
+
+@{
+    string[] sortableFields = { "Id", "Date", "Cinema", "CollectDate" };
+}
+
+<table>
+    <thead>
+        <tr>
+            @foreach (var f in sortableFields)
+            {
+                string dir = "asc";
+                string css = "";
+
+                if (f == ViewBag.Sort)
+                {
+                    dir = ViewBag.Dir == "asc" ? "des" : "asc";
+                    css = ViewBag.Dir;
+                }
+
+                <th>
+                    <a data-ajax="true"
+                       data-ajax-update="#target"
+                       data-ajax-loading="#loader"
+                       href="?search=@ViewBag.Search&sort=@f&dir=@dir"
+                       class="@css">
+                        @f
+                    </a>
+                </th>
+            }
+            <th>Paid</th>
+            <th>Claim</th>
+            <th>Count</th>
+            <th>Total</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var o in Model)
+        {
+            <tr>
+                <td>@o.Id</td>
+                <td>@o.Date.ToString("yyyy-MM-dd")</td>
+                <td>@o.Cinema</td>
+                <td>@o.CollectDate.ToString("yyyy-MM-dd")</td>
+                <td><span class="badge @(o.Paid ? "badge-paid" : "badge-unpaid")">@((o.Paid ? "Paid" : "Unpaid"))</span></td>
+                <td><span class="badge @(o.Claim ? "badge-claimed" : "badge-unclaimed")">@((o.Claim ? "Claimed" : "Unclaimed"))</span></td>
+                <td>@o.OrderLines.Sum(ol => ol.Quantity)</td>
+                <td>@o.OrderLines.Sum(ol => ol.Price * ol.Quantity)</td>
+                <td>
+                    <button data-get="/Product/OrderDetail/@o.Id" class="detail-btn">Detail</button>
+                    @if (!o.Paid)
+                    {
+                        <form asp-action="" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="@o.Id" />
+                            <button type="submit" class="pay-btn">Pay</button>
+                        </form>
+
+                        <form asp-action="CancelOrder" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="@o.Id" />
+                            <button type="submit" class="cancel-btn">Cancel</button>
+                        </form>  
+                    }
+                    @if (o.Paid && !o.Claim && o.CollectDate == DateOnly.FromDateTime(DateTime.Today))
+                    {
+                        <form asp-action="ClaimOrder" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="@o.Id" />
+                            <button type="submit" class="claim-btn">Claim</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@{
+    // AJAX Pagination options
+    var options = PagedListRenderOptions.ClassicPlusFirstAndLast;
+    options.LinkToFirstPageFormat = "First";
+    options.LinkToLastPageFormat = "Last";
+    options.LinkToPreviousPageFormat = "Previous";
+    options.LinkToNextPageFormat = "Next";
+
+    var ajaxOptions = new AjaxOptions
+    {
+        HttpMethod = "get",
+        UpdateTargetId = "target",
+        LoadingElementId = "#loader"
+    };
+}
+
+<div class="pagination-wrapper">
+    @Html.PagedListPager(
+    Model,
+    page => $"?name={ViewBag.Name}&sort={ViewBag.Sort}&dir={ViewBag.Dir}&page={page}",
+    PagedListRenderOptions.EnableUnobtrusiveAjaxReplacing(options, ajaxOptions)
+        )
+</div>

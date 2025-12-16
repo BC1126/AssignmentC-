@@ -226,7 +226,10 @@ namespace AssignmentC_.Migrations
                     Price = table.Column<decimal>(type: "decimal(6,2)", precision: 6, scale: 2, nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     OrderId = table.Column<int>(type: "int", nullable: false),
-                    ProductId = table.Column<string>(type: "nvarchar(4)", nullable: false)
+                    ProductId = table.Column<string>(type: "nvarchar(4)", nullable: true),
+                    ProductName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProductPhotoURL = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ProductId1 = table.Column<string>(type: "nvarchar(4)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -242,7 +245,12 @@ namespace AssignmentC_.Migrations
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_OrderLines_Products_ProductId1",
+                        column: x => x.ProductId1,
+                        principalTable: "Products",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -452,6 +460,11 @@ namespace AssignmentC_.Migrations
                 name: "IX_OrderLines_ProductId",
                 table: "OrderLines",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderLines_ProductId1",
+                table: "OrderLines",
+                column: "ProductId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_MemberUserId",

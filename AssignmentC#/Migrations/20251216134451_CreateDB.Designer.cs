@@ -4,6 +4,7 @@ using AssignmentC_.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    partial class DBModelSnapshot : ModelSnapshot
+    [Migration("20251216134451_CreateDB")]
+    partial class CreateDB
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -343,6 +346,9 @@ namespace AssignmentC_.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
+                    b.Property<int>("PromotionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(5)");
 
@@ -359,9 +365,11 @@ namespace AssignmentC_.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("PromotionId");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payment");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>
@@ -412,6 +420,52 @@ namespace AssignmentC_.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("AssignmentC_.Models.ProductReview", b =>
+                {
+                    b.Property<int>("ProductReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductReviewId"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProductId")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.HasKey("ProductReviewId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProductReviews");
+                });
+
             modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
                 {
                     b.Property<int>("PromotionId")
@@ -420,23 +474,9 @@ namespace AssignmentC_.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromotionId"));
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("nvarchar(13)");
-
-                    b.Property<int>("PaymentId")
-                        .HasColumnType("int");
-
                     b.HasKey("PromotionId");
 
-                    b.HasIndex("PaymentId");
-
-                    b.ToTable("Promotions");
-
-                    b.HasDiscriminator().HasValue("Promotion");
-
-                    b.UseTphMappingStrategy();
+                    b.ToTable("Promotion");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -546,117 +586,6 @@ namespace AssignmentC_.Migrations
                     b.HasDiscriminator().HasValue("User");
 
                     b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.VoucherAssignment", b =>
-                {
-                    b.Property<int>("AssignmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentId"));
-
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(5)");
-
-                    b.HasKey("AssignmentId");
-
-                    b.HasIndex("PromotionId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("VoucherAssignments");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.VoucherCondition", b =>
-                {
-                    b.Property<int>("ConditionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ConditionId"));
-
-                    b.PrimitiveCollection<string>("BirthMonth")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ConditionType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool?>("IsFirstPurchase")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("MaxAge")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MinAge")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("MinSpend")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("PromotionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ConditionId");
-
-                    b.HasIndex("PromotionId");
-
-                    b.ToTable("VoucherConditions");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.Memberpoints", b =>
-                {
-                    b.HasBaseType("AssignmentC_.Models.Promotion");
-
-                    b.Property<int>("points")
-                        .HasColumnType("int");
-
-                    b.HasDiscriminator().HasValue("Memberpoints");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.Voucher", b =>
-                {
-                    b.HasBaseType("AssignmentC_.Models.Promotion");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("DiscountValue")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("EligibilityMode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("VoucherCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("VoucherType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("status")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.HasDiscriminator().HasValue("Voucher");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Admin", b =>
@@ -792,24 +721,40 @@ namespace AssignmentC_.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AssignmentC_.Models.User", "User")
+                    b.HasOne("AssignmentC_.Models.Promotion", "Promotion")
                         .WithMany()
+                        .HasForeignKey("PromotionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentC_.Models.User", "User")
+                        .WithMany("Payment")
                         .HasForeignKey("UserId");
 
                     b.Navigation("Order");
 
+                    b.Navigation("Promotion");
+
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
+            modelBuilder.Entity("AssignmentC_.Models.ProductReview", b =>
                 {
-                    b.HasOne("AssignmentC_.Models.Payment", "Payment")
-                        .WithMany("Promotions")
-                        .HasForeignKey("PaymentId")
+                    b.HasOne("AssignmentC_.Models.Product", "Product")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Payment");
+                    b.HasOne("AssignmentC_.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -842,36 +787,6 @@ namespace AssignmentC_.Migrations
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.VoucherAssignment", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Promotion", "promotion")
-                        .WithMany()
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AssignmentC_.Models.User", "user")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("promotion");
-
-                    b.Navigation("user");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.VoucherCondition", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Promotion", "promotion")
-                        .WithMany()
-                        .HasForeignKey("PromotionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("promotion");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
                 {
                     b.Navigation("BookingSeats");
@@ -901,19 +816,21 @@ namespace AssignmentC_.Migrations
                     b.Navigation("Halls");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
-                {
-                    b.Navigation("Promotions");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>
                 {
                     b.Navigation("Lines");
+
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>
                 {
                     b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.User", b =>
+                {
+                    b.Navigation("Payment");
                 });
 #pragma warning restore 612, 618
         }

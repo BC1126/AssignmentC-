@@ -1,7 +1,9 @@
-﻿@model IEnumerable<Order>
+﻿@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<Order>
 
 @{
-    ViewBag.Title = "Product | Orders";
+    ViewBag.Title = "My Orders";
 }
 
 @section head {
@@ -18,19 +20,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
-        .back-btn {
-            margin-bottom: 20px;
-        }
-
-            .back-btn button {
-                background-color: #0d6efd;
-                color: #fff;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 4px;
-                cursor: pointer;
-            }
 
         table {
             width: 100%;
@@ -52,6 +41,14 @@
             color: #fff;
         }
 
+            th a.asc::after {
+                content: ' ▴';
+            }
+
+            th a.des::after {
+                content: ' ▾';
+            }
+
         tr:hover {
             background-color: #e9ecef;
         }
@@ -67,120 +64,134 @@
         .badge-paid {
             background-color: #198754;
         }
-        /* green */
+
         .badge-unpaid {
             background-color: #dc3545;
         }
-        /* red */
+
         .badge-claimed {
             background-color: #0d6efd;
         }
-        /* blue */
+
         .badge-unclaimed {
             background-color: #ffc107;
             color: #000;
         }
-        /* yellow */
 
-        button[data-get] {
-            background-color: #6c757d;
-            color: white;
+        button {
             border: none;
-            padding: 5px 10px;
-            margin: 2px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
-        }
-
-        td img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border: 1px solid #333;
             margin: 2px;
-            border-radius: 4px;
         }
 
-        td .popup {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 100%;
-            transform: translate(10px, -50%);
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 5px;
-            z-index: 10;
-            white-space: nowrap;
+        .detail-btn {
+            background: #0d6efd;
+            color: #fff;
         }
 
-        td:hover .popup {
-            display: block;
+        .cancel-btn {
+            background: #dc3545;
+            color: #fff;
         }
 
-        td:last-child {
-            position: relative;
+        .claim-btn {
+            background: #198754;
+            color: #fff;
         }
+
+        .pay-btn {
+            background: #198754;
+            color: #fff;
+        }
+
+        table th a.asc::after {
+            content: ' ▴';
+        }
+
+        table th a.des::after {
+            content: ' ▾';
+        }
+
+        .pagination-wrapper {
+            text-align: center;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+
+            .pagination-wrapper .pagination {
+                display: inline-flex;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+                .pagination-wrapper .pagination li {
+                    margin: 0 3px;
+                }
+
+                    .pagination-wrapper .pagination li a,
+                    .pagination-wrapper .pagination li span {
+                        display: block;
+                        padding: 8px 12px;
+                        color: #0d6efd;
+                        text-decoration: none;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        transition: all 0.3s ease;
+                    }
+
+                        .pagination-wrapper .pagination li a:hover {
+                            background-color: #0d6efd;
+                            color: #fff;
+                            border-color: #0d6efd;
+                        }
+
+                    .pagination-wrapper .pagination li.active span {
+                        background-color: #0d6efd;
+                        color: #fff;
+                        border-color: #0d6efd;
+                    }
+
+                    .pagination-wrapper .pagination li.disabled span {
+                        color: #aaa;
+                        cursor: default;
+                        border-color: #ddd;
+                    }
 
     </style>
 }
 
 <div class="container">
 
-    <div class="back-btn">
-        <button type="button" data-get="/Product/UserSelectRegion" style="background-color: #0d6efd;
-            color: #fff;">
-            ← Back
-        </button>
-    </div>
-
+    <button data-get="/Product/UserSelectRegion"
+            style="background-color:#0d6efd;color:#fff;padding:8px 16px;border:none;border-radius:5px;cursor:pointer;">
+        ← Back
+    </button>
     <h2>My Orders</h2>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Date</th>
-                <th>Paid</th>
-                <th>Claim</th>
-                <th>Count</th>
-                <th>Total</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var o in Model)
-            {
-                <tr>
-                    <td>@o.Id</td>
-                    <td>@o.Date.ToString("yyyy-MM-dd")</td>
-                    <td>
-                        <span class="badge @(o.Paid ? "badge-paid" : "badge-unpaid")">
-                            @(o.Paid ? "Paid" : "Unpaid")
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge @(o.Claim ? "badge-claimed" : "badge-unclaimed")">
-                            @(o.Claim ? "Claimed" : "Unclaimed")
-                        </span>
-                    </td>
-                    <td>@o.OrderLines.Sum(ol => ol.Quantity)</td>
-                    <td>@o.OrderLines.Sum(ol => ol.Price * ol.Quantity)</td>
-                    <td>
-                        <button data-get="/Product/OrderDetail/@o.Id" style="background-color: #0d6efd;
-                color: #fff;">
-                            Detail
-                        </button>
+    <!-- Search form -->
+    <form id="searchForm" data-ajax="true" data-ajax-update="#target" data-ajax-loading="#loader" style="margin-bottom:10px;">
+        <input type="search" name="search" value="@ViewBag.Search" placeholder="Search orders..." style="padding:6px;width:250px;" />
+        <input type="hidden" name="sort" value="@ViewBag.Sort" />
+        <input type="hidden" name="dir" value="@ViewBag.Dir" />
+    </form>
 
-                        <div class="popup">
-                            @foreach (var p in o.OrderLines.Select(ol => ol.Product))
-                            {
-                                <img src="@p.PhotoURL" title="@p.Name" />
-                            }
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <img src="/img/loader.gif" id="loader" style="display:none" />
+
+    <!-- Table container -->
+    <div id="target">
+        <partial name="_OrderTable" model="Model" />
+    </div>
 </div>
+
+@section foot {
+    <script>
+        let timer = null;
+        $('#searchForm input[name="search"]').on('input', e => {
+            clearTimeout(timer);
+            timer = setTimeout(() => $(e.target.form).submit(), 500);
+        });
+    </script>
+}

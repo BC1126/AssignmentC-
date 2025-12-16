@@ -8,8 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
-    <Folder Include="Views\Account\" />
+    <Compile Remove="Views\Account\**" />
+    <Content Remove="Views\Account\**" />
+    <EmbeddedResource Remove="Views\Account\**" />
+    <None Remove="Views\Account\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Views\Hall\" />
     <Folder Include="wwwroot\products\" />
     <Folder Include="wwwroot\js\" />
