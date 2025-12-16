@@ -48,7 +48,6 @@ public class RegisterVM
     public string Email { get; set; }
 
     // Password fields
-    // Password fields
     [Required(ErrorMessage = "Password is required.")]
 
     // 1. Enforce minimum 8 character length
@@ -115,6 +114,12 @@ public class EditProfileVM
 
     // Read-only property for display/post-back integrity
     public string Role { get; set; }
+    // Hidden field to store the current photo URL for display/reference
+    public string CurrentPhotoUrl { get; set; }
+
+    // New property for photo upload (IFormFile is used for incoming files)
+    [Display(Name = "Change Profile Photo")]
+    public IFormFile NewPhoto { get; set; }
 }
 
 public class ChangePasswordVM

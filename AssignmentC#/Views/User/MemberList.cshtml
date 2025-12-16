@@ -46,11 +46,20 @@
                     <td>@u.Email</td>
                     <td>@u.Phone</td>
                     <td>
-                            <img src="@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name">
+                        <img src="@u.PhotoURL" class="user-photo-thumbnail" alt="User Photo of @u.Name"
+                             onerror="this.onerror=null; this.src='/img/default.jpg';" /> @* Added fallback for broken images *@
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-info" data-get="/User/Update/@u.UserId">Update</button>
-                        <button class="btn btn-sm btn-danger" data-post="/User/Delete/@u.UserId">Delete</button>
+                        @* CRITICAL FIX: Use asp-tag helpers to link to AdminEditUser *@
+                        <a asp-controller="Admin" asp-action="AdminEditUser" asp-route-id="@u.UserId" class="btn btn-sm btn-info">
+                            Update
+                        </a>
+
+                        <form asp-action="AdminDeleteUser" asp-controller="Admin" method="post"
+                              style="display:inline;" onsubmit="return confirm('Permanently delete user @u.Name?');">
+                            <input type="hidden" name="id" value="@u.UserId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
                     </td>
                 </tr>
             }
