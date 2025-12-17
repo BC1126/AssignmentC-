@@ -272,4 +272,37 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
     }
 
 
+    public void LogAction(string entity, string action)
+    {
+        // Get current user email from claims
+        var email = ct.HttpContext!.User?.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrEmpty(email))
+        {
+            email = "Unknown"; // fallback
+        }
+
+        // Get user name from DB using email
+        var user = db.Users.FirstOrDefault(u => u.Email == email);
+        string name = user?.Name ?? "Unknown";
+
+        // Create log entry
+        var log = new ActionLog
+        {
+            UserEmail = user?.Email ?? "Unknown",
+            UserName = user?.Name ?? "Unknown",
+            UserRole = user?.Role ?? "Unknown",  // <-- store role here
+            Entity = entity,                     // e.g., "Movie", "ShowTime"
+            Action = action,                     // e.g., "Create", "Delete"
+            CreatedAt = DateTime.Now
+        };
+
+        db.ActionLogs.Add(log);
+        db.SaveChanges();
+
+    }
+
+
+
 }

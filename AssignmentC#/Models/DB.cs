@@ -30,6 +30,7 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Voucher> Voucher { get; set; }
     public DbSet<VoucherAssignment> VoucherAssignments { get; set; }
     public DbSet<VoucherCondition> VoucherConditions { get; set; }
+    public DbSet<ActionLog> ActionLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -410,3 +411,25 @@ public class Outlet
     public ICollection<Hall> Halls { get; set; } = new List<Hall>();
 }
 
+public class ActionLog
+{
+    [Key]
+    public int Id { get; set; }
+
+    [MaxLength(100)]
+    public string UserEmail { get; set; }
+
+    [MaxLength(100)]
+    public string UserName { get; set; }
+
+    [MaxLength(50)]
+    public string UserRole { get; set; }  
+
+    [MaxLength(100)]
+    public string Entity { get; set; }
+
+    [Column(TypeName = "nvarchar(MAX)")]
+    public string Action { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+}

@@ -1,0 +1,45 @@
+﻿@model ActionLogViewModel
+
+<div class="container mt-4">
+
+    <form asp-action="DeleteOldLogs" method="post" onsubmit="return confirm('Delete logs older than 30 days?')">
+        <button class="btn btn-warning float-end">Clean Old Logs</button>
+    </form>
+
+    <h2 class="mb-4">Action Logs</h2>
+
+
+    <form data-ajax="true" data-ajax-update="#logTarget" data-ajax-loading="#loader"
+          method="get" asp-action="ActionLogList" class="row g-3 mb-4" id="filterForm">
+        <div class="col-md-4">
+            <input type="text" name="name" id="nameInput" class="form-control" placeholder="Search Email, Name, or Entity..." />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="from" id="fromDate" class="form-control" placeholder="From Date" />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="to" id="toDate" class="form-control" placeholder="To Date" />
+        </div>
+    </form>
+
+    <div id="loader" style="display:none;" class="text-center mb-3">
+        <img src="~/img/loader.gif" width="40" />
+    </div>
+
+    <div id="logTarget">
+        <partial name="_ActionLogTable" model="Model" />
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/jquery.unobtrusive-ajax.min.js"></script>
+    <script>
+        let timer = null;
+        $('#nameInput, #fromDate, #toDate').on('input change', function() {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                $('#filterForm').submit();
+            }, 500);
+        });
+    </script>
+}

@@ -12,6 +12,24 @@ namespace AssignmentC_.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "ActionLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserEmail = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    UserRole = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Entity = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActionLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Movies",
                 columns: table => new
                 {
@@ -316,8 +334,8 @@ namespace AssignmentC_.Migrations
                 {
                     PromotionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PaymentId = table.Column<int>(type: "int", nullable: false),
                     Discriminator = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
+                    PaymentId = table.Column<int>(type: "int", nullable: true),
                     points = table.Column<int>(type: "int", nullable: true),
                     VoucherCode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     VoucherType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
@@ -335,8 +353,7 @@ namespace AssignmentC_.Migrations
                         name: "FK_Promotions_Payments_PaymentId",
                         column: x => x.PaymentId,
                         principalTable: "Payments",
-                        principalColumn: "PaymentId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PaymentId");
                 });
 
             migrationBuilder.CreateTable(
@@ -520,6 +537,9 @@ namespace AssignmentC_.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ActionLogs");
+
             migrationBuilder.DropTable(
                 name: "BookingSeats");
 
