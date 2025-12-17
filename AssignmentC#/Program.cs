@@ -19,6 +19,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<Helper>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection();
+builder.Services.AddMemoryCache();
 
 // =======================
 // Add Cookie Authentication
