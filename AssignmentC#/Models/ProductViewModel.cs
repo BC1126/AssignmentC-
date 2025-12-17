@@ -13,7 +13,7 @@ public class ProductInsertVM
     public string Id { get; set; }
 
     [Required(ErrorMessage = "Product Name is required.")]
-    [RegularExpression(@"^[A-Za-z0-9\s]+$")]
+    [RegularExpression(@"^[A-Za-z0-9-\s]+$")]
     [StringLength(100)]
     public string Name { get; set; }
 
@@ -50,7 +50,7 @@ public class ProductUpdateVM
     public string Id { get; set; }
 
     [Required(ErrorMessage = "Product Name is required.")]
-    [RegularExpression(@"^[A-Za-z0-9\s]+$")]
+    [RegularExpression(@"^[A-Za-z0-9-\s]+$")]
     [StringLength(100)]
     public string Name { get; set; }
 

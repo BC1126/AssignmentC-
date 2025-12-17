@@ -4,29 +4,24 @@
     <link href="/css/ticket.css" rel="stylesheet" />
 }
 
-
 <div class="main">
     <div class="content">
         <div class="container">
 
             <div class="voucherHeader">
-                <h1>Create New Voucher</h1>
+                <h1>Edit Voucher</h1>
                 <p class="subtitle">Configure voucher rules, value, and validity periods for customers.</p>
             </div>
 
-            @if (ViewBag.Message != null)
-            {
-                <p style="color: green">@ViewBag.Message</p>
-            }
-
             <form method="post">
+                <input type="hidden" asp-for="@Model.PromotionId" />
                 <!-- General -->
                 <div class="sectionVoucher">
-                    <h3 class="voucherH3">General Information</h3>
+                    <h3>General Information</h3>
                     <div class="grid-2">
                         <div>
                             <label asp-for="VoucherCode"></label>
-                            <input type="text" asp-for="VoucherCode" value="" />
+                            <input type="text" asp-for="VoucherCode"/>
                             <div class="hint">Code must be unique and alphanumeric.</div>
                             <span class="displayErrorMsg" asp-validation-for="VoucherCode"></span>
                         </div>
@@ -35,7 +30,7 @@
 
                 <!-- Value -->
                 <div class="sectionVoucher">
-                    <h3 class="voucherH3" Value & Type</h3>
+                    <h3>Value & Type</h3>
                     <div class="grid-2">
                         <div>
                             <label asp-for="DiscountType"></label>
@@ -55,7 +50,7 @@
 
                 <!-- Validity -->
                 <div class="sectionVoucher">
-                    <h3 class="voucherH3">Validity Period</h3>
+                    <h3>Validity Period</h3>
                     <div class="grid-2">
                         <div>
                             <label asp-for="StartDate">Start Date</label>
@@ -72,7 +67,7 @@
 
                 <!-- Min Spend-->
                 <div class="sectionVoucher">
-                    <h3 class="voucherH3"><label asp-for="MinSpend"></label></h3>
+                    <h3><label asp-for="MinSpend"></label></h3>
 
                     <div class="grid-2">
                         <div>
@@ -83,7 +78,7 @@
 
                 <!-- Eligibility -->
                 <div class="sectionVoucher">
-                    <h3 class="voucherH3"><label asp-for="EligibilityMode"></label></h3>
+                    <h3><label asp-for="EligibilityMode"></label></h3>
                     <div class="grid-2">
                         <div>
                             <select asp-for="EligibilityMode">
@@ -100,7 +95,7 @@
                 <!-- Actions -->
                 <div class="actions">
                     <button class="btn secondary"><a href="/Ticket/VoucherList">Back To List</a></button>
-                    <button type="submit" class="btn primary">Create Voucher</button>
+                    <button type="submit" class="btn primary">Save Change</button>
                 </div>
             </form>
 
@@ -108,7 +103,7 @@
     </div>
 </div>
 
-@section foot{
+@section foot {
     <script>
         Date.prototype.addDays = function (days) {
             const d = new Date(this);

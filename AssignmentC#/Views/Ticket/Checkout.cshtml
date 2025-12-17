@@ -184,99 +184,33 @@
         <!-- Scrollable content -->
         <div class="modal-body">
 
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10" checked>
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
+            @foreach (var v in ViewBag.Vouchers)
+            {
+                <label class="voucher-card">
+                    <input type="radio" name="SelectedVoucher" value="@v.VoucherCode" checked>
+                    <div class="voucher-content">
+                        <div>
+                            @if(@v.VoucherType == "percentage")
+                            {
+                                <strong>@v.DiscountValue % off</strong>
+                            }
+                            else
+                            {
+                                <strong>RM @v.DiscountValue off</strong>
+                            }
+                            
+                            <p>Minimum Spend : @v.MinSpend</p>
+                        </div>
+                        <span class="badge">@v.StartDate.ToString("dddd-MM-yyyy") - @v.EndDate.ToString("dddd-MM-yyyy") </span>
                     </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
+                </label>
+            }
+            
         </div>
 
         <!-- Fixed footer -->
         <div class="modal-footer">
-            <button class="btn-primary">Apply Voucher</button>
+            <button class="btn-primary" data-post="/Ticket/ApplyVoucher">Apply Voucher</button>
         </div>
 
     </div>
