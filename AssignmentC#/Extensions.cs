@@ -26,4 +26,28 @@ public static class Extensions
         var value = session.GetString(key);
         return value == null ? default : JsonSerializer.Deserialize<T>(value);
     }
+
+    // ------------------------------------------------------------------------
+    // Date and Time Extension Methods
+    // ------------------------------------------------------------------------
+
+    public static DateOnly ToDateOnly(this DateTime dt)
+    {
+        return DateOnly.FromDateTime(dt);
+    }
+
+    public static TimeOnly ToTimeOnly(this DateTime dt)
+    {
+        return TimeOnly.FromDateTime(dt);
+    }
+
+    public static DateOnly Today(this DateOnly date)
+    {
+        return DateOnly.FromDateTime(DateTime.Today);
+    }
+
+    public static TimeOnly Now(this TimeOnly date)
+    {
+        return TimeOnly.FromDateTime(DateTime.Now);
+    }
 }

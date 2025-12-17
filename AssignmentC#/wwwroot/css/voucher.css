@@ -1,0 +1,215 @@
+﻿.voucherLayout {
+    display: flex;
+    height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+    width: 260px;
+    background: #101322;
+    border-right: 1px solid #222949;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+    .sidebar h1 {
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .sidebar p {
+        font-size: 12px;
+        color: #909acb;
+        margin-bottom: 24px;
+    }
+
+.nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #909acb;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+    .nav a:hover {
+        background: #222949;
+        color: #fff;
+    }
+
+    .nav a.active {
+        background: #0d33f2;
+        color: #fff;
+    }
+
+/* ===== Main ===== */
+.voucherMain {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.voucherHeader {
+    display: flex;
+    margin-bottom: 24px;
+}
+
+    .voucherHeader h2 {
+        font-size: 36px;
+        font-weight: 700;
+    }
+
+    .voucherHeader p {
+        margin-top: 4px;
+        color: #909acb;
+    }
+
+.btn-primary {
+    background: #6610f2;
+    border: none;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ===== Filters ===== */
+.filters {
+    background: #ccc;
+    border: 1px solid #222949;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+    .filters input,
+    .filters select {
+        background: #f5f5f5e2;
+        border: 1px solid black;
+        color: black;
+        padding: 10px 12px;
+        border-radius: 10px;
+        width: 100%;
+    }
+
+        .filters input::placeholder {
+            color: #909acb;
+        }
+
+/* ===== Table ===== */
+.table-wrapper {
+    border-radius: 14px;
+    border: 1px solid #222949;
+    overflow: hidden;
+}
+
+.voucherList {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.voucherHead {
+    background: #ccc;
+    color: black;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+th, td {
+    padding: 16px;
+    width: 16.66%;
+}
+
+.voucherBody .voucherListRow {
+    border-top: 1px solid #222949;
+    background-color: #f5f5f5;
+}
+
+    .voucherBody .voucherListRow:hover {
+        background: rgba(255,255,255,0.03);
+    }
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.green {
+    background: #10b981;
+}
+
+.red {
+    background: red;
+}
+
+.gray {
+    background: #6b7280;
+}
+
+.blue {
+    background: #3b82f6;
+}
+
+.mono {
+    font-family: monospace;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+    .actions button {
+        background: transparent;
+        border: none;
+        color: #6610f2;
+        padding: 6px 10px;
+        border: 1px solid #6610f2;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .actions button:hover, .actions .delete:hover {
+            color: #fff;
+            background: #6610f2;
+            transition: 0.4s;
+        }
+
+/* ===== Pagination ===== */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    color: #909acb;
+    font-size: 14px;
+}
+
+.pages button {
+    background: transparent;
+    border: 1px solid #222949;
+    color: #909acb;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+    .pages button.active {
+        background: #6610f2;
+        color: #fff;
+    }

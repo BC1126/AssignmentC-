@@ -1,31 +1,71 @@
-﻿@model IEnumerable<dynamic>
+﻿@section head {
+    <link href="/css/voucher.css" rel="stylesheet" />
+}
 
+<div class="voucherLayout">
+    <!-- Main -->
+    <main class="voucherMain">
 
-<h2>Voucher List</h2>
+        <div class="voucherHeader">
+            <div>
+                <h2>Vouchers</h2>
+                <p>Manage discount codes and promotions for customers.</p>
+            </div>
+            <a href="/Ticket/Voucher"><button class="btn-primary">+ Create New Voucher</button></a>
+        </div>
 
+        <form data-ajax="true"
+              data-ajax-update="#target"
+              id="ajaxForm">
 
-<table border="1" cellpadding="5" cellspacing="0">
-    <thead>
-        <tr>
-            <th>Promotion ID</th>
-            <th>Voucher Code</th>
-            <th>Discount Type</th>
-            <th>Discount Value</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var v in Model)
-        {
-            <tr>
-                <td>@v.PromotionId</td>
-                <td>@v.VoucherCode</td>
-                <td>@v.DiscountType</td>
-                <td>@v.DiscountValue</td>
-                <td>@v.StartDate.ToString("yyyy-MM-dd")</td>
-                <td>@v.EndDate.ToString("yyyy-MM-dd")</td>
-            </tr>
-        }
-    </tbody>
-</table>
+            <div class="filters">
+                @Html.TextBox("search", "", new { type = "search", autofocus = "", data_trim = "" ,placeholder="Search by Voucher Code"})
+                <select name="status" id="status">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                </select>
+
+                <select name="type" id="type">
+                    <option value="">All Types</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed</option>
+                </select>
+                <button class="btn-primary">Search</button>
+            </div>
+        </form>
+        
+
+        <div id="target">
+            <partial name="_VoucherList" />
+        </div>
+
+        <!--
+        <div class="pagination">
+            <span>Showing 1 to 5 of 128 results</span>
+            <div class="pages">
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+            </div>
+        </div>
+        -->
+
+    </main>
+
+</div>
+
+@section foot{
+    <script>
+        let timer = null;
+
+        $('#search').on('input', e => {
+            clearTimeout(timer);
+            timer = setTimeout(() => $(e.target.form).submit(),500);
+        });
+
+        $(document).on('change', 'select', e => {
+            $(e.target.form).submit()
+        })
+    </script>
+}
