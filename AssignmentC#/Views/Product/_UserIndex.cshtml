@@ -4,6 +4,9 @@
     Dictionary<string, int> cart = ViewBag.Cart ?? new Dictionary<string, int>();
 }
 
+
+
+
 <div class="products-container">
     <div class="products">
         @foreach (var p in Model)
@@ -42,128 +45,182 @@
     </div>
 </div>
 
-<style>
-    .products-container {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    .products {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
-    }
-
-    .product-card {
-        border-radius: 8px;
-        overflow: hidden;
-        background: #fff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        display: flex;
-        flex-direction: column;
-        font-size: 12px;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-        .product-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+@if (Model is X.PagedList.IPagedList<Product> paged)
+{
+    <div class="pagination-wrapper">
+        @if (paged.HasPreviousPage)
+        {
+            <a href="#" class="page-link" data-page="@(paged.PageNumber - 1)">« Prev</a>
         }
 
-    .product-image-container {
-        width: 100%;
-        height: 200px;
-        overflow: hidden;
-        position: relative;
-    }
+        <span style="margin:0 10px;">
+            Page @paged.PageNumber of @paged.PageCount
+        </span>
 
-    .product-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .in-cart-badge {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        background: #28a745;
-        color: #fff;
-        font-size: 11px;
-        padding: 2px 6px;
-        border-radius: 12px;
-        font-weight: bold;
-    }
-
-    .product-details {
-        padding: 6px;
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        align-items: center;
-        text-align: center;
-    }
-
-    .product-desc {
-        font-size: 10px;
-        color: #555;
-        height: 20px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .quantity-control {
-        display: flex;
-        gap: 5px;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 5px;
-    }
-
-        .quantity-control input[type="number"] {
-            width: 40px;
-            text-align: center;
-            padding: 1px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 12px;
+        @if (paged.HasNextPage)
+        {
+            <a href="#" class="page-link" data-page="@(paged.PageNumber + 1)">Next »</a>
         }
+    </div>
+}
 
-    .btn-minus, .btn-plus {
-        width: 26px;
-        height: 26px;
-        background: #007bff;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+<<style>
+     .products-container {
+         max-width: 1200px;
+         margin: 0 auto;
+         padding: 10px;
+     }
 
-        .btn-minus:hover, .btn-plus:hover {
-            background: #0056b3;
-        }
+     /* 3 cards per row */
+     .products {
+         display: grid;
+         grid-template-columns: repeat(3, 1fr);
+         gap: 20px;
+     }
 
-    .btn-add {
-        background: #28a745;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        padding: 3px 6px;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 12px;
-    }
+     .product-card {
+         border-radius: 12px;
+         background: #fff;
+         box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+         display: flex;
+         flex-direction: column;
+         font-size: 13px;
+         transition: all 0.2s ease;
+     }
 
-        .btn-add:hover {
-            background: #218838;
-        }
+         .product-card:hover {
+             transform: translateY(-4px);
+             box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+         }
+
+     .product-image-container {
+         height: auto; /* allow the image to keep its original ratio */
+         max-height: 220px; /* optional max size */
+         position: relative;
+         overflow: hidden;
+         border-top-left-radius: 12px;
+         border-top-right-radius: 12px;
+     }
+
+     .product-image {
+         width: 100%;
+         height: 100%;
+         object-fit: contain;
+     }
+
+
+     .in-cart-badge {
+         position: absolute;
+         top: 8px;
+         right: 8px;
+         background: #28a745;
+         color: #fff;
+         font-size: 11px;
+         padding: 3px 7px;
+         border-radius: 12px;
+     }
+
+     .product-details {
+         padding: 10px;
+         text-align: center;
+     }
+
+         .product-details h4 {
+             font-size: 15px;
+             margin: 6px 0;
+             font-weight: 600;
+         }
+
+     .product-desc {
+         font-size: 12px;
+         color: #555;
+         margin-bottom: 8px;
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+     }
+
+     .product-details p {
+         margin: 3px 0;
+         font-size: 12px;
+     }
+
+     .quantity-control {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         gap: 6px;
+         margin: 8px 0;
+     }
+
+         .quantity-control input {
+             width: 42px;
+             height: 28px;
+             text-align: center;
+             font-size: 13px;
+         }
+
+     .btn-minus,
+     .btn-plus {
+         width: 28px;
+         height: 28px;
+         border-radius: 50%;
+         background: #007bff;
+         color: #fff;
+         border: none;
+         font-size: 15px;
+         cursor: pointer;
+     }
+
+     .btn-add {
+         margin-top: 6px;
+         width: 100%;
+         background: #28a745;
+         color: #fff;
+         border: none;
+         border-radius: 8px;
+         padding: 6px 0;
+         font-size: 13px;
+         font-weight: 600;
+         transition: background 0.3s ease;
+     }
+
+         .btn-add:hover {
+             background: #218838;
+         }
+
+     /* Modern pagination */
+     .pagination-wrapper {
+         margin-top: 30px;
+         text-align: center;
+     }
+
+         .pagination-wrapper a,
+         .pagination-wrapper span {
+             display: inline-block;
+             margin: 0 6px;
+             padding: 6px 12px;
+             border-radius: 6px;
+             text-decoration: none;
+             font-weight: 500;
+             transition: background 0.3s, color 0.3s;
+         }
+
+         .pagination-wrapper a {
+             color: #007bff;
+             border: 1px solid #007bff;
+         }
+
+             .pagination-wrapper a:hover {
+                 background: #007bff;
+                 color: #fff;
+             }
+
+         .pagination-wrapper span {
+             background: #007bff;
+             color: #fff;
+             border: 1px solid #007bff;
+         }
 </style>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
