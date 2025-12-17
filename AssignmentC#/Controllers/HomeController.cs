@@ -31,16 +31,6 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult login()
-    {
-        return View();
-    }
-
-    public IActionResult register()
-    {
-        return View();
-    }
-
     public IActionResult blog()
     {
         return View();

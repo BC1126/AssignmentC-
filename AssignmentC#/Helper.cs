@@ -1,20 +1,22 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 using System.IO; // Required for FileStream and Path operations and Directory.CreateDirectory
 using System.Linq;
-using Microsoft.AspNetCore.Hosting;
+using System.Net;
+using System.Net.Mail;
 using System.Reflection.Metadata.Ecma335; // Required for IWebHostEnvironment
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace AssignmentC_;
 
 // CRITICAL MODIFICATION: Added DB context to the constructor for GenerateNextUserId method.
 // NOTE: Make sure your DB context type (DB) is available to this class.
-public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
+public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db, IConfiguration cf)
 {
     // Private field for PasswordHasher
     private readonly PasswordHasher<object> ph = new();
@@ -270,6 +272,38 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
             ct.HttpContext!.Session.Set("Cart", dict);
         }
     }
+    public void SendEmail(MailMessage mail)
+    {
+        string user = cf["Smtp:User"]?.Trim();
+        string pass = cf["Smtp:Pass"]?.Replace(" ", "");
 
+        mail.From = new MailAddress(user, cf["Smtp:Name"]);
 
+        using (var smtp = new SmtpClient())
+        {
+            smtp.Host = cf["Smtp:Host"];
+            smtp.Port = cf.GetValue<int>("Smtp:Port");
+            smtp.EnableSsl = true;
+            smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+            smtp.UseDefaultCredentials = false;
+            smtp.Credentials = new System.Net.NetworkCredential(user, pass);
+
+            try
+            {
+                smtp.Send(mail);
+            }
+            catch (Exception ex)
+            {
+                // This logs the error to your Visual Studio Output window instead of crashing
+                System.Diagnostics.Debug.WriteLine($"SMTP Error: {ex.Message}");
+                throw new Exception("Email failed to send. Check your App Password or internet connection.", ex);
+            }
+        }
+    }
+
+    public string GenerateCaptchaCode()
+    {
+        // Just return the string; the View/Controller will handle the "memory" via encryption
+        return Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
+    }
 }

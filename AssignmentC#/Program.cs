@@ -18,6 +18,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddScoped<Helper>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDataProtection();
 
 // =======================
 // Add Cookie Authentication
@@ -39,6 +40,7 @@ builder.Services.AddAuthentication("MyCookieAuth")
 
 var app = builder.Build();
 
+app.UseRouting();
 app.UseSession();
 app.UseHttpsRedirection();
 app.UseStaticFiles();

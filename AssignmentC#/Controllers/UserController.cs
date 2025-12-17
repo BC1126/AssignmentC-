@@ -1,12 +1,15 @@
 ﻿using AssignmentC_.Models;
+using AssignmentC_.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
+using System.IO;
 using System.Security.Claims;
-using AssignmentC_.Models;
 
 namespace AssignmentC_.Controllers;
 
@@ -16,12 +19,15 @@ public class UserController : Controller
     private readonly DB db;
     private readonly Helper hp;
     private readonly IWebHostEnvironment en;
+    private readonly IDataProtector _protector;
 
-    public UserController(DB db, Helper hp, IWebHostEnvironment en)
+    public UserController(DB db, Helper hp, IWebHostEnvironment en, IDataProtectionProvider provider)
     {
         this.db = db;
         this.hp = hp;
         this.en = en;
+        _protector = provider.CreateProtector("PasswordResetPurpose");
+        _protector = provider.CreateProtector("CaptchaProtector");
     }
 
     public async Task<IActionResult> MemberList(string sortOrder, string searchString, int? pageNumber)
@@ -181,17 +187,38 @@ public class UserController : Controller
     // 1. REGISTER ACTIONS
     // ====================================================================
 
+    [HttpGet]
     public IActionResult Register()
     {
-        // FIX 1: Explicitly specify the view path since the file is in Views/Home/
+        string code = hp.GenerateCaptchaCode();
+
+        // 2. Set ViewBag BEFORE returning the view
+        ViewBag.CaptchaCode = code;
+        ViewBag.EncryptedCaptcha = _protector.Protect(code);
+
+        // 3. Return the view directly
         return View("~/Views/Home/Register.cshtml");
     }
 
     // POST: User/Register (Route is /User/Register)
     [HttpPost]
     [ValidateAntiForgeryToken] // FIX 2: Security - Prevents CSRF Attacks
-    public IActionResult Register(RegisterVM vm)
+    public IActionResult Register(RegisterVM vm, string encryptedCaptcha)
     {
+        try
+        {
+            // Decrypt the answer that was stored in the browser's hidden field
+            string actualCode = _protector.Unprotect(encryptedCaptcha);
+
+            if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
+            {
+                ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
+            }
+        }
+        catch
+        {
+            ModelState.AddModelError("CaptchaInput", "Verification expired. Please try again.");
+        }
         // 1. Check for email existence 
         if (ModelState.GetValidationState("Email") != ModelValidationState.Invalid &&
             db.Members.Any(u => u.Email == vm.Email))
@@ -258,6 +285,10 @@ public class UserController : Controller
             }
             
         }
+
+        string newCode = hp.GenerateCaptchaCode();
+        ViewBag.CaptchaCode = newCode;
+        ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
         return View("~/Views/Home/Register.cshtml", vm);
     }
 
@@ -268,11 +299,18 @@ public class UserController : Controller
     // GET: Account/Login
     public IActionResult Login(string returnUrl = null)
     {
+        
         if (!string.IsNullOrEmpty(returnUrl))
         {
             TempData["Info"] = "Please Login First";
         }
+        string code = hp.GenerateCaptchaCode();
 
+        // 1. Show the code to the user
+        ViewBag.CaptchaCode = code;
+
+        // 2. Encrypt the answer for the hidden field
+        ViewBag.EncryptedCaptcha = _protector.Protect(code);
         ViewBag.ReturnUrl = returnUrl;
         return View("~/Views/Home/Login.cshtml");
     }
@@ -286,8 +324,23 @@ public class UserController : Controller
     // POST: User/Login
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Login(LoginVM vm)
+    public IActionResult Login(LoginVM vm, string encryptedCaptcha)
     {
+        try
+        {
+            // Decrypt the hidden answer sent back by the browser
+            string actualCode = _protector.Unprotect(encryptedCaptcha);
+
+            if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
+            {
+                ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
+            }
+        }
+        catch
+        {
+            ModelState.AddModelError("CaptchaInput", "Verification expired. Please try again.");
+        }
+
         // 1. Basic Model State Validation
         if (!ModelState.IsValid)
         {
@@ -341,6 +394,9 @@ public class UserController : Controller
             // ... (catch block) ...
         }
 
+        string newCode = hp.GenerateCaptchaCode();
+        ViewBag.CaptchaCode = newCode;
+        ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
         // 5. Fallback: Return the view on failure
         return View("~/Views/Home/Login.cshtml", vm);
     }
@@ -544,20 +600,37 @@ public class UserController : Controller
     }
 
     [Authorize]
+    [HttpGet]
     public IActionResult ChangePassword()
     {
+        string code = hp.GenerateCaptchaCode(); // Get random string from Helper
+
+        ViewBag.CaptchaCode = code;
+        ViewBag.EncryptedCaptcha = _protector.Protect(code); // Encrypt answer
+
         return View();
     }
-
-    // POST: Account/UpdatePassword
-    // UserController.cs (assuming this is where the action resides)
 
     // POST: /User/ChangePassword
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken] // Recommended best practice for security
-    public async Task<IActionResult> ChangePassword(ChangePasswordVM vm)
+    public async Task<IActionResult> ChangePassword(ChangePasswordVM vm, string encryptedCaptcha)
     {
+        try
+        {
+            // Decrypt the hidden answer to verify identity
+            string actualCode = _protector.Unprotect(encryptedCaptcha);
+
+            if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
+            {
+                ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
+            }
+        }
+        catch
+        {
+            ModelState.AddModelError("CaptchaInput", "Security check expired. Please try again.");
+        }
         // 1. Retrieve the user's email from the authentication claim
         var userEmail = User.Identity?.Name;
 
@@ -578,7 +651,7 @@ public class UserController : Controller
         if (ModelState.IsValid)
         {
             // 4. Verification Check
-            if (!hp.VerifyPassword(u.PasswordHash, vm.Current))
+            if (!hp.VerifyPassword(u.PasswordHash, vm.Token))
             {
                 ModelState.AddModelError("Current", "Current Password not matched.");
                 // If verification fails, we must return the view immediately
@@ -594,8 +667,124 @@ public class UserController : Controller
             return RedirectToAction("Profile");
         }
 
+        string newCode = hp.GenerateCaptchaCode();
+        ViewBag.CaptchaCode = newCode;
+        ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
         // If ModelState was invalid from the start (e.g., New/Confirm mismatch)
         return View(vm);
     }
 
+    private void SendResetPasswordEmail(User u, string password)
+    {
+        var mail = new MailMessage();
+        mail.To.Add(new MailAddress(u.Email, u.Name));
+        mail.Subject = "Movie Theme - Your New Password";
+        mail.IsBodyHtml = true;
+
+        // Attach user photo logic (keeping your professional style)
+        var path = u switch
+        {
+            Admin => Path.Combine(en.WebRootPath, "photos", "admin.jpg"),
+            Member m => Path.Combine(en.WebRootPath, "photos", m.PhotoURL ?? "default.jpg"),
+            _ => Path.Combine(en.WebRootPath, "img", "default.jpg"),
+        };
+
+        if (System.IO.File.Exists(path))
+        {
+            var att = new Attachment(path);
+            att.ContentId = "photo";
+            mail.Attachments.Add(att);
+        }
+
+        mail.Body = $@"
+        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; text-align: center;'>
+            <div style='background: #1a1a1a; padding: 15px; margin-bottom: 20px;'>
+                <h2 style='color: #ff5500; margin: 0;'>MOVIE THEME</h2>
+            </div>
+            <img src='cid:photo' style='width: 100px; height: 100px; border-radius: 50%;'>
+            <h3>Hello {u.Name},</h3>
+            <p>Your password has been reset successfully. Please use the temporary password below to log in:</p>
+            <div style='background: #f4f4f4; padding: 15px; font-size: 20px; font-weight: bold; color: #ff5500; letter-spacing: 2px;'>
+                {password}
+            </div>
+            <p style='margin-top: 20px;'>We recommend changing this password immediately after logging in.</p>
+            <p style='color: #888;'>From, 🐱 Super Admin</p>
+        </div>";
+
+        hp.SendEmail(mail);
+    }
+
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            TempData["Info"] = "<div class='alert alert-danger'>Email not found!</div>";
+            return View();
+        }
+
+        // Generate a secure token (UserId + Expiration Ticks)
+        string payload = $"{user.UserId}|{DateTime.UtcNow.AddHours(1).Ticks}";
+        string token = _protector.Protect(payload);
+        string resetLink = Url.Action("ResetPassword", "User", new { token = token }, Request.Scheme);
+
+        // Create verification email
+        var mail = new MailMessage();
+        mail.To.Add(new MailAddress(user.Email));
+        mail.Subject = "Identity Verification - Reset Your Password";
+        mail.IsBodyHtml = true;
+        mail.Body = $@"<h3>Hello {user.Name},</h3>
+                  <p>Click the link below to verify your identity and set a new password:</p>
+                  <p><a href='{resetLink}'>VERIFY AND RESET PASSWORD</a></p>";
+
+        hp.SendEmail(mail);
+
+        TempData["Info"] = "<div class='alert alert-success'>Verification link sent to your Gmail!</div>";
+        return RedirectToAction("Login");
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string token)
+    {
+        // This passes the token from the email link into the hidden field in your View
+        return View(new ResetPasswordVM { Token = token });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(ResetPasswordVM vm)
+    {
+        try
+        {
+            // 1. Decrypt token to verify person's identity
+            string decrypted = _protector.Unprotect(vm.Token);
+            var parts = decrypted.Split('|');
+            string userId = parts[0];
+            long expiry = long.Parse(parts[1]);
+
+            // 2. Check if link has expired
+            if (DateTime.UtcNow.Ticks > expiry) return Content("Verification link expired.");
+
+            // 3. Update the password now that identity is proven
+            var user = await db.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.PasswordHash = hp.HashPassword(vm.New);
+                await db.SaveChangesAsync();
+                TempData["Info"] = "Identity verified. Password updated!";
+                return RedirectToAction("Login");
+            }
+        }
+        catch
+        {
+            return Content("Invalid or tampered security link.");
+        }
+        return RedirectToAction("Login");
+    }
 }
