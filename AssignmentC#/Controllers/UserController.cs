@@ -24,72 +24,159 @@ public class UserController : Controller
         this.en = en;
     }
 
-    // In AdminController.cs
-    public IActionResult MemberList()
+    public async Task<IActionResult> MemberList(string sortOrder, string searchString, int? pageNumber)
     {
-        //[Authorize(Role = "Admin")]
-        // Declare the list as the type the view expects: IEnumerable<Member>
-        IEnumerable<Member> memberList = new List<Member>();
+        // 1. Setup Sort Parameters for the UI (Toggle Logic)
+        ViewData["CurrentSort"] = sortOrder;
+        ViewData["NameSort"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        ViewData["EmailSort"] = sortOrder == "Email" ? "email_desc" : "Email";
+        ViewData["IdSort"] = sortOrder == "Id" ? "id_desc" : "Id";
 
-        try
-        {
-            // 1. Fetch only Member objects (assuming your DB context supports this)
-            // AND/OR
-            // 2. Explicitly cast the entire collection to the required type.
-            // The "as Member" cast will only succeed if the object is actually a Member
-            memberList = db.Users.OfType<Member>().ToList();
-        }
-        catch (Exception ex)
-        {
+        // 2. Start Query - Filter by Member type specifically
+        var memberQuery = db.Users.OfType<Member>().AsQueryable();
 
+        // 3. Search Logic: Filters by Name or Email
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            memberQuery = memberQuery.Where(m => m.Name.Contains(searchString) || m.Email.Contains(searchString));
         }
 
-        return View(memberList);
+        // 4. Sort Logic
+        memberQuery = sortOrder switch
+        {
+            "name_desc" => memberQuery.OrderByDescending(m => m.Name),
+            "Email" => memberQuery.OrderBy(m => m.Email),
+            "email_desc" => memberQuery.OrderByDescending(m => m.Email),
+            "Id" => memberQuery.OrderBy(m => m.UserId),
+            "id_desc" => memberQuery.OrderByDescending(m => m.UserId),
+            _ => memberQuery.OrderBy(m => m.Name), // Default Sort
+        };
+
+        // 5. Paging Logic
+        int pageSize = 10;
+        int pageIndex = pageNumber ?? 1;
+
+        // Execute count and fetch page items asynchronously
+        var count = await memberQuery.CountAsync();
+        var items = await memberQuery.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        // 6. Wrap results in the PaginatedList container
+        var model = new PaginatedList<Member>(items, count, pageIndex, pageSize)
+        {
+            SearchString = searchString,
+            SortOrder = sortOrder
+        };
+
+        // 7. AJAX Check: Return only the table rows if requested via JavaScript
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_MemberList", model);
+        }
+
+        // Standard request returns the full page
+        return View(model);
     }
 
-    public IActionResult StaffList()
+    public async Task<IActionResult> StaffList(string sortOrder, string searchString, int? pageNumber)
     {
-        //[Authorize(Role = "Admin")]
-        // Declare the list as the type the view expects: IEnumerable<Member>
-        IEnumerable<Staff> staffList = new List<Staff>();
+        // 1. Setup Sort Parameters for the UI
+        ViewData["CurrentSort"] = sortOrder;
+        ViewData["NameSort"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        ViewData["EmailSort"] = sortOrder == "Email" ? "email_desc" : "Email";
+        ViewData["IdSort"] = sortOrder == "Id" ? "id_desc" : "Id";
 
-        try
-        {
-            // 1. Fetch only Member objects (assuming your DB context supports this)
-            // AND/OR
-            // 2. Explicitly cast the entire collection to the required type.
-            // The "as Member" cast will only succeed if the object is actually a Member
-            staffList = db.Users.OfType<Staff>().ToList();
-        }
-        catch (Exception ex)
-        {
+        // 2. Start Query
+        var staffQuery = db.Staffs.AsQueryable(); // Use your actual DB context and table
 
+        // 3. Search Logic
+        if (!String.IsNullOrEmpty(searchString))
+        {
+            staffQuery = staffQuery.Where(s => s.Name.Contains(searchString) || s.Email.Contains(searchString));
         }
 
-        return View(staffList);
+        // 4. Sort Logic
+        staffQuery = sortOrder switch
+        {
+            "name_desc" => staffQuery.OrderByDescending(s => s.Name),
+            "Email" => staffQuery.OrderBy(s => s.Email),
+            "email_desc" => staffQuery.OrderByDescending(s => s.Email),
+            "Id" => staffQuery.OrderBy(s => s.UserId),
+            "id_desc" => staffQuery.OrderByDescending(s => s.UserId),
+            _ => staffQuery.OrderBy(s => s.Name),
+        };
+
+        // 5. Paging Logic
+        int pageSize = 10; // Number of rows per page
+        int pageIndex = pageNumber ?? 1;
+
+        var count = await staffQuery.CountAsync();
+        var items = await staffQuery.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        // 6. WRAP IN PAGINATED LIST (This fixes the error)
+        var model = new PaginatedList<Staff>(items, count, pageIndex, pageSize)
+        {
+            SearchString = searchString,
+            SortOrder = sortOrder
+        };
+
+        // 7. AJAX Check
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_StaffList", model);
+        }
+
+        return View(model);
     }
 
-    public IActionResult AdminList()
+    public async Task<IActionResult> AdminList(string sortOrder, string searchString, int? pageNumber)
     {
-        //[Authorize(Role = "Admin")]
-        // Declare the list as the type the view expects: IEnumerable<Member>
-        IEnumerable<Admin> adminList = new List<Admin>();
+        // 1. Setup Sort Parameters
+        ViewData["CurrentSort"] = sortOrder;
+        ViewData["NameSort"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        ViewData["EmailSort"] = sortOrder == "Email" ? "email_desc" : "Email";
+        ViewData["IdSort"] = sortOrder == "Id" ? "id_desc" : "Id";
 
-        try
-        {
-            // 1. Fetch only Member objects (assuming your DB context supports this)
-            // AND/OR
-            // 2. Explicitly cast the entire collection to the required type.
-            // The "as Member" cast will only succeed if the object is actually a Member
-            adminList = db.Users.OfType<Admin>().ToList();
-        }
-        catch (Exception ex)
-        {
+        // 2. Start Query - Use OfType for inheritance
+        var adminQuery = db.Users.OfType<Admin>().AsQueryable();
 
+        // 3. Search Logic
+        if (!string.IsNullOrEmpty(searchString))
+        {
+            adminQuery = adminQuery.Where(a => a.Name.Contains(searchString) || a.Email.Contains(searchString));
         }
 
-        return View(adminList);
+        // 4. Sort Logic
+        adminQuery = sortOrder switch
+        {
+            "name_desc" => adminQuery.OrderByDescending(a => a.Name),
+            "Email" => adminQuery.OrderBy(a => a.Email),
+            "email_desc" => adminQuery.OrderByDescending(a => a.Email),
+            "Id" => adminQuery.OrderBy(a => a.UserId),
+            "id_desc" => adminQuery.OrderByDescending(a => a.UserId),
+            _ => adminQuery.OrderBy(a => a.Name),
+        };
+
+        // 5. Paging Logic
+        int pageSize = 10;
+        int pageIndex = pageNumber ?? 1;
+        int count = await adminQuery.CountAsync();
+        var items = await adminQuery.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        var model = new PaginatedList<Admin>(items, count, pageIndex, pageSize)
+        {
+            SearchString = searchString,
+            SortOrder = sortOrder
+        };
+
+        // 6. AJAX Check for partial update
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_AdminList", model);
+        }
+
+        return View(model);
     }
+
     // ====================================================================
     // 1. REGISTER ACTIONS
     // ====================================================================
@@ -275,7 +362,7 @@ public class UserController : Controller
         return RedirectToAction("Login", "User");
     }
 
-    // GET: Account/AccessDenied
+    [AllowAnonymous] // Ensure everyone can see the error page
     public IActionResult AccessDenied(string? returnURL)
     {
         return View();
@@ -510,4 +597,5 @@ public class UserController : Controller
         // If ModelState was invalid from the start (e.g., New/Confirm mismatch)
         return View(vm);
     }
+
 }

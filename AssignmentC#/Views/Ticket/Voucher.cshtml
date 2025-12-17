@@ -1,0 +1,104 @@
+﻿@model VoucherViewModel
+
+@section head {
+    <link href="/css/ticket.css" rel="stylesheet" />
+}
+
+
+<div class="main">
+    <div class="content">
+        <div class="container">
+
+            <div class="voucherHeader">
+                <h1>Create New Voucher</h1>
+                <p class="subtitle">Configure voucher rules, value, and validity periods for customers.</p>
+            </div>
+
+            @if (ViewBag.Message != null)
+            {
+                <p style="color: green">@ViewBag.Message</p>
+            }
+
+            <form method="post">
+                <!-- General -->
+                <div class="sectionVoucher">
+                    <h3>General Information</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Voucher Code</label>
+                            <input type="text" placeholder="CINEMA2025" name="VoucherCode" value="" />
+                            <div class="hint">Code must be unique and alphanumeric.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Value -->
+                <div class="sectionVoucher">
+                    <h3>Value & Type</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label >Discount Type</label>
+                            <select name="DiscountType">
+                                <option value="percentage">Percentage Discount (%)</option>
+                                <option value="fixed">Fixed Amount (RM)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Discount Value</label>
+                            <input type="number" placeholder="0" name="DiscountValue" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validity -->
+                <div class="sectionVoucher">
+                    <h3>Validity Period</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label>Start Date</label>
+                            <input type="date" name="StartDate"/>
+                        </div>
+                        <div>
+                            <label>End Date</label>
+                            <input type="date" name="EndDate"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eligibility -->
+                <div class="sectionVoucher">
+                    <h3>Eligibility Mode</h3>
+                    <div class="grid-2">
+                        <div>
+                            <select name="EligibilityMode">
+                                <option value="open">Open to all</option>
+                                <option value="condition">Condition-based</option>
+                                <option value="assigned">Assigned user only</option>
+                                <option value="both">Assigned + Condition</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target -->
+                <div class="sectionVoucher">
+                    <h3>Condition</h3>
+
+                    <div class="grid-2">
+                        <div>
+                            <label>Minimum Purchase Amount ($)</label>
+                            <input type="number" placeholder="0.00" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button class="btn secondary"><a href="/Ticket/VoucherList">Back To List</a></button>
+                    <button type="submit" class="btn primary">Create Voucher</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>

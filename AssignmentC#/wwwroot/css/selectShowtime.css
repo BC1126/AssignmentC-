@@ -1,0 +1,217 @@
+﻿body {
+    background-color: #fff;
+    color: #fff;
+}
+
+.movie-header {
+    position: relative;
+    height: 500px;
+    overflow: hidden;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(26,26,26,1));
+}
+
+    .movie-header video,
+    .movie-header iframe {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+    }
+
+.movie-header-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 40px;
+    background: linear-gradient(to top, rgba(26,26,26,1), transparent);
+    z-index: 1;
+}
+
+.movie-info h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.movie-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.rating-badge {
+    background: #e50914;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.date-selector {
+    background: #242424;
+    padding: 30px;
+    border-radius: 10px;
+    margin: 30px 0;
+}
+
+.date-pills {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+.date-pill {
+    min-width: 100px;
+    padding: 15px 20px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+    .date-pill:hover {
+        border-color: #e50914;
+        transform: translateY(-2px);
+    }
+
+    .date-pill.active {
+        background: #e50914;
+        border-color: #e50914;
+    }
+
+    .date-pill .day {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    .date-pill .date {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .date-pill .month {
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
+
+.experience-filter {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.experience-btn {
+    padding: 10px 25px;
+    background: #242424;
+    border: 2px solid #333;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #fff;
+}
+
+    .experience-btn:hover {
+        border-color: #e50914;
+    }
+
+    .experience-btn.active {
+        background: #e50914;
+        border-color: #e50914;
+    }
+
+.cinema-section {
+    margin: 30px 0;
+}
+
+.cinema-card {
+    background: #242424;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.cinema-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.cinema-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #e50914;
+}
+
+.cinema-location {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.showtime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.showtime-btn {
+    padding: 15px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #fff;
+    text-decoration: none;
+    display: block;
+}
+
+    .showtime-btn:hover {
+        border-color: #e50914;
+        transform: translateY(-2px);
+        background: #e50914;
+        color: #fff;
+    }
+
+.showtime-time {
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: block;
+}
+
+.showtime-type {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 5px;
+    display: block;
+}
+
+.showtime-price {
+    font-size: 0.9rem;
+    color: #4caf50;
+    margin-top: 5px;
+    display: block;
+}
+
+.no-showtimes {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.container-custom {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}

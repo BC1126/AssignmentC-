@@ -68,8 +68,8 @@ public class RegisterVM
     public string ConfirmPassword { get; set; }
 
     // Corresponds to the 'Gender' property in your User entity
-    [Required(ErrorMessage = "Gender is required.")]
-    [StringLength(1, ErrorMessage = "Gender must be a single character (e.g., M or F).")] // REMOVED ErrorMode
+    [Required(ErrorMessage = "Please select a gender")]
+    [RegularExpression("^(M|F)$", ErrorMessage = "Invalid Gender selected")]
     public string Gender { get; set; }
 
     // Corresponds to the 'Phone' property in your User entity
@@ -108,7 +108,8 @@ public class EditProfileVM
     [StringLength(11)] // Adjusted to 11 to match User.Phone MaxLength
     public string Phone { get; set; }
 
-    [StringLength(1)]
+    [Required(ErrorMessage = "Please select a gender")]
+    [RegularExpression("^(M|F)$", ErrorMessage = "Invalid Gender selected")]
     public string Gender { get; set; }
 
     // Read-only property for display/post-back integrity

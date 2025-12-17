@@ -19,8 +19,9 @@
                              style="height:390px; max-width:270px; object-fit:cover;" />
                         <div class="card-body text-center">
                             <h6 class="fw-bold">@movie.Title</h6>
-                            <a asp-action="Details"
-                               asp-route-id="@movie.MovieId"
+                            <a asp-controller="Booking"
+                               asp-action="selectShowtime"
+                               asp-route-movieId="@movie.MovieId"
                                class="btn btn-outline-primary btn-sm mt-2">
                                 Get Ticket
                             </a>

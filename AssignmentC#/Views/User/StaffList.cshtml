@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Staff>
+﻿@model PaginatedList<Staff>
 
 @{
     ViewBag.Title = "Admin | StaffList";
@@ -7,101 +7,52 @@
 
 @section head {
     <style>
+        /* Matches MemberList styles */
         .table th, .table td {
             vertical-align: middle;
         }
-        /* Elevates the table area with padding and a subtle shadow */
+
         .table-container {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            position: relative;
+            transition: opacity 0.3s ease;
         }
     </style>
 }
 
-@* Everything is wrapped in this container for side spacing *@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>User Management</h2>
+        <div class="btn-group" role="group">
+            <a asp-action="MemberList" asp-controller="User" class="btn btn-outline-primary">All Members</a>
+            <a asp-action="StaffList" asp-controller="User" class="btn btn-outline-primary active">Staff Only</a>
+            <a asp-action="AdminList" asp-controller="User" class="btn btn-outline-primary">Admins Only</a>
+        </div>
+    </div>
 
-        @* Category Navigation *@
-        <div class="btn-group" role="group" aria-label="User Categories">
-            <a asp-action="MemberList" asp-controller="User"
-               class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "MemberList" ? "active" : "")">
-                All Members
-            </a>
-            <a asp-action="StaffList" asp-controller="User"
-               class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "StaffList" ? "active" : "")">
-                Staff Only
-            </a>
-            <a asp-action="AdminList" asp-controller="User"
-               class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "AdminList" ? "active" : "")">
-                Admins Only
+    @* Search and Add Button *@
+    <div class="row mb-3 align-items-end">
+        <div class="col-md-4">
+            <h6 class="fw-bold">Search Staffs</h6>
+            <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Search by name or email..." value="@Model.SearchString" />
+        </div>
+        <div class="col-md-8 text-end">
+            <a asp-action="AdminAddUser" asp-controller="Admin" asp-route-role="Staff" class="btn btn-success shadow-sm">
+                <i class="bi bi-person-plus-fill"></i> Add New Staff
             </a>
         </div>
     </div>
 
-    @* Aligned button with the table edge *@
-    <div class="d-flex justify-content-end mb-3">
-        <a asp-action="AdminAddUser" asp-controller="Admin" asp-route-role="Staff" class="btn btn-success shadow-sm">
-            <i class="bi bi-person-plus-fill"></i> Add New Staff
-        </a>
+    <div id="tableContainer">
+        <partial name="_StaffList" model="Model" />
     </div>
-
-    @if (Model != null)
-    {
-        <div class="table-container border">
-            <p class="text-muted">Showing @Model.Count() staff record(s)</p>
-
-            <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>@Html.DisplayNameFor(model => model.First().UserId)</th>
-                            <th>@Html.DisplayNameFor(model => model.First().Name)</th>
-                            <th>@Html.DisplayNameFor(model => model.First().Gender)</th>
-                            <th>@Html.DisplayNameFor(model => model.First().Email)</th>
-                            <th>@Html.DisplayNameFor(model => model.First().Phone)</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var u in Model)
-                        {
-                            <tr>
-                                <td><strong>@u.UserId</strong></td>
-                                <td>@u.Name</td>
-                                <td>@u.Gender</td>
-                                <td>@u.Email</td>
-                                <td>@u.Phone</td>
-                                <td class="text-center">
-                                    <a asp-controller="Admin" asp-action="AdminEditUser"
-                                       asp-route-id="@u.UserId"
-                                       asp-route-returnUrl="@currentUrl"
-                                       class="btn btn-sm btn-info text-white">
-                                        Update
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-danger"
-                                            onclick="openDeleteModal('@u.UserId', '@u.Name')">
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-warning shadow-sm">No staff data available or an error occurred loading the data.</div>
-    }
 </div>
 
-@* Delete Modal remains outside the container *@
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog">
         <div class="modal-content">
             <form asp-action="AdminDeleteUser" asp-controller="Admin" method="post">
@@ -109,11 +60,13 @@
                     <h5 class="modal-title">Confirm Delete</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
                 <div class="modal-body">
                     <p>Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
                     <input type="hidden" name="id" id="deleteUserId" />
                     <input type="hidden" name="returnUrl" value="@currentUrl" />
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Confirm Delete</button>
@@ -125,6 +78,83 @@
 
 @section Scripts {
     <script>
+        $(document).ready(function () {
+            // Store the initial sort order from the server model
+            let currentSort = "@Model.SortOrder";
+
+            /**
+             * Core function to fetch data via AJAX
+             */
+            function loadData(page, sort, search) {
+                // Visual Feedback: Fade out the table and show a loading state
+                $('#tableContainer').css('opacity', '0.5');
+
+                $.ajax({
+                    url: '@Url.Action("StaffList", "User")',
+                    type: 'GET',
+                    data: {
+                        pageNumber: page,
+                        sortOrder: sort,
+                        searchString: search
+                    },
+                    // Ensure the server knows this is an AJAX request
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    success: function (result) {
+                        // Inject the partial view HTML into the container
+                        $('#tableContainer').html(result).css('opacity', '1');
+                    },
+                    error: function () {
+                        $('#tableContainer').css('opacity', '1');
+                        console.error("AJAX Error: Could not load staff data.");
+                    }
+                });
+            }
+
+            /**
+             * Optimized Search: Uses "input" event for better mobile/paste support
+             * and a shorter 300ms debounce for a snappier feel.
+             */
+            let typingTimer;
+            $('#searchInput').on('input', function () {
+                clearTimeout(typingTimer);
+                const searchVal = $(this).val();
+
+                typingTimer = setTimeout(() => {
+                    // Reset to page 1 whenever a new search is performed
+                    loadData(1, currentSort, searchVal);
+                }, 300); // 300ms is the "sweet spot" for speed and server load
+            });
+
+            /**
+             * Pagination Logic: Triggers when user clicks Next/Prev/Page Number
+             */
+            $(document).on('click', '.page-link', function (e) {
+                e.preventDefault();
+                // Avoid triggers on disabled or active buttons
+                if ($(this).parent().hasClass('disabled') || $(this).parent().hasClass('active')) {
+                    return;
+                }
+
+                let page = $(this).data('page');
+                let search = $('#searchInput').val();
+                if (page) loadData(page, currentSort, search);
+            });
+
+            /**
+             * Sorting Logic: Triggers when user clicks Table Headers
+             */
+            $(document).on('click', '.sort-link', function (e) {
+                e.preventDefault();
+                // Update current sort and reload from page 1
+                currentSort = $(this).data('sort');
+                let search = $('#searchInput').val();
+                loadData(1, currentSort, search);
+            });
+        });
+
+        /**
+         * Delete Modal Handler: Remains global so it can be called from button onclick
+         */
         function openDeleteModal(id, name) {
             document.getElementById('deleteUserId').value = id;
             document.getElementById('deleteUserName').innerText = name;

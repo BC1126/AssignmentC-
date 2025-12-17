@@ -6,6 +6,7 @@
 public class SelectTicketViewModel
 {
     public int ShowTimeId { get; set; }
+    public int MovieId { get; set; }
     public string MovieTitle { get; set; }
     public string MoviePosterUrl { get; set; }
     public DateTime StartTime { get; set; }

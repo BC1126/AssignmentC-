@@ -50,6 +50,7 @@ public class BookingController : Controller
         var vm = new SelectTicketViewModel
         {
             ShowTimeId = showtime.ShowTimeId,
+            MovieId = showtime.MovieId,
             MovieTitle = showtime.Movie.Title,
             MoviePosterUrl = showtime.Movie.PosterUrl,
             StartTime = showtime.StartTime,
@@ -156,4 +157,72 @@ public class BookingController : Controller
         return RedirectToAction("Index", "Cart");
     }
 
+    [HttpGet]
+    public IActionResult selectShowtime(int movieId)
+    {
+        var movie = db.Movies
+            .Include(m => m.ShowTimes)
+                .ThenInclude(st => st.Hall)
+                    .ThenInclude(h => h.Outlet)
+            .Include(m => m.ShowTimes)
+                .ThenInclude(st => st.Hall)
+                    .ThenInclude(h => h.Seats)
+            .Include(m => m.ShowTimes)
+                .ThenInclude(st => st.Bookings)
+                    .ThenInclude(b => b.BookingSeats)
+            .FirstOrDefault(m => m.MovieId == movieId);
+
+        if (movie == null)
+        {
+            TempData["Error"] = "Movie not found";
+            return RedirectToAction("Index", "Movie");
+        }
+
+        // Get showtimes for the next 7 days
+        var startDate = DateTime.Now.Date;
+        var endDate = startDate.AddDays(7);
+
+        var showtimes = movie.ShowTimes
+            .Where(st => st.IsActive && st.StartTime >= startDate && st.StartTime < endDate)
+            .OrderBy(st => st.StartTime)
+            .ToList();
+
+        // Group by outlet
+        var groupedShowtimes = showtimes
+            .GroupBy(st => new { st.Hall.OutletId, st.Hall.Outlet.Name, st.Hall.Outlet.City })
+            .Select(g => new OutletShowtimes
+            {
+                OutletId = g.Key.OutletId,
+                OutletName = g.Key.Name,
+                City = g.Key.City,
+                Showtimes = g.Select(st => {
+                    var bookedSeats = st.Bookings
+                        .SelectMany(b => b.BookingSeats)
+                        .Select(bs => bs.SeatId)
+                        .Distinct()
+                        .Count();
+
+                    var totalSeats = st.Hall.Seats.Count(s => s.IsActive);
+
+                    return new ShowtimeInfo
+                    {
+                        ShowTimeId = st.ShowTimeId,
+                        StartTime = st.StartTime,
+                        TicketPrice = st.TicketPrice,
+                        HallName = st.Hall.Name,
+                        HallType = st.Hall.HallType,
+                        AvailableSeats = totalSeats - bookedSeats
+                    };
+                }).ToList()
+            })
+            .ToList();
+
+        var viewModel = new MovieShowtimeViewModel
+        {
+            Movie = movie,
+            GroupedShowtimes = groupedShowtimes
+        };
+
+        return View(viewModel);
+    }
 }

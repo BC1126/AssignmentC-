@@ -1,0 +1,188 @@
+﻿@model MovieShowtimeViewModel
+@{
+    ViewData["Title"] = "Book Tickets - " + Model.Movie.Title;
+}
+
+@section head {
+        <link rel="stylesheet" href="~/css/selectShowtime.css"/>
+}
+
+<!-- Movie Header with Trailer -->
+<section class="movie-header">
+    @if (!string.IsNullOrEmpty(Model.Movie.TrailerUrl))
+    {
+        <iframe src="@Model.Movie.TrailerUrl.Replace("watch?v=", "embed/")?autoplay=1&mute=1&controls=0&loop=1&playlist=@Model.Movie.TrailerUrl.Split("v=").Last()"
+                frameborder="0"
+                allow="autoplay; encrypted-media"
+                allowfullscreen>
+        </iframe>
+    }
+    <div class="movie-header-overlay">
+        <div class="container-custom">
+            <div class="movie-info">
+                <h1>@Model.Movie.Title</h1>
+                <div class="movie-meta">
+                    <span class="rating-badge">@Model.Movie.Rating</span>
+                    <span>@Model.Movie.DurationMinutes min</span>
+                    <span>@Model.Movie.Genre</span>
+                </div>
+                <p style="max-width: 800px; opacity: 0.9;">@Model.Movie.Description</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Date Selector -->
+<div class="container-custom">
+    <div class="date-selector">
+        <h3 class="mb-4">Select Date</h3>
+        <div class="date-pills" id="datePills">
+            @for (int i = 0; i < 7; i++)
+            {
+                var date = DateTime.Now.Date.AddDays(i);
+                <div class="date-pill @(i == 0 ? "active" : "")"
+                     data-date="@date.ToString("yyyy-MM-dd")"
+                     onclick="selectDate(this)">
+                    <div class="day">@date.ToString("ddd")</div>
+                    <div class="date">@date.Day</div>
+                    <div class="month">@date.ToString("MMM")</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Experience Filter -->
+    <div class="experience-filter">
+        <button class="experience-btn active" data-type="all" onclick="filterExperience(this)">
+            All Experiences
+        </button>
+        <button class="experience-btn" data-type="Standard" onclick="filterExperience(this)">
+            Standard
+        </button>
+        <button class="experience-btn" data-type="Premium" onclick="filterExperience(this)">
+            Premium
+        </button>
+        <button class="experience-btn" data-type="IMAX" onclick="filterExperience(this)">
+            IMAX
+        </button>
+        <button class="experience-btn" data-type="4DX" onclick="filterExperience(this)">
+            4DX
+        </button>
+    </div>
+
+    <!-- Cinema & Showtimes -->
+    <div class="cinema-section" id="cinemaSection">
+        @foreach (var outlet in Model.GroupedShowtimes)
+        {
+            <div class="cinema-card">
+                <div class="cinema-header">
+                    <div>
+                        <div class="cinema-name">@outlet.OutletName</div>
+                        <div class="cinema-location">@outlet.City</div>
+                    </div>
+                </div>
+
+                <div class="showtime-grid">
+                    @foreach (var showtime in outlet.Showtimes)
+                    {
+                        <a href="@Url.Action("SelectTicket", "Booking", new { showtimeId = showtime.ShowTimeId })"
+                           class="showtime-btn"
+                           data-type="@showtime.HallType"
+                           data-date="@showtime.StartTime.ToString("yyyy-MM-dd")">
+                            <span class="showtime-time">@showtime.StartTime.ToString("HH:mm")</span>
+                            <span class="showtime-type">@showtime.HallType</span>
+                            <span class="showtime-price">RM @showtime.TicketPrice</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        let selectedDate = '@DateTime.Now.ToString("yyyy-MM-dd")';
+        let selectedExperience = 'all';
+
+        function selectDate(element) {
+            // Remove active from all pills
+            document.querySelectorAll('.date-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+
+            // Add active to clicked pill
+            element.classList.add('active');
+            selectedDate = element.dataset.date;
+
+            filterShowtimes();
+        }
+
+        function filterExperience(element) {
+            // Remove active from all buttons
+            document.querySelectorAll('.experience-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active to clicked button
+            element.classList.add('active');
+            selectedExperience = element.dataset.type;
+
+            filterShowtimes();
+        }
+
+        function filterShowtimes() {
+            const showtimes = document.querySelectorAll('.showtime-btn');
+            const cinemaCards = document.querySelectorAll('.cinema-card');
+
+            cinemaCards.forEach(card => {
+                const cardShowtimes = card.querySelectorAll('.showtime-btn');
+                let hasVisibleShowtimes = false;
+
+                cardShowtimes.forEach(showtime => {
+                    const showtimeDate = showtime.dataset.date;
+                    const showtimeType = showtime.dataset.type;
+
+                    const dateMatch = showtimeDate === selectedDate;
+                    const typeMatch = selectedExperience === 'all' || showtimeType === selectedExperience;
+
+                    if (dateMatch && typeMatch) {
+                        showtime.style.display = 'block';
+                        hasVisibleShowtimes = true;
+                    } else {
+                        showtime.style.display = 'none';
+                    }
+                });
+
+                // Show/hide entire cinema card
+                if (hasVisibleShowtimes) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Check if any showtimes are visible
+            const visibleShowtimes = document.querySelectorAll('.showtime-btn[style="display: block;"]');
+            const noShowtimesMsg = document.getElementById('noShowtimesMsg');
+
+            if (visibleShowtimes.length === 0) {
+                if (!noShowtimesMsg) {
+                    const msg = document.createElement('div');
+                    msg.id = 'noShowtimesMsg';
+                    msg.className = 'no-showtimes';
+                    msg.innerHTML = '<h4>No showtimes available</h4><p>Please select a different date or experience</p>';
+                    document.getElementById('cinemaSection').appendChild(msg);
+                }
+            } else {
+                if (noShowtimesMsg) {
+                    noShowtimesMsg.remove();
+                }
+            }
+        }
+
+        // Initialize
+        filterShowtimes();
+    </script>
+}

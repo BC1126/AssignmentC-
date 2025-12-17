@@ -1,0 +1,75 @@
+﻿@model PaginatedList<Member>
+@{
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="table-container border">
+    <p class="text-muted mb-3">Showing @Model.Items.Count record(s)</p>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["IdSort"]">ID</a></th>
+                    <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["NameSort"]">Name</a></th>
+                    <th>Gender</th>
+                    <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["EmailSort"]">Email</a></th>
+                    <th>Phone</th>
+                    <th>Photo</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Items)
+                {
+                    <tr>
+                        <td><strong>@u.UserId</strong></td>
+                        <td>@u.Name</td>
+                        <td>@u.Gender</td>
+                        <td>@u.Email</td>
+                        <td>@u.Phone</td>
+                        <td>
+                            <img src="@u.PhotoURL" class="user-photo-thumbnail border" alt="User Photo"
+                                 onerror="this.onerror=null; this.src='/images/default.jpg';" />
+                        </td>
+                        <td class="text-center">
+                            <a asp-controller="Admin" asp-action="AdminEditUser" asp-route-id="@u.UserId"
+                               asp-route-returnUrl="@currentUrl" class="btn btn-sm btn-info text-white">Update</a>
+                            @* The button below triggers the modal via JavaScript *@
+                            <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="openDeleteModal('@u.UserId', '@u.Name')">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* Pagination Controls *@
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+        <span class="text-muted small">Page @Model.PageIndex of @Model.TotalPages</span>
+        <nav>
+            <ul class="pagination mb-0">
+                @* Previous Button *@
+                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" data-page="@(Model.PageIndex - 1)">Previous</a>
+                </li>
+
+                @* Page Number Links *@
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                        <a class="page-link" href="javascript:void(0)" data-page="@i">@i</a>
+                    </li>
+                }
+
+                @* Next Button *@
+                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" data-page="@(Model.PageIndex + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
