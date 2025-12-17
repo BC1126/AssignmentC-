@@ -15,7 +15,7 @@ public class ProductController(DB db, Helper hp) : Controller
                  .ToList<dynamic>();
     }
 
-    //[Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     public IActionResult Index(string? name, string sort = "Stock", string dir = "asc", int page = 1)
     {
         if (page < 1) page = 1;
@@ -95,7 +95,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return (n + 1).ToString("'P'000");
     }
 
-    //[Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     public IActionResult Insert()
     {
         var vm = new ProductInsertVM
@@ -112,7 +112,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
-    //[Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public IActionResult Insert(ProductInsertVM vm)
     {
@@ -165,7 +165,7 @@ public class ProductController(DB db, Helper hp) : Controller
         }
     }
 
-    //[Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     public IActionResult Update(string? id)
     {
         if (string.IsNullOrEmpty(id)) return RedirectToAction("Index");
@@ -194,7 +194,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
-    //[Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public IActionResult Update(ProductUpdateVM vm)
     {
@@ -248,7 +248,7 @@ public class ProductController(DB db, Helper hp) : Controller
         }
     }
 
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public IActionResult Delete(string? id)
     {
@@ -363,8 +363,7 @@ public class ProductController(DB db, Helper hp) : Controller
         return Redirect(Request.Headers.Referer.ToString());
     }
 
-    //GET
-    public IActionResult UserIndex(string? category)
+    public IActionResult UserIndex(string? category, string? search, int page = 1)
     {
         ViewBag.Cart = hp.GetCart();
 
@@ -376,8 +375,13 @@ public class ProductController(DB db, Helper hp) : Controller
 
         var products = db.Products
             .Where(p => p.Region == region && p.Cinema == cinema)
-            .Where(p => string.IsNullOrEmpty(category) || p.Category == category)
-            .ToList();
+            .Where(p => string.IsNullOrEmpty(category) || p.Category == category);
+
+        if (!string.IsNullOrEmpty(search))
+            products = products.Where(p => p.Name.Contains(search));
+
+        int pageSize = 6;
+        var pagedProducts = products.ToPagedList(page, pageSize);
 
         ViewBag.Region = region;
         ViewBag.Cinema = cinema;
@@ -394,9 +398,9 @@ public class ProductController(DB db, Helper hp) : Controller
         ViewBag.SelectedCategory = category;
 
         if (Request.IsAjax())
-            return PartialView("_UserIndex", products);
+            return PartialView("_UserIndex", pagedProducts);
 
-        return View(products);
+        return View(pagedProducts);
     }
 
     public IActionResult ShoppingCart()
