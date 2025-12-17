@@ -378,7 +378,7 @@ public class UserController : Controller
 
                     // Set lockout duration (e.g., 15 minutes)
                     var cacheOptions = new MemoryCacheEntryOptions()
-                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(1));
+                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
                     _cache.Set(cacheKey, fails, cacheOptions);
 
                     int remaining = 3 - fails;
