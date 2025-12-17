@@ -61,17 +61,19 @@
 							</button>
 							<div class="collapse navbar-collapse" id="navbarSupportedContent">
 								<ul class="navbar-nav mb-0 ms-auto">
-
-									<li class="nav-item">
-										<a class="nav-link" aria-current="page" href="/">Home</a>
-									</li>
-
-
 									@if (!User.Identity.IsAuthenticated || User.IsInRole("Member"))
 									{
 										@* This inner check ensures Staff/Admin don't see these links if they somehow acquire the "Member" claim. *@
 										@if (!User.IsInRole("Staff") && !User.IsInRole("Admin"))
 										{
+											<li class="nav-item">
+												<a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+												   aria-current="page"
+												   asp-action="Index"
+												   asp-controller="Home">
+													Home
+												</a>
+											</li>
 											<li class="nav-item">
 												<a class="nav-link" href="/Home/about">About Us</a>
 											</li>
@@ -102,6 +104,14 @@
 
 									@if (User.IsInRole("Staff"))
 									{
+										<li class="nav-item">
+											<a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Staff" && ViewContext.RouteData.Values["action"]?.ToString() == "StaffDashboard" ? "active" : "")"
+											   aria-current="page"
+											   asp-action="StaffDashboard"
+											   asp-controller="Staff">
+												Dashboard
+											</a>
+										</li>
 										<li class="nav-item dropdown">
 											<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownStaff" role="button" data-bs-toggle="dropdown" aria-expanded="false">
 												Product
@@ -116,7 +126,7 @@
 												Movie
 											</a>
 											<ul class="dropdown-menu drop_1" aria-labelledby="navbarDropdownStaffMovie">
-												<li><a class="dropdown-item" href="/Staff/ManageMovie"><i class="fa fa-chevron-right font_12 me-1"></i> Manage Movie</a></li>
+												<li><a class="dropdown-item" href="/Movie/Movies"><i class="fa fa-chevron-right font_12 me-1"></i> Manage Movie</a></li>
 												<li><a class="dropdown-item" href="/Staff/ViewOrders"><i class="fa fa-chevron-right font_12 me-1"></i> View Orders</a></li>
 											</ul>
 										</li>
@@ -124,14 +134,19 @@
 
 									@if (User.IsInRole("Admin"))
 									{
-										<li class="nav-item dropdown">
-											<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownAdminUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+										<li class="nav-item">
+											<a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "AdminDashboard" ? "active" : "")"
+											   aria-current="page"
+											   asp-action="AdminDashboard"
+											   asp-controller="Admin">
+												Dashboard
+											</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "MemberList" ? "active" : "")"
+											   href="/User/MemberList">
 												User
 											</a>
-											<ul class="dropdown-menu drop_1" aria-labelledby="navbarDropdownAdminUser">
-												<li><a class="dropdown-item" href="/User/MemberList"><i class="fa fa-chevron-right font_12 me-1"></i> Manage Users</a></li>
-												<li><a class="dropdown-item" href="/Admin/SystemSettings"><i class="fa fa-chevron-right font_12 me-1"></i> Settings</a></li>
-											</ul>
 										</li>
 										<li class="nav-item dropdown">
 											<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownAdminProduct" role="button" data-bs-toggle="dropdown" aria-expanded="false">
