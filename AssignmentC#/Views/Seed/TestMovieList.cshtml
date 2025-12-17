@@ -157,6 +157,9 @@
         <a href="@Url.Action("MovieShowtimeTestData", "Seed")" class="btn-seed">
             Generate Test Data
         </a>
+        <a href="@Url.Action("CleanTestData", "Seed")" class="btn-seed" style="background: #f44336;">
+            🧹 Clean All Data
+        </a>
         <a href="@Url.Action("TestMovieList", "Seed")" class="btn-seed" style="background: #2196f3;">
             Refresh Movie List
         </a>
@@ -178,7 +181,7 @@
                             <div>@movie.Rating | @movie.DurationMinutes min</div>
                             <div>@movie.Genre</div>
                         </div>
-                        <a href="@Url.Action("GetShowtimes", "Booking", new { movieId = movie.MovieId })"
+                        <a href="@Url.Action("selectShowtime", "Booking", new { movieId = movie.MovieId })"
                            class="btn-book">
                             Get Tickets
                         </a>

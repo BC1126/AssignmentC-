@@ -1,0 +1,406 @@
+﻿@model MovieShowtimeViewModel
+@{
+    ViewData["Title"] = "Book Tickets - " + Model.Movie.Title;
+}
+
+@section head {
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+
+        .movie-header {
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(26,26,26,1));
+        }
+
+            .movie-header video,
+            .movie-header iframe {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                min-width: 100%;
+                min-height: 100%;
+                width: auto;
+                height: auto;
+                transform: translate(-50%, -50%);
+                z-index: 0;
+            }
+
+        .movie-header-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px;
+            background: linear-gradient(to top, rgba(26,26,26,1), transparent);
+            z-index: 1;
+        }
+
+        .movie-info h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .movie-meta {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rating-badge {
+            background: #e50914;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .date-selector {
+            background: #242424;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        .date-pills {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+
+        .date-pill {
+            min-width: 100px;
+            padding: 15px 20px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+            .date-pill:hover {
+                border-color: #e50914;
+                transform: translateY(-2px);
+            }
+
+            .date-pill.active {
+                background: #e50914;
+                border-color: #e50914;
+            }
+
+            .date-pill .day {
+                font-size: 0.9rem;
+                opacity: 0.7;
+            }
+
+            .date-pill .date {
+                font-size: 1.5rem;
+                font-weight: bold;
+            }
+
+            .date-pill .month {
+                font-size: 0.8rem;
+                opacity: 0.7;
+            }
+
+        .experience-filter {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .experience-btn {
+            padding: 10px 25px;
+            background: #242424;
+            border: 2px solid #333;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #fff;
+        }
+
+            .experience-btn:hover {
+                border-color: #e50914;
+            }
+
+            .experience-btn.active {
+                background: #e50914;
+                border-color: #e50914;
+            }
+
+        .cinema-section {
+            margin: 30px 0;
+        }
+
+        .cinema-card {
+            background: #242424;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .cinema-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .cinema-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e50914;
+        }
+
+        .cinema-location {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .showtime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .showtime-btn {
+            padding: 15px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #fff;
+            text-decoration: none;
+            display: block;
+        }
+
+            .showtime-btn:hover {
+                border-color: #e50914;
+                transform: translateY(-2px);
+                background: #e50914;
+                color: #fff;
+            }
+
+        .showtime-time {
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .showtime-type {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .showtime-price {
+            font-size: 0.9rem;
+            color: #4caf50;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .no-showtimes {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .container-custom {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+    </style>
+}
+
+<!-- Movie Header with Trailer -->
+<section class="movie-header">
+    @if (!string.IsNullOrEmpty(Model.Movie.TrailerUrl))
+    {
+        <iframe src="@Model.Movie.TrailerUrl.Replace("watch?v=", "embed/")?autoplay=1&mute=1&controls=0&loop=1&playlist=@Model.Movie.TrailerUrl.Split("v=").Last()"
+                frameborder="0"
+                allow="autoplay; encrypted-media"
+                allowfullscreen>
+        </iframe>
+    }
+    <div class="movie-header-overlay">
+        <div class="container-custom">
+            <div class="movie-info">
+                <h1>@Model.Movie.Title</h1>
+                <div class="movie-meta">
+                    <span class="rating-badge">@Model.Movie.Rating</span>
+                    <span>@Model.Movie.DurationMinutes min</span>
+                    <span>@Model.Movie.Genre</span>
+                </div>
+                <p style="max-width: 800px; opacity: 0.9;">@Model.Movie.Description</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Date Selector -->
+<div class="container-custom">
+    <div class="date-selector">
+        <h3 class="mb-4">Select Date</h3>
+        <div class="date-pills" id="datePills">
+            @for (int i = 0; i < 7; i++)
+            {
+                var date = DateTime.Now.Date.AddDays(i);
+                <div class="date-pill @(i == 0 ? "active" : "")"
+                     data-date="@date.ToString("yyyy-MM-dd")"
+                     onclick="selectDate(this)">
+                    <div class="day">@date.ToString("ddd")</div>
+                    <div class="date">@date.Day</div>
+                    <div class="month">@date.ToString("MMM")</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Experience Filter -->
+    <div class="experience-filter">
+        <button class="experience-btn active" data-type="all" onclick="filterExperience(this)">
+            All Experiences
+        </button>
+        <button class="experience-btn" data-type="Standard" onclick="filterExperience(this)">
+            Standard
+        </button>
+        <button class="experience-btn" data-type="Premium" onclick="filterExperience(this)">
+            Premium
+        </button>
+        <button class="experience-btn" data-type="IMAX" onclick="filterExperience(this)">
+            IMAX
+        </button>
+        <button class="experience-btn" data-type="4DX" onclick="filterExperience(this)">
+            4DX
+        </button>
+    </div>
+
+    <!-- Cinema & Showtimes -->
+    <div class="cinema-section" id="cinemaSection">
+        @foreach (var outlet in Model.GroupedShowtimes)
+        {
+            <div class="cinema-card"
+                 data-date="@DateTime.Now.ToString("yyyy-MM-dd")">
+                <div class="cinema-header">
+                    <div>
+                        <div class="cinema-name">@outlet.OutletName</div>
+                        <div class="cinema-location">@outlet.City</div>
+                    </div>
+                </div>
+
+                <div class="showtime-grid">
+                    @foreach (var showtime in outlet.Showtimes.Where(s => s.StartTime.Date == DateTime.Now.Date))
+                    {
+                        <a href="@Url.Action("SelectTicket", "Booking", new { showtimeId = showtime.ShowTimeId })"
+                           class="showtime-btn"
+                           data-type="@showtime.HallType"
+                           data-date="@showtime.StartTime.ToString("yyyy-MM-dd")">
+                            <span class="showtime-time">@showtime.StartTime.ToString("HH:mm")</span>
+                            <span class="showtime-type">@showtime.HallType</span>
+                            <span class="showtime-price">RM @showtime.TicketPrice</span>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section foot {
+    <script>
+        let selectedDate = '@DateTime.Now.ToString("yyyy-MM-dd")';
+        let selectedExperience = 'all';
+
+        function selectDate(element) {
+            // Remove active from all pills
+            document.querySelectorAll('.date-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+
+            // Add active to clicked pill
+            element.classList.add('active');
+            selectedDate = element.dataset.date;
+
+            filterShowtimes();
+        }
+
+        function filterExperience(element) {
+            // Remove active from all buttons
+            document.querySelectorAll('.experience-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active to clicked button
+            element.classList.add('active');
+            selectedExperience = element.dataset.type;
+
+            filterShowtimes();
+        }
+
+        function filterShowtimes() {
+            const showtimes = document.querySelectorAll('.showtime-btn');
+            const cinemaCards = document.querySelectorAll('.cinema-card');
+
+            cinemaCards.forEach(card => {
+                const cardShowtimes = card.querySelectorAll('.showtime-btn');
+                let hasVisibleShowtimes = false;
+
+                cardShowtimes.forEach(showtime => {
+                    const showtimeDate = showtime.dataset.date;
+                    const showtimeType = showtime.dataset.type;
+
+                    const dateMatch = showtimeDate === selectedDate;
+                    const typeMatch = selectedExperience === 'all' || showtimeType === selectedExperience;
+
+                    if (dateMatch && typeMatch) {
+                        showtime.style.display = 'block';
+                        hasVisibleShowtimes = true;
+                    } else {
+                        showtime.style.display = 'none';
+                    }
+                });
+
+                // Show/hide entire cinema card
+                if (hasVisibleShowtimes) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Check if any showtimes are visible
+            const visibleShowtimes = document.querySelectorAll('.showtime-btn[style="display: block;"]');
+            const noShowtimesMsg = document.getElementById('noShowtimesMsg');
+
+            if (visibleShowtimes.length === 0) {
+                if (!noShowtimesMsg) {
+                    const msg = document.createElement('div');
+                    msg.id = 'noShowtimesMsg';
+                    msg.className = 'no-showtimes';
+                    msg.innerHTML = '<h4>No showtimes available</h4><p>Please select a different date or experience</p>';
+                    document.getElementById('cinemaSection').appendChild(msg);
+                }
+            } else {
+                if (noShowtimesMsg) {
+                    noShowtimesMsg.remove();
+                }
+            }
+        }
+
+        // Initialize
+        filterShowtimes();
+    </script>
+}
