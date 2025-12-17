@@ -45,9 +45,15 @@
                         <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm Password" />
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
 
-                        <h6 class="mb-3 fw-bold mt-4">Gender (M/F)</h6>
-                        <input asp-for="Gender" class="form-control" placeholder="M or F" type="text" />
-                        <span asp-validation-for="Gender" class="text-danger"></span>
+                        <div class="mb-3 mt-4">
+                            <label asp-for="Gender" class="form-label fw-bold">Gender</label>
+                            <select asp-for="Gender" class="form-select">
+                                <option value="">-- Select Gender --</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                            <span asp-validation-for="Gender" class="text-danger"></span>
+                        </div>
 
                         <h6 class="mb-3 fw-bold mt-4">Phone Number</h6>
                         <input asp-for="Phone" class="form-control" placeholder="Phone Number (Max 11 digits)" type="tel" />

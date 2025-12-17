@@ -275,7 +275,7 @@ public class UserController : Controller
         return RedirectToAction("Login", "User");
     }
 
-    // GET: Account/AccessDenied
+    [AllowAnonymous] // Ensure everyone can see the error page
     public IActionResult AccessDenied(string? returnURL)
     {
         return View();
@@ -510,4 +510,5 @@ public class UserController : Controller
         // If ModelState was invalid from the start (e.g., New/Confirm mismatch)
         return View(vm);
     }
+
 }
