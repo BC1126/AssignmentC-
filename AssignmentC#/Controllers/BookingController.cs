@@ -50,6 +50,7 @@ public class BookingController : Controller
         var vm = new SelectTicketViewModel
         {
             ShowTimeId = showtime.ShowTimeId,
+            MovieId = showtime.MovieId,
             MovieTitle = showtime.Movie.Title,
             MoviePosterUrl = showtime.Movie.PosterUrl,
             StartTime = showtime.StartTime,
