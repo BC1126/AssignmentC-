@@ -292,8 +292,7 @@
     <div class="cinema-section" id="cinemaSection">
         @foreach (var outlet in Model.GroupedShowtimes)
         {
-            <div class="cinema-card"
-                 data-date="@DateTime.Now.ToString("yyyy-MM-dd")">
+            <div class="cinema-card">
                 <div class="cinema-header">
                     <div>
                         <div class="cinema-name">@outlet.OutletName</div>
@@ -302,7 +301,7 @@
                 </div>
 
                 <div class="showtime-grid">
-                    @foreach (var showtime in outlet.Showtimes.Where(s => s.StartTime.Date == DateTime.Now.Date))
+                    @foreach (var showtime in outlet.Showtimes)
                     {
                         <a href="@Url.Action("SelectTicket", "Booking", new { showtimeId = showtime.ShowTimeId })"
                            class="showtime-btn"
@@ -316,10 +315,11 @@
                 </div>
             </div>
         }
+
     </div>
 </div>
 
-@section foot {
+@section scripts {
     <script>
         let selectedDate = '@DateTime.Now.ToString("yyyy-MM-dd")';
         let selectedExperience = 'all';
