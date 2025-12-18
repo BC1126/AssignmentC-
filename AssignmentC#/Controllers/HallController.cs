@@ -121,78 +121,7 @@ public class HallController(DB db, Helper hp) : Controller
         return RedirectToAction("EditHallSeats", new { id = hall.HallId });
     }
 
-    [HttpGet]
-    public IActionResult SeedTestHall()
-    {
-        try
-        {
-            Console.WriteLine("🌱 SeedTestHall started");
-            Console.WriteLine("DB = " + db.Database.GetDbConnection().ConnectionString);
-
-            // Check if outlet exists
-            var outlet = db.Outlets.FirstOrDefault();
-            if (outlet == null)
-            {
-                Console.WriteLine("Creating new outlet...");
-                outlet = new Outlet
-                {
-                    City = "Kuala Lumpur",
-                    Name = "Test Cinema"
-                };
-                db.Outlets.Add(outlet);
-                db.SaveChanges();
-                Console.WriteLine($"Outlet created with ID: {outlet.OutletId}");
-            }
-            else
-            {
-                Console.WriteLine($"Using existing outlet: {outlet.Name}");
-            }
-
-            // Create test hall
-            var hall = new Hall
-            {
-                Name = "Test Hall 1",
-                OutletId = outlet.OutletId,
-                Capacity = 50,
-                HallType = "Standard",
-                IsActive = true
-            };
-            db.Halls.Add(hall);
-            db.SaveChanges();
-            Console.WriteLine($"Hall created with ID: {hall.HallId}");
-
-            // Create seats
-            int seatCount = 0;
-            for (int row = 0; row < 5; row++)
-            {
-                for (int col = 1; col <= 10; col++)
-                {
-                    db.Seats.Add(new Seat
-                    {
-                        HallId = hall.HallId,
-                        SeatIdentifier = $"{(char)('A' + row)}{col}",
-                        IsPremium = false,
-                        IsWheelchair = false,
-                        IsActive = true
-                    });
-                    seatCount++;
-                }
-            }
-            db.SaveChanges();
-            Console.WriteLine($"Created {seatCount} seats");
-
-            TempData["Info"] = $"Test hall created successfully with {seatCount} seats!";
-            return RedirectToAction("ManageHalls");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ ERROR: {ex.Message}");
-            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-            TempData["Error"] = $"Failed to create test hall: {ex.Message}";
-            return RedirectToAction("ManageHalls");
-        }
-    }
-
+    
     [HttpGet]
     public IActionResult EditHallSeats(int id)
     {

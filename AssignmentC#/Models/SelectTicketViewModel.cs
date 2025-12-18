@@ -57,8 +57,7 @@ public class BookingSessionData
 
     // Selected Seats
     public List<int> SelectedSeatIds { get; set; } = new();
-    public List<string> SelectedSeatIdentifiers { get; set; } = new(); // e.g., ["A1", "A2", "A3"]
-
+    public List<string> SelectedSeatIdentifiers { get; set; } = new(); 
     // Food & Beverage (filled by F&B page)
     public decimal FoodBeverageTotal { get; set; } = 0;
 
