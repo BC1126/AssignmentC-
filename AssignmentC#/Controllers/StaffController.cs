@@ -1,32 +1,28 @@
-﻿// StaffController.cs
-
-using AssignmentC_;
+﻿using AssignmentC_;
+using AssignmentC_.Models; // Added to ensure MemberDetailsVM is recognized
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
-// IMPORTANT: This attribute ensures only users with the "Staff" role can access this controller.
 [Authorize(Roles = "Staff")]
+// Updated Primary Constructor to assign the field
 public class StaffController(DB db, Helper hp) : Controller
 {
-    // The framework looks for this method: /Staff/Dashboard
+
     public IActionResult StaffDashboard()
     {
-        // This will attempt to find a view at Views/Staff/Dashboard.cshtml
         return View("~/Views/Home/StaffDashboard.cshtml");
     }
 
-    // QR Scan page
     public IActionResult Scan()
     {
-        return View(); // Views/Staff/Scan.cshtml
+        return View();
     }
 
-    // Complete claim from scanned order
     [HttpPost]
     public IActionResult CompleteClaim(int orderId)
     {
+        // Using 'db' as per your original logic
         var order = db.Orders
             .Include(o => o.OrderLines)
             .FirstOrDefault(o => o.Id == orderId);
@@ -40,7 +36,28 @@ public class StaffController(DB db, Helper hp) : Controller
         return Ok();
     }
 
+    public IActionResult MemberDetails(string id)
+    {
+        var member = db.Users
+            .Where(u => u.UserId == id) 
+            .Select(u => new MemberDetailsVM
+            {
+                Name = u.Name,
+                Email = u.Email,
+                Phone = u.Phone,
+                Gender = u.Gender,
 
-    // You can add other Staff-related actions here, e.g.,
-    // public IActionResult ProductList() { ... }
+                PhotoPath = (u as Member).PhotoURL,
+
+                Role = u.Role
+            })
+            .FirstOrDefault();
+
+        if (member == null || member.Role != "Member")
+        {
+            return NotFound();
+        }
+
+        return View("~/Views/User/MemberDetails.cshtml", member);
+    }
 }

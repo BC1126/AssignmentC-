@@ -85,6 +85,7 @@ public class BookingController : Controller
             TicketPrice = showtime.TicketPrice,
             ChildrenPrice = showtime.TicketPrice * 0.8m,
             SeniorPrice = showtime.TicketPrice * 0.85m,
+            OkuPrice = showtime.TicketPrice * 0.9m,
             SessionId = sessionId,
             LockDurationMinutes = 5,
             Seats = showtime.Hall.Seats
@@ -111,45 +112,35 @@ public class BookingController : Controller
     [HttpPost]
     public IActionResult CalculateTicketPrice([FromBody] TicketCalculationRequest request)
     {
-        if (request.ShowTimeId <= 0)
+        var showtime = db.ShowTimes.Include(st => st.Hall).ThenInclude(h => h.Seats)
+                                 .FirstOrDefault(st => st.ShowTimeId == request.ShowTimeId);
+
+        if (showtime == null || request.SelectedSeatIds == null) return BadRequest();
+
+        var selectedSeats = showtime.Hall.Seats
+            .Where(s => request.SelectedSeatIds.Contains(s.SeatId)).ToList();
+
+        decimal total = 0;
+        int remChild = request.ChildrenCount;
+        int remAdult = request.AdultCount;
+        int remSenior = request.SeniorCount;
+        int remOku = request.OkuCount;
+
+        foreach (var seat in selectedSeats)
         {
-            return BadRequest(new { success = false, message = "Invalid showtime" });
+            decimal seatPrice = showtime.TicketPrice;
+
+            if (remChild > 0) { seatPrice *= 0.80m; remChild--; }
+            else if (remSenior > 0) { seatPrice *= 0.85m; remSenior--; }
+            else if (remOku > 0) { seatPrice *= 0.90m; remOku--; }
+            else { remAdult--; }
+
+            if (seat.IsPremium) { seatPrice *= 1.20m; }
+
+            total += seatPrice;
         }
 
-        var showtime = db.ShowTimes.Find(request.ShowTimeId);
-        if (showtime == null)
-        {
-            return NotFound(new { success = false, message = "Showtime not found" });
-        }
-
-        // Calculate pricing regardless of validation
-        decimal ticketPrice = showtime.TicketPrice;
-        decimal childrenPrice = ticketPrice * 0.8m; // 20% discount
-        decimal seniorPrice = ticketPrice * 0.85m; // 15% discount
-
-        decimal subtotal = (request.ChildrenCount * childrenPrice) +
-                          (request.AdultCount * ticketPrice) +
-                          (request.SeniorCount * seniorPrice);
-
-        // Validate ticket counts
-        int totalTickets = request.ChildrenCount + request.AdultCount + request.SeniorCount;
-        bool isValid = totalTickets == request.SelectedSeatsCount && request.SelectedSeatsCount > 0;
-
-        return Ok(new
-        {
-            success = true,
-            isValid = isValid,
-            message = isValid ? "Valid" : "Ticket type count must match the number of selected seats",
-            childrenCount = request.ChildrenCount,
-            adultCount = request.AdultCount,
-            seniorCount = request.SeniorCount,
-            totalTickets,
-            selectedSeats = request.SelectedSeatsCount,
-            subtotal = subtotal.ToString("F2"),
-            ticketPrice = ticketPrice.ToString("F2"),
-            childrenPrice = childrenPrice.ToString("F2"),
-            seniorPrice = seniorPrice.ToString("F2")
-        });
+        return Ok(new { success = true, subtotal = total.ToString("F2"), isValid = true });
     }
 
     // AJAX: Validate seat availability in real-time
@@ -205,7 +196,8 @@ public class BookingController : Controller
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
 
-        int totalTickets = submission.ChildrenCount + submission.AdultCount + submission.SeniorCount;
+        int totalTickets = submission.ChildrenCount + submission.AdultCount +
+                       submission.SeniorCount + submission.OkuCount;
         if (totalTickets != uniqueSeatIds.Count)
         {
             TempData["Error"] = "Ticket type count must match the number of selected seats";
@@ -213,9 +205,10 @@ public class BookingController : Controller
         }
 
         var showtime = db.ShowTimes
-            .Include(st => st.Movie)
-            .Include(st => st.Hall).ThenInclude(h => h.Outlet)
-            .FirstOrDefault(st => st.ShowTimeId == submission.ShowTimeId);
+        .Include(st => st.Movie)
+        .Include(st => st.Hall).ThenInclude(h => h.Outlet)
+        .Include(st => st.Hall).ThenInclude(h => h.Seats) 
+        .FirstOrDefault(st => st.ShowTimeId == submission.ShowTimeId);
 
         if (showtime == null)
         {
@@ -244,7 +237,6 @@ public class BookingController : Controller
         var alreadyBooked = uniqueSeatIds.Intersect(bookedSeatIds).ToList();
         if (alreadyBooked.Any())
         {
-            // FIX: Query the 'seats' list (objects), not 'uniqueSeatIds' (integers)
             var bookedIdentifiers = seats
                 .Where(s => alreadyBooked.Contains(s.SeatId))
                 .Select(s => s.SeatIdentifier);
@@ -254,12 +246,21 @@ public class BookingController : Controller
         }
 
         // Pricing
-        decimal ticketPrice = showtime.TicketPrice;
-        decimal childrenPrice = ticketPrice * 0.8m;
-        decimal seniorPrice = ticketPrice * 0.85m;
-        decimal subtotal = (submission.ChildrenCount * childrenPrice) +
-                          (submission.AdultCount * ticketPrice) +
-                          (submission.SeniorCount * seniorPrice);
+        var selectedSeats = showtime.Hall.Seats.Where(s => uniqueSeatIds.Contains(s.SeatId)).ToList();
+        decimal subtotal = 0;
+        decimal childrenPrice = submission.ChildrenCount;
+        decimal seniorPrice = submission.SeniorCount;
+        decimal okuPrice = submission.OkuCount;
+        foreach (var seat in selectedSeats)
+        {
+            decimal price = showtime.TicketPrice;
+            if (childrenPrice > 0) { price *= 0.80m; childrenPrice--; }
+            else if (seniorPrice > 0) { price *= 0.85m; seniorPrice--; }
+            else if (okuPrice > 0) { price *= 0.90m; okuPrice--; }
+
+            if (seat.IsPremium) { price *= 1.20m; }
+            subtotal += price;
+        }
 
 
         var bookingData = new BookingSessionData
@@ -269,10 +270,11 @@ public class BookingController : Controller
             StartTime = showtime.StartTime,
             HallName = showtime.Hall.Name,
             OutletName = showtime.Hall.Outlet.Name,
-            TicketPrice = ticketPrice,
+            TicketPrice = showtime.TicketPrice,
             ChildrenCount = submission.ChildrenCount,
             AdultCount = submission.AdultCount,
             SeniorCount = submission.SeniorCount,
+            OkuCount = submission.OkuCount,
             TicketQuantity = seats.Count,
             SelectedSeatIds = uniqueSeatIds, 
             SelectedSeatIdentifiers = seats
@@ -386,7 +388,7 @@ public class BookingController : Controller
         }
 
         var startDate = DateTime.Now.Date;
-        var endDate = startDate.AddDays(7);
+        var endDate = startDate.AddDays(31);
 
         var showtimes = movie.ShowTimes
             .Where(st => st.IsActive && st.StartTime >= startDate && st.StartTime < endDate)
@@ -439,7 +441,9 @@ public class TicketCalculationRequest
     public int ChildrenCount { get; set; }
     public int AdultCount { get; set; }
     public int SeniorCount { get; set; }
+    public int OkuCount { get; set; }
     public int SelectedSeatsCount { get; set; }
+    public List<int> SelectedSeatIds { get; set; } = new();
 }
 
 public class SeatValidationRequest
@@ -455,6 +459,7 @@ public class TicketSelectionSubmission
     public int ChildrenCount { get; set; }
     public int AdultCount { get; set; }
     public int SeniorCount { get; set; }
+    public int OkuCount { get; set; }
 }
 public class SeatLockRequest
 {
