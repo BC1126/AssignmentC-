@@ -295,7 +295,8 @@ public class AdminController : Controller
                         Phone = vm.Phone ?? "",
                         PasswordHash = hp.HashPassword("Default123!"),
                         Gender = vm.Gender.Substring(0, 1).ToUpper(),
-                        PhotoURL = photoUrl
+                        PhotoURL = photoUrl,
+                        IsEmailConfirmed = true
                     };
                     db.Users.Add(newMember);
                 }

@@ -283,7 +283,6 @@ public class MovieController : Controller
     {
         var movie = db.Movies
             .Include(m => m.ShowTimes)
-            .Include(m => m.Reviews)
             .FirstOrDefault(m => m.MovieId == movieId);
 
         if (movie == null)

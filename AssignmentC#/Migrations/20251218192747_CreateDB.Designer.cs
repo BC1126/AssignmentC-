@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251218082823_CreateDB")]
+    [Migration("20251218192747_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -214,53 +214,6 @@ namespace AssignmentC_.Migrations
                     b.HasKey("MovieId");
 
                     b.ToTable("Movies");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.MovieReview", b =>
-                {
-                    b.Property<int>("MovieReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MovieReviewId"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MovieId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<bool?>("Recommend")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
-                    b.HasKey("MovieReviewId");
-
-                    b.HasIndex("MovieId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MovieReviews");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Order", b =>
@@ -595,6 +548,9 @@ namespace AssignmentC_.Migrations
                         .HasMaxLength(1)
                         .HasColumnType("nvarchar(1)");
 
+                    b.Property<bool>("IsEmailConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -829,25 +785,6 @@ namespace AssignmentC_.Migrations
                     b.Navigation("Outlet");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.MovieReview", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Movie", "Movie")
-                        .WithMany("Reviews")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AssignmentC_.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Movie");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Order", b =>
                 {
                     b.HasOne("AssignmentC_.Models.Member", "Member")
@@ -1017,8 +954,6 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.Movie", b =>
                 {
-                    b.Navigation("Reviews");
-
                     b.Navigation("ShowTimes");
                 });
 
