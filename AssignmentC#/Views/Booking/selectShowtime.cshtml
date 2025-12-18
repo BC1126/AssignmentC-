@@ -7,17 +7,36 @@
         <link rel="stylesheet" href="~/css/selectShowtime.css"/>
 }
 
+@{
+    string videoId = "";
+
+    if (!string.IsNullOrEmpty(Model.Movie.TrailerUrl))
+    {
+        if (Model.Movie.TrailerUrl.Contains("watch?v="))
+        {
+            videoId = Model.Movie.TrailerUrl.Split("v=")[1].Split("&")[0];
+        }
+        else if (Model.Movie.TrailerUrl.Contains("youtu.be/"))
+        {
+            videoId = Model.Movie.TrailerUrl.Split("youtu.be/")[1].Split("?")[0];
+        }
+    }
+}
+
 <!-- Movie Header with Trailer -->
 <section class="movie-header">
-    @if (!string.IsNullOrEmpty(Model.Movie.TrailerUrl))
+    @if (!string.IsNullOrEmpty(videoId))
     {
-        <iframe src="@Model.Movie.TrailerUrl.Replace("watch?v=", "embed/")?autoplay=1&mute=1&controls=0&loop=1&playlist=@Model.Movie.TrailerUrl.Split("v=").Last()"
+        <iframe id="trailerIframe"
+                src="https://www.youtube.com/embed/@videoId?autoplay=1&mute=1&controls=0&loop=1&playlist=@videoId"
                 frameborder="0"
                 allow="autoplay; encrypted-media"
                 allowfullscreen>
-        </iframe>
+        </iframe>   
     }
+
     <div class="movie-header-overlay">
+
         <div class="container-custom">
             <div class="movie-info">
                 <h1>@Model.Movie.Title</h1>
@@ -27,6 +46,9 @@
                     <span>@Model.Movie.Genre</span>
                 </div>
                 <p style="max-width: 800px; opacity: 0.9;">@Model.Movie.Description</p>
+                <button id="unmuteBtn" class="unmute-btn" style="float:right;">
+                    🔊 Unmute
+                </button>
             </div>
         </div>
     </div>
@@ -185,4 +207,19 @@
         // Initialize
         filterShowtimes();
     </script>
+    <script>
+        const iframe = document.getElementById('trailerIframe');
+        const unmuteBtn = document.getElementById('unmuteBtn');
+
+        unmuteBtn.addEventListener('click', function () {
+            if (iframe.src.includes('mute=1')) {
+                iframe.src = iframe.src.replace('mute=1', 'mute=0');
+                this.innerText = '🔇 Mute';
+            } else {
+                iframe.src = iframe.src.replace('mute=0', 'mute=1');
+                this.innerText = '🔊 Unmute';
+            }
+        });
+    </script>
+
 }
