@@ -7,8 +7,9 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Mail;
+using Microsoft.Extensions.Caching.Memory;
 using System.IO;
+using System.Net.Mail;
 using System.Security.Claims;
 
 namespace AssignmentC_.Controllers;
@@ -20,14 +21,16 @@ public class UserController : Controller
     private readonly Helper hp;
     private readonly IWebHostEnvironment en;
     private readonly IDataProtector _protector;
+    private readonly IMemoryCache _cache;
 
-    public UserController(DB db, Helper hp, IWebHostEnvironment en, IDataProtectionProvider provider)
+    public UserController(DB db, Helper hp, IWebHostEnvironment en, IDataProtectionProvider provider, IMemoryCache cache)
     {
         this.db = db;
         this.hp = hp;
         this.en = en;
         _protector = provider.CreateProtector("PasswordResetPurpose");
         _protector = provider.CreateProtector("CaptchaProtector");
+        _cache = cache;
     }
 
     public async Task<IActionResult> MemberList(string sortOrder, string searchString, int? pageNumber)
@@ -315,22 +318,24 @@ public class UserController : Controller
         return View("~/Views/Home/Login.cshtml");
     }
 
-
-    // POST: Account/Login - Handles user authentication
-    // UserController.cs
-
-    // ... (existing Register actions and GET Login action) ...
-
-    // POST: User/Login
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Login(LoginVM vm, string encryptedCaptcha)
     {
+        string cacheKey = $"LoginFail_{vm.Email}";
+        string loginViewPath = "~/Views/Home/Login.cshtml";
+
+        // 1. Lockout Check
+        if (_cache.TryGetValue(cacheKey, out int fails) && fails >= 3)
+        {
+            ModelState.AddModelError("", "Too many failed attempts. Locked for 15 minutes.");
+            goto SkipToView;
+        }
+
+        // 2. CAPTCHA Verification
         try
         {
-            // Decrypt the hidden answer sent back by the browser
             string actualCode = _protector.Unprotect(encryptedCaptcha);
-
             if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
             {
                 ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
@@ -338,67 +343,74 @@ public class UserController : Controller
         }
         catch
         {
-            ModelState.AddModelError("CaptchaInput", "Verification expired. Please try again.");
+            ModelState.AddModelError("CaptchaInput", "Verification expired.");
         }
 
-        // 1. Basic Model State Validation
-        if (!ModelState.IsValid)
+        // 3. Sequential Database Search
+        if (ModelState.IsValid)
         {
-            // Re-display the view if client-side validation failed
-            return View("~/Views/Home/Login.cshtml", vm);
-        }
+            // Start by checking Members
+            User user = db.Members.FirstOrDefault(u => u.Email == vm.Email);
 
-        // 2. Find the user by email
-        var user = db.Users.FirstOrDefault(u => u.Email == vm.Email);
+            // Fallback to Staff
+            if (user == null) user = db.Staffs.FirstOrDefault(u => u.Email == vm.Email);
 
-        if (user == null)
-        {
-            // Check if the user exists in the base Users table (if Members is empty)
-            // Note: For a robust system, you might check the base Users table first if Admin/Staff logins are handled here too.
-            ModelState.AddModelError("Email", "Invalid login attempt.");
-            return View("~/Views/Home/Login.cshtml", vm);
-        }
+            // Fallback to Admin
+            if (user == null) user = db.Admins.FirstOrDefault(u => u.Email == vm.Email);
 
-        // 3. Verify the password hash
-        bool passwordMatch = hp.VerifyPassword(user.PasswordHash, vm.Password);
-
-        if (!passwordMatch)
-        {
-            ModelState.AddModelError("Password", "Invalid login attempt.");
-            return View("~/Views/Home/Login.cshtml", vm);
-        }
-
-        // 4. Authentication and Sign In
-        try
-        {
-            hp.SignIn(user.Email, user.Role, vm.RememberMe); // user.Role should now be "Admin" or "Member"
-
-            TempData["Info"] = $"Welcome back, {user.Name}!";
-
-            // 5. Role-Based Redirect Logic
-            if (user.Role == "Admin")
+            if (user != null)
             {
-                return RedirectToAction("AdminDashboard", "Admin"); // <-- Redirect to AdminController
-            }
-            else if (user.Role == "Staff")
-            {
-                return RedirectToAction("StaffDashboard", "Staff"); // <-- Redirect to StaffController
+                if (hp.VerifyPassword(user.PasswordHash, vm.Password))
+                {
+                    _cache.Remove(cacheKey);
+                    hp.SignIn(user.Email, user.Role, vm.RememberMe);
+                    TempData["Info"] = $"Welcome, {user.Name}!";
+
+                    if (user is Admin) return RedirectToAction("AdminDashboard", "Admin");
+                    if (user is Staff) return RedirectToAction("StaffDashboard", "Staff");
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    // 1. Increment cache counter
+                    if (!_cache.TryGetValue(cacheKey, out fails)) fails = 0;
+                    fails++;
+
+                    // Set lockout duration (e.g., 15 minutes)
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
+                    _cache.Set(cacheKey, fails, cacheOptions);
+
+                    int remaining = 3 - fails;
+
+                    if (remaining <= 0)
+                    {
+                        // This keeps the message visible after they click "Login" again
+                        ModelState.AddModelError("Password", "Incorrect password. Account locked.");
+                        ModelState.AddModelError("", "Too many failed attempts. Locked for 15 minutes.");
+                        goto SkipToView;
+                    }
+                    else
+                    {
+                        // This triggers on the 1st and 2nd fail
+                        ModelState.AddModelError("Password", $"Incorrect password. {remaining} attempts left.");
+                    }
+                    ModelState.AddModelError("Password", $"Incorrect password. {3 - fails} attempts left.");
+                }
             }
             else
             {
-                return RedirectToAction("Index", "Home"); // Default for Members and Guests
+                ModelState.AddModelError("Email", "User account not found.");
             }
         }
-        catch (Exception ex)
-        {
-            // ... (catch block) ...
-        }
 
+    SkipToView:
+        // 4. Refresh CAPTCHA and return (This fixes the CS0161 error)
         string newCode = hp.GenerateCaptchaCode();
         ViewBag.CaptchaCode = newCode;
         ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
-        // 5. Fallback: Return the view on failure
-        return View("~/Views/Home/Login.cshtml", vm);
+
+        return View(loginViewPath, vm);
     }
 
     // ====================================================================
