@@ -194,10 +194,10 @@ public class BookingController : Controller
         });
     }
 
-    // POST: /Booking/SelectTicket - Final submission
     [HttpPost]
     public IActionResult SelectTicket([FromForm] TicketSelectionSubmission submission)
     {
+        var uniqueSeatIds = submission.SeatIds.Distinct().ToList();
         // Validate input
         if (submission.ShowTimeId <= 0 || submission.SeatIds == null || !submission.SeatIds.Any())
         {
@@ -228,10 +228,10 @@ public class BookingController : Controller
 
         // Get seat details
         var seats = db.Seats
-            .Where(s => submission.SeatIds.Contains(s.SeatId))
-            .ToList();
+                            .Where(s => uniqueSeatIds.Contains(s.SeatId))
+                            .ToList();
 
-        if (seats.Count != submission.SeatIds.Count)
+        if (seats.Count != uniqueSeatIds.Count)
         {
             TempData["Error"] = "Some seats are invalid";
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
