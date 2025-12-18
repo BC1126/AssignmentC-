@@ -126,7 +126,17 @@
                         <button type="button" class="counter-btn" data-action="increment">+</button>
                     </div>
                 </div>
-
+                <div class="ticket-counter" data-ticket-type="oku">
+                    <div class="ticket-counter-label">
+                        <div>OKU (Disability)</div>
+                        <small class="text-muted">RM @Model.OkuPrice.ToString("F2") <span style="color: #28a745;">(10% off)</span></small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" data-action="decrement">−</button>
+                        <span class="counter-value" data-count-display="oku">0</span>
+                        <button type="button" class="counter-btn" data-action="increment">+</button>
+                    </div>
+                </div>
                 <div class="alert alert-warning mt-3" id="ticketWarning" style="display: none; font-size: 13px; padding: 8px;">
                     <small>⚠️ Total must match selected seats</small>
                 </div>
@@ -140,12 +150,14 @@
                   data-ticket-price="@Model.TicketPrice"
                   data-children-price="@Model.ChildrenPrice.ToString("F2")"
                   data-senior-price="@Model.SeniorPrice.ToString("F2")"
+                  data-oku-price="@Model.OkuPrice.ToString("F2")"
                   data-lock-duration="@Model.LockDurationMinutes">
 
                 @Html.AntiForgeryToken()
 
                 <input type="hidden" name="ShowTimeId" value="@Model.ShowTimeId" />
                 <div id="seatIdsContainer"></div>
+                <input type="hidden" name="OkuCount" data-count-input="oku" value="0" />
                 <input type="hidden" name="ChildrenCount" data-count-input="children" value="0" />
                 <input type="hidden" name="AdultCount" data-count-input="adult" value="0" />
                 <input type="hidden" name="SeniorCount" data-count-input="senior" value="0" />
