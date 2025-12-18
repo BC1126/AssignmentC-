@@ -388,7 +388,7 @@ public class BookingController : Controller
         }
 
         var startDate = DateTime.Now.Date;
-        var endDate = startDate.AddDays(7);
+        var endDate = startDate.AddDays(31);
 
         var showtimes = movie.ShowTimes
             .Where(st => st.IsActive && st.StartTime >= startDate && st.StartTime < endDate)
