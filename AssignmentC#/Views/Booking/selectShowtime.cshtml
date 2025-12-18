@@ -67,21 +67,44 @@
     </div>
 </section>
 
-<!-- Date Selector -->
 <div class="container-custom">
     <div class="date-selector">
         <h3 class="mb-4">Select Date</h3>
         <div class="date-pills" id="datePills">
-            @for (int i = 0; i < 7; i++)
+            @{
+                var availableDates = Model.GroupedShowtimes
+                .SelectMany(g => g.Showtimes)
+                .Select(st => st.StartTime.Date)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+                // Track if we've set the first pill as active
+                bool firstPillSet = false;
+                string initialActiveDate = "";
+            }
+
+            @foreach (var date in availableDates)
             {
-                var date = DateTime.Now.Date.AddDays(i);
-                <div class="date-pill @(i == 0 ? "active" : "")"
+                bool isActive = !firstPillSet;
+                if (isActive)
+                {
+                    firstPillSet = true;
+                    initialActiveDate = date.ToString("yyyy-MM-dd");
+                }
+
+                <div class="date-pill @(isActive ? "active" : "")"
                      data-date="@date.ToString("yyyy-MM-dd")"
                      onclick="selectDate(this)">
                     <div class="day">@date.ToString("ddd")</div>
                     <div class="date">@date.Day</div>
                     <div class="month">@date.ToString("MMM")</div>
                 </div>
+            }
+
+            @if (!availableDates.Any())
+            {
+                <div class="alert alert-info">No upcoming showtimes available for this movie.</div>
             }
         </div>
     </div>
@@ -106,19 +129,20 @@
     </div>
 
     <!-- Cinema & Showtimes -->
-    <div class="cinema-section" id="cinemaSection">
-        @foreach (var outlet in Model.GroupedShowtimes)
-        {
+        < div class= "cinema-section" id = "cinemaSection" >
+                @foreach(var outlet in Model.GroupedShowtimes.OrderBy(o => o.City).ThenBy(o => o.OutletName))
+            {
             <div class="cinema-card">
                 <div class="cinema-header">
                     <div>
+                        <span class="badge bg-secondary mb-1">@outlet.City</span>
                         <div class="cinema-name">@outlet.OutletName</div>
-                        <div class="cinema-location">@outlet.City</div>
+                        <div class="cinema-location"><i class="bi bi-geo-alt"></i> @outlet.City</div>
                     </div>
                 </div>
 
                 <div class="showtime-grid">
-                    @foreach (var showtime in outlet.Showtimes)
+                    @foreach (var showtime in outlet.Showtimes.OrderBy(st => st.StartTime))
                     {
                         <a href="@Url.Action("SelectTicket", "Booking", new { showtimeId = showtime.ShowTimeId })"
                            class="showtime-btn"
@@ -131,27 +155,21 @@
                     }
                 </div>
             </div>
-        }
-
-    </div>
+            }
+        </div>
 </div>
 
 @section scripts {
     <script>
-        let selectedDate = '@DateTime.Now.ToString("yyyy-MM-dd")';
+        let selectedDate = '@initialActiveDate';
         let selectedExperience = 'all';
 
         function selectDate(element) {
-            // Remove active from all pills
             document.querySelectorAll('.date-pill').forEach(pill => {
-                pill.classList.remove('active');
-            });
-
-            // Add active to clicked pill
-            element.classList.add('active');
-            selectedDate = element.dataset.date;
-
-            filterShowtimes();
+            pill.classList.remove('active');});
+        element.classList.add('active');
+        selectedDate = element.dataset.date;
+        filterShowtimes();
         }
 
         function filterExperience(element) {
@@ -217,8 +235,9 @@
             }
         }
 
-        // Initialize
-        filterShowtimes();
+            document.addEventListener("DOMContentLoaded", function() {
+            filterShowtimes();
+        });
     </script>
     <script>
         const iframe = document.getElementById('trailerIframe');
