@@ -6,15 +6,18 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace AssignmentC_.Controllers;
 
-public class TicketController(DB db) : Controller
+public class TicketController(DB db, Helper hp) : Controller
 {
     private const int TIME_LIMIT = 8 * 60;
 
     public IActionResult Checkout()
     {
+        // Get PurchaseVM from session
+        var session = HttpContext.Session.GetString("PurchaseVM");
+        var purchaseVM = JsonSerializer.Deserialize<PurchaseVM>(session);
 
         // Timer
-            if (HttpContext.Session.GetString("StartTime") == null)
+        if (HttpContext.Session.GetString("StartTime") == null)
             {
                 HttpContext.Session.SetString("StartTime",DateTime.Now.ToString("O"));
             }
@@ -36,6 +39,8 @@ public class TicketController(DB db) : Controller
                 Timer = timer
             };
 
+        ViewBag.Timer = vm;
+
         if (Request.IsAjax())
         {
             return PartialView("_Timer", timer);
@@ -49,7 +54,7 @@ public class TicketController(DB db) : Controller
 
         
 
-        return View(vm);
+        return View(purchaseVM);
     }
 
     public IActionResult Purchase()
@@ -73,28 +78,70 @@ public class TicketController(DB db) : Controller
 
             if (showtime != null)
             {
+                //Get Cart
+                var cart = hp.GetCart();
+                decimal subtotal = 0;
+
+                List<string> OrderNames = new List<string>();
+                List<int> OrderQuantitys = new List<int>();
+                List<decimal> OrderPrice = new List<decimal>();
+
+                foreach (var (productId, quantity) in cart)
+                {
+
+                    var p = db.Products.Find(productId);
+                    if (p == null) continue;
+
+                    // Stock validation
+                    if (quantity > p.Stock)
+                    {
+                        TempData["Error"] = $"Not enough stock for {p.Name}. Available: {p.Stock}";
+                        return RedirectToAction("ShoppingCart");
+                    }
+
+                    OrderNames.Add(p.Name);
+                    OrderQuantitys.Add(quantity);
+                    OrderPrice.Add(p.Price);
+
+                    // Reduce stock
+                    p.Stock -= quantity;
+
+                    // Add order line
+                
+                    subtotal += (p.Price * quantity);
+                }
+
                 List<string> seating = bookingData.SelectedSeatIdentifiers;
 
                 var seats = db.Seats.Where(s => seating.Contains(s.SeatIdentifier));
 
                 var bd = new PurchaseVM
                 {
-                    ShowTimeId = showtime.ShowTimeId,
-                    MovieTitle = showtime.Movie.Title,
-                    MoviewUrl = showtime.Movie.PosterUrl,
-                    MovieDuration = showtime.Movie.DurationMinutes,
-                    MovieRating = showtime.Movie.Rating,
-                    StartTime = showtime.StartTime,
-                    HallName = showtime.Hall.Name,
-                    OutletCity = showtime.Hall.Outlet.City,
-                    OutletName = showtime.Hall.Outlet.Name,
+                        ShowTimeId = showtime.ShowTimeId,
+                        MovieTitle = showtime.Movie.Title,
+                        MoviewUrl = showtime.Movie.PosterUrl,
+                        MovieDuration = showtime.Movie.DurationMinutes,
+                        MovieRating = showtime.Movie.Rating,
+                        StartTime = showtime.StartTime,
+                        HallName = showtime.Hall.Name,
+                        OutletCity = showtime.Hall.Outlet.City,
+                        OutletName = showtime.Hall.Outlet.Name,
 
-                    TicketPrice = showtime.TicketPrice,
-                    TicketQuantity = seating.Count,
-                    TicketSubtotal = showtime.TicketPrice * seating.Count,
+                        OrderName = OrderNames,
+                        OrderQuantity = OrderQuantitys,
+                        OrderPrice = OrderPrice,
+                        OrderSubtotal = subtotal,
 
-                    SelectedSeatIdentifiers = seating.ToList(),
+                        TicketPrice = showtime.TicketPrice,
+                        TicketQuantity = seating.Count,
+                        TicketSubtotal = showtime.TicketPrice * seating.Count,
+
+                        SelectedSeatIdentifiers = seating.ToList(),
+                        total = subtotal + (showtime.TicketPrice * seating.Count),
                 };
+
+                var tempDate = JsonSerializer.Serialize(bd);
+                HttpContext.Session.SetString("PurchaseVM", tempDate);
 
                 return View(bd);
             }
