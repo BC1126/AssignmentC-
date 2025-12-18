@@ -282,7 +282,6 @@ public class BookingController : Controller
         TempData["BookingData"] = JsonSerializer.Serialize(bookingData);
 
         return RedirectToAction("Index", "Cart");
-
     }
 
     [HttpPost]
