@@ -23,7 +23,7 @@ public class HallController(DB db, Helper hp) : Controller
                 OutletId = h.OutletId,
                 OutletName = h.Outlet.Name,
                 Capacity = h.Capacity,
-                HallType = h.HallType,  
+                HallType = h.HallType,
                 IsActive = h.IsActive,
                 TotalSeats = h.Seats.Count,
                 PremiumSeats = h.Seats.Count(s => s.IsPremium)
@@ -45,7 +45,7 @@ public class HallController(DB db, Helper hp) : Controller
                     Text = $"{o.Name} - {o.City}"
                 })
                 .ToList(),
-            IsActive = true 
+            IsActive = true
         };
 
         return View(vm);
@@ -109,7 +109,7 @@ public class HallController(DB db, Helper hp) : Controller
                 {
                     HallId = hall.HallId,
                     SeatIdentifier = $"{(char)('A' + row)}{col}",
-                    IsPremium = false 
+                    IsPremium = false
                 });
             }
         }
@@ -121,7 +121,7 @@ public class HallController(DB db, Helper hp) : Controller
         return RedirectToAction("EditHallSeats", new { id = hall.HallId });
     }
 
-    
+
     [HttpGet]
     public IActionResult EditHallSeats(int id)
     {
@@ -282,33 +282,30 @@ public class HallController(DB db, Helper hp) : Controller
         }
 
         var hall = db.Halls.Include(h => h.Seats).FirstOrDefault(h => h.HallId == vm.HallId);
-
         if (hall == null)
         {
             TempData["Error"] = "Hall not found";
             return RedirectToAction("ManageHalls");
         }
+        int newCapacity = (vm.Rows ?? 0) * (vm.SeatsPerRow ?? 0);
 
-        bool dimensionsChanged = (vm.Rows.HasValue && vm.SeatsPerRow.HasValue) &&
-                                 (hall.Capacity != (vm.Rows.Value * vm.SeatsPerRow.Value));
+        // Check if the user actually entered new dimensions and if they differ from current
+        bool dimensionsChanged = vm.Rows.HasValue && vm.SeatsPerRow.HasValue && hall.Capacity != newCapacity;
 
         if (dimensionsChanged)
         {
-            // 1. Check if there are active bookings or showtimes
+            // Safety check: Don't allow regeneration if tickets are already being sold
             var hasShowtimes = db.ShowTimes.Any(st => st.HallId == hall.HallId);
             if (hasShowtimes)
             {
-                TempData["Error"] = "Cannot change seat capacity/layout for a hall that has active showtimes. Delete showtimes first.";
+                TempData["Error"] = "Cannot change capacity: This hall has active showtimes.";
                 return RedirectToAction("EditHall", new { id = hall.HallId });
             }
 
-            // 2. Remove old seats
+            // Wipe and Recreate
             db.Seats.RemoveRange(hall.Seats);
+            hall.Capacity = newCapacity;
 
-            // 3. Update Capacity
-            hall.Capacity = vm.Rows.Value * vm.SeatsPerRow.Value;
-
-            // 4. Generate new seats
             for (int r = 0; r < vm.Rows.Value; r++)
             {
                 for (int c = 1; c <= vm.SeatsPerRow.Value; c++)
@@ -317,7 +314,6 @@ public class HallController(DB db, Helper hp) : Controller
                     {
                         HallId = hall.HallId,
                         SeatIdentifier = $"{(char)('A' + r)}{c}",
-                        IsPremium = false,
                         IsActive = true
                     });
                 }
@@ -346,11 +342,29 @@ public class HallController(DB db, Helper hp) : Controller
 
         if (hall == null)
             return Json(new { success = false, message = "Hall not found" });
+        if (hall.IsActive)
+        {
+            bool hasActiveShowtimes = db.ShowTimes.Any(st => st.HallId == id && st.StartTime >= DateTime.Today);
+            if (hasActiveShowtimes)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Cannot disable a hall with active showtimes today. Please reschedule movies first."
+                });
+            }
+        }
 
+        // Flip the status
         hall.IsActive = !hall.IsActive;
         db.SaveChanges();
 
-        return Json(new { success = true, isActive = hall.IsActive });
+        return Json(new
+        {
+            success = true,
+            isActive = hall.IsActive,
+            message = $"Hall is now {(hall.IsActive ? "Active" : "Inactive")}"
+        });
     }
 
     [HttpPost]
@@ -364,25 +378,171 @@ public class HallController(DB db, Helper hp) : Controller
 
         if (hall == null)
         {
+            TempData["Error"] = "Hall not found.";
+            return RedirectToAction("ManageHalls");
+        }
+
+
+        if (hall.ShowTimes.Any(st => st.StartTime > DateTime.Now))
+        {
+            TempData["Error"] = $"Cannot delete '{hall.Name}' because it is linked to movie showtimes. Try disabling it instead.";
+            return RedirectToAction("ManageHalls");
+        }
+
+        try
+        {
+            if (hall.Seats.Any())
+            {
+                db.Seats.RemoveRange(hall.Seats);
+            }
+
+            db.Halls.Remove(hall);
+
+            db.SaveChanges();
+
+            TempData["Info"] = $"Hall '{hall.Name}' and its seats were successfully deleted.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "An error occurred while deleting the hall: " + ex.Message;
+        }
+
+        return RedirectToAction("ManageHalls");
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult RegenerateSeats(int hallId, int rows, int seatsPerRow)
+    {
+        Console.WriteLine("===========================================");
+        Console.WriteLine($"[REGENERATE] 🔥 METHOD CALLED 🔥");
+        Console.WriteLine($"[REGENERATE] HallId: {hallId}");
+        Console.WriteLine($"[REGENERATE] Rows: {rows}");
+        Console.WriteLine($"[REGENERATE] SeatsPerRow: {seatsPerRow}");
+        Console.WriteLine("===========================================");
+
+        // Validation
+        if (rows < 1 || rows > 26)
+        {
+            TempData["Error"] = "Rows must be between 1 and 26";
+            return RedirectToAction("EditHallSeats", new { id = hallId });
+        }
+
+        if (seatsPerRow < 1 || seatsPerRow > 50)
+        {
+            TempData["Error"] = "Seats per row must be between 1 and 50";
+            return RedirectToAction("EditHallSeats", new { id = hallId });
+        }
+
+        var hall = db.Halls
+            .Include(h => h.Seats)
+            .Include(h => h.ShowTimes)
+            .FirstOrDefault(h => h.HallId == hallId);
+
+        if (hall == null)
+        {
             TempData["Error"] = "Hall not found";
             return RedirectToAction("ManageHalls");
         }
 
-        // Check if hall has any showtimes
-        if (hall.ShowTimes.Any())
+        // Safety check: Don't allow regeneration if there are active showtimes
+        var hasActiveShowtimes = hall.ShowTimes.Any(st => st.StartTime > DateTime.Now);
+        if (hasActiveShowtimes)
         {
-            TempData["Error"] = "Cannot delete hall with existing showtimes. Disable it instead.";
-            return RedirectToAction("ManageHalls");
+            TempData["Error"] = "Cannot regenerate seats: This hall has upcoming showtimes. Please delete or reschedule them first.";
+            return RedirectToAction("EditHallSeats", new { id = hallId });
         }
 
-        // Delete all seats first
-        db.Seats.RemoveRange(hall.Seats);
+        // Safety check: Don't allow if there are any bookings
+        var hasBookings = db.Bookings.Any(b => b.ShowTime.HallId == hallId);
+        if (hasBookings)
+        {
+            TempData["Error"] = "Cannot regenerate seats: This hall has existing bookings.";
+            return RedirectToAction("EditHallSeats", new { id = hallId });
+        }
 
-        // Delete the hall
-        db.Halls.Remove(hall);
-        db.SaveChanges();
+        try
+        {
+            var oldCapacity = hall.Capacity;
+            var newCapacity = rows * seatsPerRow;
 
-        TempData["Info"] = $"Hall '{hall.Name}' deleted successfully.";
-        return RedirectToAction("ManageHalls");
+            Console.WriteLine($"[REGENERATE] Old capacity: {oldCapacity}, New capacity: {newCapacity}");
+            Console.WriteLine($"[REGENERATE] Deleting {hall.Seats.Count} existing seats...");
+
+            // Delete all existing seats
+            db.Seats.RemoveRange(hall.Seats);
+            db.SaveChanges(); // Save deletion first
+
+            // Update hall capacity
+            hall.Capacity = newCapacity;
+
+            // Generate new seats
+            Console.WriteLine($"[REGENERATE] Creating {newCapacity} new seats...");
+            var newSeats = new List<Seat>();
+
+            for (int row = 0; row < rows; row++)
+            {
+                char rowLetter = (char)('A' + row);
+                for (int col = 1; col <= seatsPerRow; col++)
+                {
+                    newSeats.Add(new Seat
+                    {
+                        HallId = hall.HallId,
+                        SeatIdentifier = $"{rowLetter}{col}",
+                        IsPremium = false,
+                        IsWheelchair = false,
+                        IsActive = true
+                    });
+                }
+            }
+
+            db.Seats.AddRange(newSeats);
+            db.SaveChanges();
+
+            Console.WriteLine($"[REGENERATE] ✅ Success! Created {newSeats.Count} seats");
+
+            TempData["Info"] = $"Seat layout regenerated successfully! Changed from {oldCapacity} to {newCapacity} seats. All seats are now standard and active.";
+            return RedirectToAction("EditHallSeats", new { id = hallId });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[REGENERATE] ❌ Error: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+            TempData["Error"] = $"Error regenerating seats: {ex.Message}";
+            return RedirectToAction("EditHallSeats", new { id = hallId });
+        }
+    }
+
+    private bool CanRegenerateSeats(int hallId, out string errorMessage)
+    {
+        errorMessage = null;
+
+        var hall = db.Halls
+            .Include(h => h.ShowTimes)
+            .FirstOrDefault(h => h.HallId == hallId);
+
+        if (hall == null)
+        {
+            errorMessage = "Hall not found";
+            return false;
+        }
+
+        // Check for future showtimes
+        var hasFutureShowtimes = hall.ShowTimes.Any(st => st.StartTime > DateTime.Now);
+        if (hasFutureShowtimes)
+        {
+            errorMessage = "This hall has upcoming showtimes";
+            return false;
+        }
+
+        // Check for any bookings
+        var hasBookings = db.Bookings.Any(b => b.ShowTime.HallId == hallId);
+        if (hasBookings)
+        {
+            errorMessage = "This hall has existing bookings";
+            return false;
+        }
+
+        return true;
     }
 }
