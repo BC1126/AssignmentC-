@@ -283,8 +283,12 @@ public class BookingController : Controller
             TicketSubtotal = subtotal
         };
 
+        HttpContext.Session.SetString("SelectedRegion", showtime.Hall.Outlet.City);
+        HttpContext.Session.SetString("SelectedCinema", showtime.Hall.Outlet.Name);
+        HttpContext.Session.SetString("CollectDate", showtime.StartTime.ToString("yyyy-MM-dd"));
+
         TempData["BookingData"] = JsonSerializer.Serialize(bookingData);
-        return RedirectToAction("Purchase", "Ticket");
+        return RedirectToAction("UserIndex", "Product");
     }
 
     [HttpPost]
