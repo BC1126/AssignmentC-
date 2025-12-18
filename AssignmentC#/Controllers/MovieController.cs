@@ -325,24 +325,41 @@ public class MovieController : Controller
     // ======================
 
     // Movie listing for users
-    public IActionResult Index(int page = 1)
+    public IActionResult Index(string name, int page = 1)
     {
-        int pageSize = 8; // movies per page
+        int pageSize = 8;
 
-        var totalMovies = db.Movies.Count();
-        var movies = db.Movies
-            .OrderBy(m => m.PremierDate)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+        // 1. Start Query
+        var query = db.Movies.AsQueryable();
+
+        // 2. Search Logic
+        if (!string.IsNullOrEmpty(name))
+        {
+            name = name.Trim();
+            query = query.Where(m => m.Title.Contains(name) || m.Genre.Contains(name));
+        }
+
+        // 3. Sorting & Paging
+        var totalMovies = query.Count();
+        var movies = query.OrderBy(m => m.PremierDate)
+                          .Skip((page - 1) * pageSize)
+                          .Take(pageSize)
+                          .ToList();
 
         var vm = new MovieListVM
         {
             Movies = movies,
             CurrentPage = page,
             PageSize = pageSize,
-            TotalCount = totalMovies
+            TotalCount = totalMovies,
+            SearchName = name // Pass search term back to view
         };
+
+        // 4. Return Partial View if AJAX request
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return PartialView("_UserMovieGrid", vm);
+        }
 
         return View(vm);
     }

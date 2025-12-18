@@ -1,54 +1,35 @@
 ﻿@model MovieListVM
 
 <div class="container my-5">
-    <h3 class="mb-4">Now Showing</h3>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Now Showing</h3>
 
-    @if (!Model.Movies.Any())
-    {
-        <div class="alert alert-info">No movies showing now.</div>
-    }
-    else
-    {
-        <div class="row g-4" id="movieContainer">
-            @foreach (var movie in Model.Movies)
-            {
-                <div class="col-lg-3 col-md-4 col-sm-6">
-                    <div class="card h-100 shadow-sm border-0">
-                        <img src="~/uploads/@movie.PosterUrl"
-                             class="card-img-top"
-                             style="height:390px; max-width:270px; object-fit:cover;" />
-                        <div class="card-body text-center">
-                            <h6 class="fw-bold">@movie.Title</h6>
-                            <a asp-controller="Booking"
-                               asp-action="selectShowtime"
-                               asp-route-movieId="@movie.MovieId"
-                               class="btn btn-outline-primary btn-sm mt-2">
-                                Get Ticket
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
+        <form data-ajax="true" data-ajax-update="#movieTarget" data-ajax-loading="#loader"
+              asp-action="Index" method="get" class="d-flex" id="searchForm">
+            <input type="text" name="name" id="nameInput" class="form-control me-2"
+                   placeholder="Search movies..." style="width: 250px;" value="@Model.SearchName">
+        </form>
+    </div>
 
-        <!-- Pagination -->
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)">Previous</a>
-                </li>
+    <div id="loader" style="display:none;" class="text-center mb-3">
+        <img src="~/img/loader.gif" width="50" />
+    </div>
 
-                @for (int i = 1; i <= Model.TotalPages; i++)
-                {
-                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
-                    </li>
-                }
-
-                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)">Next</a>
-                </li>
-            </ul>
-        </nav>
-    }
+    <div id="movieTarget">
+        <partial name="_UserMovieGrid" model="Model" />
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/jquery.unobtrusive-ajax.min.js"></script>
+    <script>
+        // Search-as-you-type logic
+        let timer = null;
+        $('#nameInput').on('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                $('#searchForm').submit();
+            }, 500); // 500ms delay
+        });
+    </script>
+}

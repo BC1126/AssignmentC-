@@ -67,9 +67,6 @@
                 }
 
         .cart-btn {
-            margin-left: auto;
-            margin-right: 20px;
-            position: relative;
             text-decoration: none;
             background: #000;
             color: #fff;
@@ -87,9 +84,9 @@
             }
 
         .cart-count {
-            position: absolute;
-            top: -6px;
-            right: -6px;
+            position: relative; /* remove absolute to align in flex */
+            top: 0;
+            right: 0;
             background: red;
             color: #fff;
             font-size: 11px;
@@ -102,6 +99,9 @@
             justify-content: center;
         }
 
+
+
+
     </style>
 }
 
@@ -112,7 +112,18 @@
 </div>
 
 <div class="top-bar">
-    <a asp-action="UserSelectRegion" class="back-btn">← Back</a>
+
+
+    
+</div>
+
+<div class="search-cart-bar" style="display:flex; justify-content:center; align-items:center; gap:15px; margin-bottom:15px;">
+    <a asp-action="UserSelectRegion" style="background-color:#0d6efd;color:#fff;padding:8px 16px;border:none;border-radius:5px;cursor:pointer;">← Back</a>
+    
+    <input type="text"
+           id="searchBox"
+           placeholder="Search product..."
+           style="padding:8px; width:250px; border-radius:6px; border:1px solid #ccc;" />
 
     <a asp-controller="Product"
        asp-action="ShoppingCart"
@@ -121,6 +132,8 @@
         <span class="cart-count">@((ViewBag.Cart?.Count) ?? 0)</span>
     </a>
 </div>
+
+
 
 
 <div class="category-bar">
@@ -142,3 +155,28 @@
 <div id="target">
     <partial name="_UserIndex" />
 </div>
+
+<script>
+    function loadProducts(page = 1) {
+        $.get('@Url.Action("UserIndex")', {
+            page: page,
+            search: $('#searchBox').val(),
+            category: '@ViewBag.SelectedCategory'
+        }, function (html) {
+            $('#target').html(html);
+        });
+    }
+
+    // Search
+    $('#searchBox').on('keyup', function () {
+        loadProducts(1);
+    });
+
+    // Paging click
+    $(document).on('click', '.page-link', function (e) {
+        e.preventDefault();
+        let page = $(this).data('page');
+        loadProducts(page);
+    });
+</script>
+

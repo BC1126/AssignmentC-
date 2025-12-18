@@ -471,8 +471,6 @@ namespace AssignmentC_.Migrations
 
                     b.HasKey("PromotionId");
 
-                    b.HasIndex("PaymentId");
-
                     b.ToTable("Promotions");
 
                     b.HasDiscriminator().HasValue("Promotion");
@@ -601,7 +599,6 @@ namespace AssignmentC_.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(5)");
 
                     b.HasKey("AssignmentId");
@@ -639,9 +636,6 @@ namespace AssignmentC_.Migrations
                     b.Property<int?>("MinAge")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("MinSpend")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("PromotionId")
                         .HasColumnType("int");
 
@@ -652,12 +646,37 @@ namespace AssignmentC_.Migrations
                     b.ToTable("VoucherConditions");
                 });
 
+            modelBuilder.Entity("PaymentPromotion", b =>
+                {
+                    b.Property<int>("PaymentsPaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PromotionsPromotionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PaymentsPaymentId", "PromotionsPromotionId");
+
+                    b.HasIndex("PromotionsPromotionId");
+
+                    b.ToTable("PaymentPromotion");
+                });
+
             modelBuilder.Entity("AssignmentC_.Models.Memberpoints", b =>
                 {
                     b.HasBaseType("AssignmentC_.Models.Promotion");
 
+                    b.Property<int?>("VoucherAssignmentAssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VoucherConditionConditionId")
+                        .HasColumnType("int");
+
                     b.Property<int>("points")
                         .HasColumnType("int");
+
+                    b.HasIndex("VoucherAssignmentAssignmentId");
+
+                    b.HasIndex("VoucherConditionConditionId");
 
                     b.HasDiscriminator().HasValue("Memberpoints");
                 });
@@ -678,6 +697,9 @@ namespace AssignmentC_.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("MinSpend")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -844,9 +866,13 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
                 {
-                    b.HasOne("AssignmentC_.Models.Payment", null)
+                    b.HasOne("AssignmentC_.Models.Payment", "Payment")
                         .WithMany("Promotions")
-                        .HasForeignKey("PaymentId");
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -889,9 +915,7 @@ namespace AssignmentC_.Migrations
 
                     b.HasOne("AssignmentC_.Models.User", "user")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("promotion");
 
@@ -900,13 +924,43 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.VoucherCondition", b =>
                 {
-                    b.HasOne("AssignmentC_.Models.Promotion", "promotion")
+                    b.HasOne("AssignmentC_.Models.Promotion", "Promotion")
                         .WithMany()
                         .HasForeignKey("PromotionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("promotion");
+                    b.Navigation("Promotion");
+                });
+
+            modelBuilder.Entity("PaymentPromotion", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentsPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentC_.Models.Promotion", null)
+                        .WithMany()
+                        .HasForeignKey("PromotionsPromotionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.Memberpoints", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.VoucherAssignment", "VoucherAssignment")
+                        .WithMany()
+                        .HasForeignKey("VoucherAssignmentAssignmentId");
+
+                    b.HasOne("AssignmentC_.Models.VoucherCondition", "VoucherCondition")
+                        .WithMany()
+                        .HasForeignKey("VoucherConditionConditionId");
+
+                    b.Navigation("VoucherAssignment");
+
+                    b.Navigation("VoucherCondition");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
@@ -936,11 +990,6 @@ namespace AssignmentC_.Migrations
             modelBuilder.Entity("AssignmentC_.Models.Outlet", b =>
                 {
                     b.Navigation("Halls");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
-                {
-                    b.Navigation("Promotions");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>

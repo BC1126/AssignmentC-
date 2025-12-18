@@ -1,0 +1,54 @@
+﻿@model IEnumerable<dynamic>
+
+<div class="table-wrapper">
+    <table class="voucherList">
+        <thead class="voucherHead">
+            <tr>
+                <th>Status</th>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th style="text-align:right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="voucherBody">
+
+            @foreach (var vm in Model)
+            {
+                <tr class="voucherListRow">
+                    @if (vm.StartDate >= DateTime.Today)
+                    {
+                        <td class="status"><span class="dot green"></span>Active</td>
+                    }
+
+                    @if (vm.EndDate < DateTime.Today)
+                    {
+                        <td class="status"><span class="dot red"></span>Expired</td>
+                    }
+
+                    <td class="mono">@vm.VoucherCode</td>
+
+                    @if (vm.DiscountType == "percentage")
+                    {
+                        <td>@vm.DiscountValue.ToString("0.##") %</td>
+                    }
+
+                    @if (vm.DiscountType == "fixed")
+                    {
+                        <td>RM @vm.DiscountValue </td>
+                    }
+
+
+
+                    <td>@vm.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td>@vm.EndDate.ToString("yyyy-MM-dd")</td>
+                    <td class="actions">
+                        <button data-get="/Ticket/EditVoucher/@vm.PromotionId">Edit</button>
+                        <button data-delete="/Ticket/DeleteVoucher/@vm.PromotionId" class="delete">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

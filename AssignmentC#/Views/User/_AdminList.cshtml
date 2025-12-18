@@ -1,0 +1,54 @@
+﻿@model PaginatedList<Admin>
+
+<div class="table-container border">
+    <p class="text-muted">Showing @Model.Items.Count record(s)</p>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["IdSort"]">ID</a></th>
+                    <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["NameSort"]">Name</a></th>
+                    <th>Gender</th>
+                    <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["EmailSort"]">Email</a></th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Items)
+                {
+                    <tr>
+                        <td><strong>@u.UserId</strong></td>
+                        <td>@u.Name</td>
+                        <td>@u.Gender</td>
+                        <td>@u.Email</td>
+                        <td>@u.Phone</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* Pagination Numbers *@
+    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+        <span class="text-muted small">Page @Model.PageIndex of @Model.TotalPages</span>
+        <nav>
+            <ul class="pagination mb-0">
+                <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" data-page="@(Model.PageIndex - 1)">Previous</a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                        <a class="page-link" href="javascript:void(0)" data-page="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" data-page="@(Model.PageIndex + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>

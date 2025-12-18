@@ -1,0 +1,139 @@
+﻿@model VoucherViewModel
+
+@section head {
+    <link href="/css/ticket.css" rel="stylesheet" />
+}
+
+<div class="main">
+    <div class="content">
+        <div class="container">
+
+            <div class="voucherHeader">
+                <h1>Edit Voucher</h1>
+                <p class="subtitle">Configure voucher rules, value, and validity periods for customers.</p>
+            </div>
+
+            <form method="post">
+                <input type="hidden" asp-for="@Model.PromotionId" />
+                <!-- General -->
+                <div class="sectionVoucher">
+                    <h3>General Information</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label asp-for="VoucherCode"></label>
+                            <input type="text" asp-for="VoucherCode"/>
+                            <div class="hint">Code must be unique and alphanumeric.</div>
+                            <span class="displayErrorMsg" asp-validation-for="VoucherCode"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Value -->
+                <div class="sectionVoucher">
+                    <h3>Value & Type</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label asp-for="DiscountType"></label>
+                            <select asp-for="DiscountType">
+                                <option value="percentage">Percentage Discount (%)</option>
+                                <option value="fixed">Fixed Amount (RM)</option>
+                            </select>
+                            <span class="displayErrorMsg" asp-validation-for="DiscountType"></span>
+                        </div>
+                        <div>
+                            <label asp-for="DiscountValue"></label>
+                            <input type="number" placeholder="0" asp-for="DiscountValue" />
+                            <span class="displayErrorMsg" asp-validation-for="DiscountValue"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validity -->
+                <div class="sectionVoucher">
+                    <h3>Validity Period</h3>
+                    <div class="grid-2">
+                        <div>
+                            <label asp-for="StartDate">Start Date</label>
+                            <input type="date" asp-for="StartDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span class="displayErrorMsg" asp-validation-for="StartDate"></span>
+                        </div>
+                        <div>
+                            <label asp-for="EndDate">End Date</label>
+                            <input type="date" asp-for="EndDate" />
+                            <span class="displayErrorMsg" asp-validation-for="EndDate"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Min Spend-->
+                <div class="sectionVoucher">
+                    <h3><label asp-for="MinSpend"></label></h3>
+
+                    <div class="grid-2">
+                        <div>
+                            <input type="number" placeholder="0.00" asp-for="MinSpend" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eligibility -->
+                <div class="sectionVoucher">
+                    <h3><label asp-for="EligibilityMode"></label></h3>
+                    <div class="grid-2">
+                        <div>
+                            <select asp-for="EligibilityMode">
+                                <option value="open">Open to all</option>
+                                <option value="condition">Condition-based</option>
+                                <option value="assigned">Assigned user only</option>
+                                <option value="both">Assigned + Condition</option>
+                            </select>
+                            <span class="displayErrorMsg" asp-validation-for="EligibilityMode"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions">
+                    <button class="btn secondary"><a href="/Ticket/VoucherList">Back To List</a></button>
+                    <button type="submit" class="btn primary">Save Change</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section foot {
+    <script>
+        Date.prototype.addDays = function (days) {
+            const d = new Date(this);
+            d.setDate(d.getDate() + days);
+            return d;
+        };
+
+        Date.prototype.format = function () {
+            return this.toISOString().substring(0,10)
+        };
+
+        $('#StartDate').on('input', e => {
+            const sd = $('#StartDate')[0];
+            const ed = $('#EndDate')[0];
+
+            ed.min = sd.valueAsDate.addDays(0).format();
+            ed.max = sd.valueAsDate.addDays(365).format();
+
+            if(ed.value < ed.min) ed.value = ed.min;
+            if(ed.value > ed.max) ed.value = ed.max;
+        });
+
+        $('#StartDate,#EndDate').on('input', e => {
+            const sd = $('#StartDate')[0];
+            const ed = $('#EndDate')[0];
+            const ms = ed.valueAsDate - sd.valueAsDate;
+            const days = parseInt(ms / (24 * 60 * 60 * 1000));
+            $('#days').text(days);
+        });
+
+        $('#StartDate').trigger('input');
+    </script>
+}

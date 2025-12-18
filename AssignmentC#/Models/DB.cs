@@ -27,7 +27,7 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Promotion> Promotions { get; set; }
     public DbSet<Memberpoints> Memberpoints { get; set; }
-    public DbSet<Voucher> Voucher { get; set; }
+    public DbSet<Voucher> Vouchers { get; set; }
     public DbSet<VoucherAssignment> VoucherAssignments { get; set; }
     public DbSet<VoucherCondition> VoucherConditions { get; set; }
     public DbSet<ActionLog> ActionLogs { get; set; }
@@ -185,11 +185,16 @@ public class Promotion
 {
     [Key]
     public int PromotionId { get; set; }
+
+    public List<Payment> Payments { get; set; } = [];
 }
 
 public class Memberpoints : Promotion
 {
     public int points { get; set; }
+
+    public VoucherCondition? VoucherCondition { get; set; }
+    public VoucherAssignment? VoucherAssignment { get; set; }
 }
 
 public class Voucher : Promotion
@@ -209,6 +214,9 @@ public class Voucher : Promotion
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public DateTime CreatedTime { get; set; }
+    public decimal MinSpend { get; set; }
+
+    
 
 }
 
@@ -222,12 +230,11 @@ public class VoucherCondition
 
     public int? MinAge { get; set; }
     public int? MaxAge { get; set; }
-    public decimal? MinSpend { get; set;}
+    
     public bool? IsFirstPurchase { get; set; }
     public List<int> BirthMonth { get; set; } = new List<int>();
 
-    // FK
-    public Promotion promotion { get; set; }
+    public Promotion Promotion { get; set; } = null;
 }
 
 public class VoucherAssignment
@@ -236,7 +243,7 @@ public class VoucherAssignment
     public int AssignmentId { get; set; }
 
     //FK
-    public Promotion promotion { get; set; }
+    public Promotion promotion { get; set; } = null;
     public User user { get; set; }
 }
 

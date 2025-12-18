@@ -1,5 +1,5 @@
-﻿namespace AssignmentC_.Models
-{
+﻿namespace AssignmentC_.Models;
+
     public class ActionLogViewModel
     {
         public List<ActionLog> Logs { get; set; } = new();
@@ -9,4 +9,4 @@
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
     }
-}
+

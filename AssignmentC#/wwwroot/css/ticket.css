@@ -638,7 +638,7 @@ h1 {
     font-weight: 800
 }
 
-h3 {
+.voucherH3 {
     font-size: 18px;
     font-weight: 700;
     padding-bottom: 12px;
@@ -728,3 +728,7 @@ select {
         color: #fff;
         box-shadow: 0 5px 30px rgba(242, 135, 13, 0.35);
     }
+
+.displayErrorMsg{
+    color: red;
+}

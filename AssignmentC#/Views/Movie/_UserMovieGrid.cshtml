@@ -1,0 +1,55 @@
+﻿@model MovieListVM
+
+@if (!Model.Movies.Any())
+{
+    <div class="alert alert-info">No movies found matching your search.</div>
+}
+else
+{
+    <div class="row g-4" id="movieContainer">
+        @foreach (var movie in Model.Movies)
+        {
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card h-100 shadow-sm border-0">
+                    <img src="~/uploads/@movie.PosterUrl"
+                         class="card-img-top"
+                         style="height:390px; max-width:270px; object-fit:cover;" />
+                    <div class="card-body text-center">
+                        <h6 class="fw-bold">@movie.Title</h6>
+                        <a asp-controller="Booking"
+                           asp-action="selectShowtime"
+                           asp-route-movieId="@movie.MovieId"
+                           class="btn btn-outline-primary btn-sm mt-2">
+                            Get Ticket
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @* PREVIOUS LINK *@
+            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" data-ajax="true" data-ajax-update="#movieTarget" data-ajax-loading="#loader"
+                   href="@Url.Action("Index", new { name = Model.SearchName, page = Model.CurrentPage - 1 })">Previous</a>
+            </li>
+
+            @* PAGE NUMBERS *@
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" data-ajax="true" data-ajax-update="#movieTarget" data-ajax-loading="#loader"
+                       href="@Url.Action("Index", new { name = Model.SearchName, page = i })">@i</a>
+                </li>
+            }
+
+            @* NEXT LINK *@
+            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" data-ajax="true" data-ajax-update="#movieTarget" data-ajax-loading="#loader"
+                   href="@Url.Action("Index", new { name = Model.SearchName, page = Model.CurrentPage + 1 })">Next</a>
+            </li>
+        </ul>
+    </nav>
+}

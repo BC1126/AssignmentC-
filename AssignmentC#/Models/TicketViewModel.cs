@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace AssignmentC_.Models
 {
@@ -47,19 +48,38 @@ namespace AssignmentC_.Models
     public class VoucherViewModel
     {
         public int PromotionId { get; set; }
+
+        [DisplayName("Voucher Code")]
         public string VoucherCode { get; set; }
+
+        [DisplayName("Discount Type")]
         public string DiscountType { get; set; }
+
+        [DisplayName("Discount Value")]
+        [Range(typeof(decimal), "0.01", "79228162514264337593543950335" , ErrorMessage = "Please enter a valid number")]
+        // 79228162514264337593543950335 = max value of decimal
         public decimal DiscountValue { get; set; }
 
+        [DisplayName("Eligibility Mode")]
         public string EligibilityMode { get; set; }
 
+        [DisplayName("Start Date")]
+        [DataType(DataType.Date)]
         public DateTime StartDate {  get; set; }
+
+        [DisplayName("End Date")]
+        [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
 
+       
+        [DisplayName("Minimum Spend Amount")]
+        [Range(typeof(decimal), "0", "79228162514264337593543950335", ErrorMessage = "Please enter a valid number")]
+        public decimal MinSpend { get; set; }
+        
         // Condition
         public int? MaxAge { get; set; }
         public int? MinAge { get; set; }
-        public decimal? MinSpend { get; set; }
+        
         public bool? IsFirstPurchase { get; set; }
         public List<int> BirthMonth { get; set; } = new List<int>();
         // Assigned User use
