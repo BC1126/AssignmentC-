@@ -55,10 +55,8 @@ public class BookingSessionData
     public int AdultCount { get; set; }
     public int SeniorCount { get; set; }
 
-    // Selected Seats
     public List<int> SelectedSeatIds { get; set; } = new();
     public List<string> SelectedSeatIdentifiers { get; set; } = new(); 
-    // Food & Beverage (filled by F&B page)
     public decimal FoodBeverageTotal { get; set; } = 0;
 
     // Auto-calculated total

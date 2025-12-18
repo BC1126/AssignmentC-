@@ -66,8 +66,7 @@ public class BookingController : Controller
             .Select(sl => sl.SeatId)
             .ToHashSet();
 
-        // 4. Get seats locked by ME (Blue/Selected)
-        var myLockedSeatIds = db.SeatLocks
+            var myLockedSeatIds = db.SeatLocks
             .Where(sl => sl.ShowTimeId == showtimeId
                       && sl.ExpiresAt > now
                       && sl.SessionId == sessionId)
@@ -99,7 +98,7 @@ public class BookingController : Controller
                     IsWheelchair = s.IsWheelchair,
                     IsOccupied = bookedSeatIds.Contains(s.SeatId),
                     IsLocked = lockedByOthersIds.Contains(s.SeatId),
-                    IsSelected = myLockedSeatIds.Contains(s.SeatId), // NEW PROPERTY
+                    IsSelected = myLockedSeatIds.Contains(s.SeatId), 
                     Row = new string(s.SeatIdentifier.TakeWhile(char.IsLetter).ToArray()),
                     Column = int.Parse(new string(s.SeatIdentifier.SkipWhile(char.IsLetter).ToArray()))
                 })
@@ -197,18 +196,15 @@ public class BookingController : Controller
     [HttpPost]
     public IActionResult SelectTicket([FromForm] TicketSelectionSubmission submission)
     {
-        // 1. Clean the input immediately to avoid duplicate "C5" identifiers
+
         var uniqueSeatIds = submission.SeatIds?.Distinct().ToList() ?? new List<int>();
 
-        // 2. Validate input using the CLEANED list
         if (submission.ShowTimeId <= 0 || !uniqueSeatIds.Any())
         {
             TempData["Error"] = "Please select at least one seat";
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
 
-        // 3. IMPORTANT: Use uniqueSeatIds.Count here. 
-        // If you use submission.SeatIds.Count, the validation will fail if there were duplicates.
         int totalTickets = submission.ChildrenCount + submission.AdultCount + submission.SeniorCount;
         if (totalTickets != uniqueSeatIds.Count)
         {
@@ -216,7 +212,6 @@ public class BookingController : Controller
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
 
-        // Verify showtime exists
         var showtime = db.ShowTimes
             .Include(st => st.Movie)
             .Include(st => st.Hall).ThenInclude(h => h.Outlet)
@@ -228,8 +223,10 @@ public class BookingController : Controller
             return RedirectToAction("Index", "Movie");
         }
 
+
+
         var seats = db.Seats
-            .Where(s => uniqueSeatIds.Contains(s.SeatId))
+            .Where(s => uniqueSeatIds.Contains(s.SeatId) && s.HallId == showtime.HallId)
             .ToList();
 
         if (seats.Count != uniqueSeatIds.Count)
@@ -243,18 +240,20 @@ public class BookingController : Controller
             .Select(bs => bs.SeatId)
             .ToHashSet();
 
-        // Use uniqueSeatIds for the intersection check
+
         var alreadyBooked = uniqueSeatIds.Intersect(bookedSeatIds).ToList();
         if (alreadyBooked.Any())
         {
+            // FIX: Query the 'seats' list (objects), not 'uniqueSeatIds' (integers)
             var bookedIdentifiers = seats
                 .Where(s => alreadyBooked.Contains(s.SeatId))
                 .Select(s => s.SeatIdentifier);
+
             TempData["Error"] = $"Seats {string.Join(", ", bookedIdentifiers)} are already booked";
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
 
-        // Calculate pricing
+        // Pricing
         decimal ticketPrice = showtime.TicketPrice;
         decimal childrenPrice = ticketPrice * 0.8m;
         decimal seniorPrice = ticketPrice * 0.85m;
@@ -262,7 +261,7 @@ public class BookingController : Controller
                           (submission.AdultCount * ticketPrice) +
                           (submission.SeniorCount * seniorPrice);
 
-        // Store booking data - ENSURE ALL LISTS ARE CLEANED
+
         var bookingData = new BookingSessionData
         {
             ShowTimeId = showtime.ShowTimeId,
@@ -271,12 +270,16 @@ public class BookingController : Controller
             HallName = showtime.Hall.Name,
             OutletName = showtime.Hall.Outlet.Name,
             TicketPrice = ticketPrice,
-            SelectedSeatIds = uniqueSeatIds, // Use clean list
-            SelectedSeatIdentifiers = seats.Select(s => s.SeatIdentifier).ToList(), 
             ChildrenCount = submission.ChildrenCount,
             AdultCount = submission.AdultCount,
             SeniorCount = submission.SeniorCount,
-            TicketQuantity = uniqueSeatIds.Count, // Use clean count
+            TicketQuantity = seats.Count,
+            SelectedSeatIds = uniqueSeatIds, 
+            SelectedSeatIdentifiers = seats
+                .Select(s => s.SeatIdentifier)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList(),
             TicketSubtotal = subtotal
         };
 

@@ -8,6 +8,7 @@ public class SeatViewModel
     public bool IsWheelchair { get; set; }
     public bool IsActive { get; set; }
 
+
     public string Row { get; set; }
     public int Column { get; set; }
 }
