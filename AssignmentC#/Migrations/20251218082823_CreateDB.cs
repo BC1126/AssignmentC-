@@ -329,6 +329,35 @@ namespace AssignmentC_.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SeatLocks",
+                columns: table => new
+                {
+                    SeatLockId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ShowTimeId = table.Column<int>(type: "int", nullable: false),
+                    SeatId = table.Column<int>(type: "int", nullable: false),
+                    SessionId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LockedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SeatLocks", x => x.SeatLockId);
+                    table.ForeignKey(
+                        name: "FK_SeatLocks_Seats_SeatId",
+                        column: x => x.SeatId,
+                        principalTable: "Seats",
+                        principalColumn: "SeatId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SeatLocks_ShowTimes_ShowTimeId",
+                        column: x => x.ShowTimeId,
+                        principalTable: "ShowTimes",
+                        principalColumn: "ShowTimeId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "BookingSeats",
                 columns: table => new
                 {
@@ -527,6 +556,16 @@ namespace AssignmentC_.Migrations
                 column: "VoucherConditionConditionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SeatLocks_SeatId",
+                table: "SeatLocks",
+                column: "SeatId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SeatLocks_ShowTimeId",
+                table: "SeatLocks",
+                column: "ShowTimeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Seats_HallId",
                 table: "Seats",
                 column: "HallId");
@@ -610,16 +649,19 @@ namespace AssignmentC_.Migrations
                 name: "PaymentPromotion");
 
             migrationBuilder.DropTable(
-                name: "Bookings");
+                name: "SeatLocks");
 
             migrationBuilder.DropTable(
-                name: "Seats");
+                name: "Bookings");
 
             migrationBuilder.DropTable(
                 name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Payments");
+
+            migrationBuilder.DropTable(
+                name: "Seats");
 
             migrationBuilder.DropTable(
                 name: "ShowTimes");

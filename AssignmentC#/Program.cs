@@ -1,5 +1,6 @@
 global using AssignmentC_.Models;
 using AssignmentC_;
+using AssignmentC_.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,7 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
-
+builder.Services.AddSignalR();
 builder.Services.AddScoped<Helper>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection();
@@ -41,15 +42,16 @@ builder.Services.AddAuthentication("MyCookieAuth")
 
 var app = builder.Build();
 
-app.UseRouting();
 app.UseSession();
+app.UseRouting();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 
 // Enable Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapDefaultControllerRoute();
-
+app.MapHub<SeatHub>("/seatHub");
 app.Run();
