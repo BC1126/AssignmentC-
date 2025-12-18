@@ -26,8 +26,6 @@
 <!-- Movie Header with Trailer -->
 <section class="movie-header">
     @{
-        string videoId = "";
-
         if (!string.IsNullOrEmpty(Model.Movie.TrailerUrl))
         {
             if (Model.Movie.TrailerUrl.Contains("watch?v="))
