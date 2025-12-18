@@ -15,6 +15,7 @@ public class SelectTicketViewModel
     public decimal TicketPrice { get; set; }
     public decimal ChildrenPrice { get; set; } // 20% discount
     public decimal SeniorPrice { get; set; } // 15% discount
+    public decimal OkuPrice { get; set; }
     public string SessionId { get; set; } // For seat locking
     public int LockDurationMinutes { get; set; } // How long seats are locked
     public List<SeatSelectionViewModel> Seats { get; set; } = new();
@@ -54,6 +55,7 @@ public class BookingSessionData
     public int ChildrenCount { get; set; }
     public int AdultCount { get; set; }
     public int SeniorCount { get; set; }
+    public int OkuCount { get; set; }
 
     public List<int> SelectedSeatIds { get; set; } = new();
     public List<string> SelectedSeatIdentifiers { get; set; } = new(); 

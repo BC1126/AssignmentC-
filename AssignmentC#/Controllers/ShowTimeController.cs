@@ -16,6 +16,7 @@ public class ShowTimeController : Controller
     }
 
     [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     public IActionResult Manage(int? outletId, int? hallId, DateTime? date)
     {
         var vm = new ShowTimeManageVM
@@ -31,22 +32,31 @@ public class ShowTimeController : Controller
         if (outletId.HasValue)
         {
             vm.OutletId = outletId.Value;
+
+            // ✅ FIX 1: Only load ACTIVE halls into the dropdown list
             vm.Halls = db.Halls
-                .Where(h => h.OutletId == outletId)
+                .Where(h => h.OutletId == outletId && h.IsActive)
                 .ToList();
         }
 
         if (hallId.HasValue)
         {
-            vm.HallId = hallId.Value;
-            vm.ExistingShowTimes = db.ShowTimes
-                .Include(st => st.Movie)
-                .Where(st =>
-                    st.HallId == hallId &&
-                    st.StartTime.Date == vm.Date.Date &&
-                    st.IsActive)
-                .OrderBy(st => st.StartTime)
-                .ToList();
+            // Optional: Double check if the selected hallId is actually active. 
+            // If not, we ignore it to prevent showing data for inactive halls.
+            var selectedHall = db.Halls.FirstOrDefault(h => h.HallId == hallId.Value && h.IsActive);
+
+            if (selectedHall != null)
+            {
+                vm.HallId = hallId.Value;
+                vm.ExistingShowTimes = db.ShowTimes
+                    .Include(st => st.Movie)
+                    .Where(st =>
+                        st.HallId == hallId &&
+                        st.StartTime.Date == vm.Date.Date &&
+                        st.IsActive)
+                    .OrderBy(st => st.StartTime)
+                    .ToList();
+            }
         }
 
         return View(vm);
@@ -60,6 +70,17 @@ public class ShowTimeController : Controller
         var movie = db.Movies.Find(vm.MovieId);
         if (movie == null)
             return NotFound();
+
+        // ✅ FIX 2: Security Validation
+        // Check if the Hall exists AND is active.
+        // This prevents users from inspecting element and forcing an inactive ID.
+        var targetHall = db.Halls.FirstOrDefault(h => h.HallId == vm.HallId && h.IsActive);
+        if (targetHall == null)
+        {
+            TempData["Error"] = "Operation failed: The selected Hall is inactive or does not exist.";
+            return RedirectToAction("Manage",
+                new { vm.OutletId, date = vm.Date }); // Redirect without hallId to reset selection
+        }
 
         var newStart = vm.Date.Date.Add(vm.StartTime.TimeOfDay);
         var newEnd = newStart.AddMinutes(movie.DurationMinutes);
@@ -97,7 +118,6 @@ public class ShowTimeController : Controller
         // ===========================
         // 🔹 LOG ACTION
         // ===========================
-        // Use your injected Helper (hp)
         hp.LogAction("ShowTime", $"Created showtime for movie {movie.Title} at hall {vm.HallId}");
 
         TempData["Info"] = "Showtime added successfully!";

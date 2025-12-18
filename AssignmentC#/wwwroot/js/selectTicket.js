@@ -15,7 +15,8 @@
         timerDisplay: document.getElementById('timerDisplay'),
         childrenInput: null,
         adultInput: null,
-        seniorInput: null
+        seniorInput: null,
+        okuInput: document.querySelector('input[name="OkuCount"]'),
     };
 
     const state = {
@@ -130,23 +131,38 @@
     });
     async function handleSeatClick(e) {
         const seatEl = e.target;
+        if (!seatEl.classList.contains('seat') || seatEl.classList.contains('occupied') || seatEl.classList.contains('locked')) {
+            return;
+        }
+
         const seatId = parseInt(seatEl.dataset.seatId);
 
         if (state.selectedSeats.has(seatId)) {
-            const released = await releaseSingleSeat(seatId); // Call the API
+            const released = await releaseSingleSeat(seatId);
             if (released) {
                 state.selectedSeats.delete(seatId);
                 seatEl.classList.remove('selected');
                 updateSeatCount();
-                console.log(`Seat ${seatId} released and available for others.`);
+                console.log(`Seat ${seatId} released.`);
             }
-        } else {
-            const locked = await lockSingleSeat(seatId);
-            if (locked) {
-                state.selectedSeats.add(seatId);
-                seatEl.classList.add('selected');
-                updateSeatCount();
+            return; 
+        }
+
+        if (seatEl.classList.contains('wheelchair')) {
+            const okuInput = document.querySelector('input[name="OkuCount"]');
+            const okuCount = parseInt(okuInput?.value) || 0;
+
+            if (okuCount === 0) {
+                alert("Wheelchair seats are reserved for OKU ticket holders. Please add an OKU ticket type first.");
+                return; 
             }
+        }
+
+        const locked = await lockSingleSeat(seatId);
+        if (locked) {
+            state.selectedSeats.add(seatId);
+            seatEl.classList.add('selected');
+            updateSeatCount();
         }
     }
 
@@ -219,69 +235,60 @@
         if (!btn.classList.contains('counter-btn')) return;
 
         const counter = btn.closest('.ticket-counter');
-        if (!counter) return;
-
         const type = counter.dataset.ticketType;
-        const display = counter.querySelector('[data-count-display]');
+        const action = btn.dataset.action;
 
-        let input = null;
-        if (type === 'children') input = elements.childrenInput;
-        else if (type === 'adult') input = elements.adultInput;
-        else if (type === 'senior') input = elements.seniorInput;
-
-        if (!input || !display) return;
-
-        let value = parseInt(input.value) || 0;
-        const delta = btn.dataset.action === 'increment' ? 1 : -1;
-        const newValue = Math.max(0, value + delta);
-
-        // Check total doesn't exceed selected seats
         const children = parseInt(elements.childrenInput.value) || 0;
         const adult = parseInt(elements.adultInput.value) || 0;
         const senior = parseInt(elements.seniorInput.value) || 0;
+        const oku = parseInt(document.querySelector('input[name="OkuCount"]')?.value) || 0;
 
-        let totalTickets = children + adult + senior - value + newValue;
+        const currentTotal = children + adult + senior + oku;
+        const delta = action === 'increment' ? 1 : -1;
 
-        if (totalTickets > state.selectedSeats.size) {
+        if (action === 'increment' && currentTotal >= state.selectedSeats.size) {
             return;
         }
 
-        value = newValue;
-        input.value = value;
-        display.textContent = value;
+        if (type === 'oku' && action === 'decrement') {
+            const hasWheelchair = document.querySelector('.seat.selected.wheelchair');
+            if (hasWheelchair && oku === 1) {
+                alert("Cannot remove OKU ticket while a wheelchair seat is selected.");
+                return;
+            }
+        }
+        let targetInput = (type === 'oku') ? document.querySelector('input[name="OkuCount"]') : elements[`${type}Input`];
+        let newValue = Math.max(0, (parseInt(targetInput.value) || 0) + delta);
+
+        targetInput.value = newValue;
+        counter.querySelector('[data-count-display]').textContent = newValue;
 
         calculatePricing();
     }
 
     function updateSeatCount() {
         const count = state.selectedSeats.size;
-
-        if (elements.countDisplay) {
-            elements.countDisplay.textContent = count;
-        }
-        if (elements.totalSeatsDisplay) {
-            elements.totalSeatsDisplay.textContent = count;
-        }
+        if (elements.countDisplay) elements.countDisplay.textContent = count;
+        if (elements.totalSeatsDisplay) elements.totalSeatsDisplay.textContent = count;
 
         if (count === 0) {
-            if (elements.ticketTypeSection) {
-                elements.ticketTypeSection.style.display = 'none';
-            }
-            stopTimer();
+            elements.ticketTypeSection.style.display = 'none';
             resetCounters();
         } else {
-            if (elements.ticketTypeSection) {
-                elements.ticketTypeSection.style.display = 'block';
+            elements.ticketTypeSection.style.display = 'block';
+
+            const children = parseInt(elements.childrenInput.value) || 0;
+            const adult = parseInt(elements.adultInput.value) || 0;
+            const senior = parseInt(elements.seniorInput.value) || 0;
+            const oku = parseInt(document.querySelector('input[name="OkuCount"]')?.value) || 0;
+            const currentTotalTickets = children + adult + senior + oku;
+
+            if (currentTotalTickets < count) {
+                const diff = count - currentTotalTickets;
+                elements.adultInput.value = adult + diff;
+                document.querySelector('[data-count-display="adult"]').textContent = adult + diff;
             }
 
-            // Auto-set adult count
-            if (elements.adultInput) {
-                const adultDisplay = document.querySelector('[data-count-display="adult"]');
-                elements.adultInput.value = count;
-                if (adultDisplay) {
-                    adultDisplay.textContent = count;
-                }
-            }
             calculatePricing();
         }
     }
@@ -291,6 +298,12 @@
         if (elements.adultInput) elements.adultInput.value = 0;
         if (elements.seniorInput) elements.seniorInput.value = 0;
 
+        const okuInput = document.querySelector('input[name="OkuCount"]');
+        if (okuInput) okuInput.value = 0;
+
+        document.querySelectorAll('[data-count-display]').forEach(display => {
+            display.textContent = 0;
+        });
         document.querySelectorAll('[data-count-display]').forEach(display => {
             display.textContent = 0;
         });
@@ -370,21 +383,14 @@
     }
 
     async function calculatePricing() {
-        if (!elements.childrenInput || !elements.adultInput || !elements.seniorInput) {
-            return;
-        }
-
-        const children = parseInt(elements.childrenInput.value) || 0;
-        const adult = parseInt(elements.adultInput.value) || 0;
-        const senior = parseInt(elements.seniorInput.value) || 0;
+        const children = parseInt(elements.childrenInput?.value) || 0;
+        const adult = parseInt(elements.adultInput?.value) || 0;
+        const senior = parseInt(elements.seniorInput?.value) || 0;
+        const oku = parseInt(document.querySelector('input[name="OkuCount"]')?.value) || 0;
 
         if (state.selectedSeats.size === 0) {
-            if (elements.totalDisplay) {
-                elements.totalDisplay.textContent = '0.00';
-            }
-            if (elements.nextButton) {
-                elements.nextButton.disabled = true;
-            }
+            if (elements.totalDisplay) elements.totalDisplay.textContent = '0.00';
+            if (elements.nextButton) elements.nextButton.disabled = true;
             return;
         }
 
@@ -397,7 +403,9 @@
                     childrenCount: children,
                     adultCount: adult,
                     seniorCount: senior,
-                    selectedSeatsCount: state.selectedSeats.size
+                    okuCount: oku, // ADDED
+                    selectedSeatsCount: state.selectedSeats.size,
+                    selectedSeatIds: Array.from(state.selectedSeats) 
                 })
             });
 
@@ -405,23 +413,18 @@
 
             if (data.success) {
                 if (elements.totalDisplay) {
-                    elements.totalDisplay.textContent = data.subtotal || '0.00';
+                    elements.totalDisplay.textContent = parseFloat(data.subtotal).toFixed(2);
                 }
 
-                if (data.isValid) {
-                    if (elements.ticketWarning) {
-                        elements.ticketWarning.style.display = 'none';
-                    }
-                    if (elements.nextButton) {
-                        elements.nextButton.disabled = false;
-                    }
+                const totalTickets = children + adult + senior + oku;
+                const isValid = (totalTickets === state.selectedSeats.size);
+
+                if (isValid) {
+                    if (elements.ticketWarning) elements.ticketWarning.style.display = 'none';
+                    if (elements.nextButton) elements.nextButton.disabled = false;
                 } else {
-                    if (elements.ticketWarning) {
-                        elements.ticketWarning.style.display = 'block';
-                    }
-                    if (elements.nextButton) {
-                        elements.nextButton.disabled = true;
-                    }
+                    if (elements.ticketWarning) elements.ticketWarning.style.display = 'block';
+                    if (elements.nextButton) elements.nextButton.disabled = true;
                 }
             }
         } catch (err) {
@@ -439,18 +442,18 @@
         const children = parseInt(elements.childrenInput.value) || 0;
         const adult = parseInt(elements.adultInput.value) || 0;
         const senior = parseInt(elements.seniorInput.value) || 0;
-        const totalTickets = children + adult + senior;
+        const oku = parseInt(document.querySelector('input[name="OkuCount"]')?.value) || 0;
+
+        const totalTickets = children + adult + senior + oku;
 
         if (totalTickets !== state.selectedSeats.size) {
             e.preventDefault();
-            alert('Ticket type count must match the number of selected seats');
+            alert(`Ticket count (${totalTickets}) must match selected seats (${state.selectedSeats.size})`);
             return;
         }
-
-        // Add seat IDs to form
         const container = document.getElementById('seatIdsContainer');
         if (container) {
-            container.innerHTML = ''; 
+            container.innerHTML = '';
             state.selectedSeats.forEach(seatId => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -458,9 +461,14 @@
                 input.value = seatId;
                 container.appendChild(input);
             });
+
+            const okuHidden = document.createElement('input');
+            okuHidden.type = 'hidden';
+            okuHidden.name = 'OkuCount';
+            okuHidden.value = oku;
+            container.appendChild(okuHidden);
         }
 
-        // Stop timer but keep lock (we're proceeding to next page)
         stopTimer();
         stopLockRenewal();
     }
