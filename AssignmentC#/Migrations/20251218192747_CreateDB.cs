@@ -95,6 +95,7 @@ namespace AssignmentC_.Migrations
                     Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: false),
+                    IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     Discriminator = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
                     PhotoURL = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
@@ -123,38 +124,6 @@ namespace AssignmentC_.Migrations
                         column: x => x.OutletId,
                         principalTable: "Outlets",
                         principalColumn: "OutletId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "MovieReviews",
-                columns: table => new
-                {
-                    MovieReviewId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
-                    MovieId = table.Column<int>(type: "int", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Rating = table.Column<int>(type: "int", nullable: false),
-                    Recommend = table.Column<bool>(type: "bit", nullable: true),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsApproved = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MovieReviews", x => x.MovieReviewId);
-                    table.ForeignKey(
-                        name: "FK_MovieReviews_Movies_MovieId",
-                        column: x => x.MovieId,
-                        principalTable: "Movies",
-                        principalColumn: "MovieId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MovieReviews_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -501,16 +470,6 @@ namespace AssignmentC_.Migrations
                 column: "OutletId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovieReviews_MovieId",
-                table: "MovieReviews",
-                column: "MovieId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MovieReviews_UserId",
-                table: "MovieReviews",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_OrderLines_OrderId",
                 table: "OrderLines",
                 column: "OrderId");
@@ -638,9 +597,6 @@ namespace AssignmentC_.Migrations
 
             migrationBuilder.DropTable(
                 name: "BookingSeats");
-
-            migrationBuilder.DropTable(
-                name: "MovieReviews");
 
             migrationBuilder.DropTable(
                 name: "OrderLines");
