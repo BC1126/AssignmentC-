@@ -13,6 +13,10 @@ public class SelectTicketViewModel
     public string HallName { get; set; }
     public string OutletName { get; set; }
     public decimal TicketPrice { get; set; }
+    public decimal ChildrenPrice { get; set; } // 20% discount
+    public decimal SeniorPrice { get; set; } // 15% discount
+    public string SessionId { get; set; } // For seat locking
+    public int LockDurationMinutes { get; set; } // How long seats are locked
     public List<SeatSelectionViewModel> Seats { get; set; } = new();
 }
 
@@ -26,6 +30,8 @@ public class SeatSelectionViewModel
     public bool IsPremium { get; set; }
     public bool IsWheelchair { get; set; }
     public bool IsOccupied { get; set; } // Already booked by someone else
+    public bool IsLocked { get; set; } // Temporarily locked by another session
+    public bool IsSelected { get; set; }
     public string Row { get; set; } // e.g., "A", "B"
     public int Column { get; set; } // e.g., 1, 2, 3
 }
@@ -49,14 +55,10 @@ public class BookingSessionData
     public int AdultCount { get; set; }
     public int SeniorCount { get; set; }
 
-    // Selected Seats
     public List<int> SelectedSeatIds { get; set; } = new();
-    public List<string> SelectedSeatIdentifiers { get; set; } = new(); // e.g., ["A1", "A2", "A3"]
-
-    // Food & Beverage (filled by F&B page)
+    public List<string> SelectedSeatIdentifiers { get; set; } = new(); 
     public decimal FoodBeverageTotal { get; set; } = 0;
 
     // Auto-calculated total
     public decimal GrandTotal => TicketSubtotal + FoodBeverageTotal;
 }
-

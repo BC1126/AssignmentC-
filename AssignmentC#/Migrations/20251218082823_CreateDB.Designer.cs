@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251218051717_CreateDB")]
+    [Migration("20251218082823_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -509,6 +509,39 @@ namespace AssignmentC_.Migrations
                     b.ToTable("Seats");
                 });
 
+            modelBuilder.Entity("AssignmentC_.Models.SeatLock", b =>
+                {
+                    b.Property<int>("SeatLockId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SeatLockId"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SeatId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ShowTimeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SeatLockId");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("ShowTimeId");
+
+                    b.ToTable("SeatLocks");
+                });
+
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>
                 {
                     b.Property<int>("ShowTimeId")
@@ -872,6 +905,25 @@ namespace AssignmentC_.Migrations
                         .IsRequired();
 
                     b.Navigation("Hall");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.SeatLock", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Seat", "Seat")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentC_.Models.ShowTime", "ShowTime")
+                        .WithMany()
+                        .HasForeignKey("ShowTimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
+
+                    b.Navigation("ShowTime");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>

@@ -50,7 +50,9 @@
         <div class="mt-4">
             <button type="submit" class="btn btn-success">Save Changes</button>
             <a asp-action="ManageHalls" class="btn btn-secondary">Cancel</a>
-            <a asp-action="EditHallSeats" asp-route-id="@Model.HallId" class="btn btn-info">Edit Seats</a>
+            <a asp-action="EditHallSeats" asp-route-id="@Model.HallId" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-grid-3x3"></i> Edit Seats
+            </a>
         </div>
     </form>
 </div>

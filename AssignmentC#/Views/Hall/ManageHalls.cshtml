@@ -74,7 +74,7 @@
                                 <span class="text-muted">None</span>
                             }
                         </td>
-                        <td>
+                        <td id="status-badge-container-@hall.HallId">
                             @if (hall.IsActive)
                             {
                                 <span class="badge bg-success">Active</span>
@@ -84,34 +84,28 @@
                                 <span class="badge bg-secondary">Inactive</span>
                             }
                         </td>
-                        <td>
-                            <a asp-controller="Hall"
-                               asp-action="EditHall"
-                               asp-route-id="@hall.HallId"
-                               class="btn btn-sm btn-warning">
-                                Edit
-                            </a>
-                            <a asp-controller="Hall"
-                               asp-action="EditHallSeats"
-                               asp-route-id="@hall.HallId"
-                               class="btn btn-sm btn-info">
-                                Seats
-                            </a>
+
+                        <td id="action-buttons-@hall.HallId">
+                            <a asp-controller="Hall" asp-action="EditHall" asp-route-id="@hall.HallId" class="btn btn-sm btn-warning">Edit</a>
+                            <form asp-controller="Hall" asp-action="DeleteHall" asp-route-id="@hall.HallId"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to PERMANENTLY delete this hall? This will remove all associated seats.');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </button>
+                            </form>
                             @if (hall.IsActive)
                             {
-                                <button onclick="toggleHallStatus(@hall.HallId, false)"
-                                        class="btn btn-sm btn-danger">
-                                    Disable
-                                </button>
+                                <button onclick="toggleHallStatus(@hall.HallId, false)" class="btn btn-sm btn-danger">Disable</button>
                             }
                             else
                             {
-                                <button onclick="toggleHallStatus(@hall.HallId, true)"
-                                        class="btn btn-sm btn-success">
-                                    Enable
-                                </button>
+                                <button onclick="toggleHallStatus(@hall.HallId, true)" class="btn btn-sm btn-success">Enable</button>
                             }
                         </td>
+
+
                     </tr>
                 }
             </tbody>
@@ -131,28 +125,40 @@
     <script>
         async function toggleHallStatus(hallId, enable) {
             const action = enable ? 'enable' : 'disable';
-            if (!confirm(`Are you sure you want to ${action} this hall?`)) {
-                return;
-            }
+            if (!confirm(`Are you sure you want to ${action} this hall?`)) return;
 
             try {
                 const response = await fetch(`/Hall/ToggleHallStatus/${hallId}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                     }
                 });
-
                 const result = await response.json();
-
                 if (result.success) {
-                    location.reload();
+                    const badgeContainer = document.getElementById(`status-badge-container-${hallId}`);
+                    badgeContainer.innerHTML = result.isActive
+                        ? '<span class="badge bg-success">Active</span>'
+                        : '<span class="badge bg-secondary">Inactive</span>';
+
+                        const actionContainer = document.getElementById(`action-buttons-${hallId}`);
+                        const editBtn = `<a href="/Hall/EditHall/${hallId}" class="btn btn-sm btn-warning">Edit</a> `;
+                        const toggleBtn = result.isActive
+                            ? `<button onclick="toggleHallStatus(${hallId}, false)" class="btn btn-sm btn-danger">Disable</button> `
+                            : `<button onclick="toggleHallStatus(${hallId}, true)" class="btn btn-sm btn-success">Enable</button> `;
+                        const deleteForm = `
+                            <form action="/Hall/DeleteHall/${hallId}" method="post" class="d-inline" onsubmit="return confirm('Delete permanently?');">
+                                <input name="__RequestVerificationToken" type="hidden" value="${document.querySelector('input[name="__RequestVerificationToken"]').value}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>`;
+
+                        actionContainer.innerHTML = editBtn + deleteForm + toggleBtn ;
                 } else {
-                    alert('Error toggling hall status');
+                    alert(result.message || 'Error toggling hall status');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error toggling hall status');
+                alert('A network error occurred.');
             }
         }
     </script>

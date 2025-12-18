@@ -12,9 +12,12 @@ namespace AssignmentC_.Models
     {
         public int ShowTimeId { get; set; }
         public string MovieTitle { get; set; }
+        public string MoviewUrl { get; set; }
+        public string MovieRating { get; set; }
         public int MovieDuration { get; set; }
         public DateTime StartTime { get; set; }
         public string HallName { get; set; }
+        public string OutletCity { get; set; }
         public string OutletName { get; set; }
 
         // Ticket Info

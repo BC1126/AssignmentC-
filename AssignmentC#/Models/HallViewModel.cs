@@ -19,12 +19,12 @@ namespace AssignmentC_.Models
         public string? OutletName { get; set; }
         public List<SelectListItem> OutletList { get; set; } = new();
 
-        /*[Required(ErrorMessage = "Number of rows is required")]
-        [Range(1, 50, ErrorMessage = "Rows must be between 1 and 50")]*/
+        [Required(ErrorMessage = "Number of rows is required")]
+        [Range(1, 25, ErrorMessage = "Rows must be between 1 and 26")]
         public int? Rows { get; set; }
 
-        /*[Required(ErrorMessage = "Seats per row is required")]
-        [Range(1, 50, ErrorMessage = "Seats per row must be between 1 and 50")]*/
+        [Required(ErrorMessage = "Number of rows is required")]
+        [Range(1, 50, ErrorMessage = "Rows must be between 1 and 50")]
         public int? SeatsPerRow { get; set; }
 
         public decimal StandardPrice { get; set; }

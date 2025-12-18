@@ -1,0 +1,16 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var voucherCode = HttpContextAccessor.HttpContext.Session.GetString("AppliedVoucherCode");
+}
+
+@if (voucherCode == null)
+{
+    <p class="text-text-secondary">No voucher applied</p>
+}
+else
+{
+    <p class="text-primary font-bold">
+        Applied Voucher: @voucherCode
+    </p>
+}

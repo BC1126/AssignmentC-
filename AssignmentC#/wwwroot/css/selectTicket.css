@@ -297,3 +297,88 @@ body {
         min-width: unset;
     }
 }
+
+.seat.locked {
+    background-color: #6c757d !important; 
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.seat-legend.locked {
+    background-color: #ffc107;
+}
+
+.seat-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+    .seat-timer i {
+        font-size: 16px;
+    }
+
+#timerDisplay {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    min-width: 45px;
+    text-align: center;
+}
+
+/* Pulse animation for timer when low */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.seat-timer.warning {
+    animation: pulse 1s infinite;
+    background-color: #fff3cd;
+    border-color: #ffc107;
+}
+
+/* Seat hover states */
+.seat:not(.occupied):not(.locked):hover {
+    transform: scale(1.05);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.seat.occupied:hover,
+.seat.locked:hover {
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Loading state for seat operations */
+.seat.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200px 0;
+    }
+
+    100% {
+        background-position: 200px 0;
+    }
+}
+
+.seat.loading {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+}

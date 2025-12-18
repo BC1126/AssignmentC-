@@ -25,6 +25,21 @@
 
 <!-- Movie Header with Trailer -->
 <section class="movie-header">
+    @{
+        string videoId = "";
+
+        if (!string.IsNullOrEmpty(Model.Movie.TrailerUrl))
+        {
+            if (Model.Movie.TrailerUrl.Contains("watch?v="))
+            {
+                videoId = Model.Movie.TrailerUrl.Split("v=")[1].Split("&")[0];
+            }
+            else if (Model.Movie.TrailerUrl.Contains("youtu.be/"))
+            {
+                videoId = Model.Movie.TrailerUrl.Split("youtu.be/")[1].Split("?")[0];
+            }
+        }
+    }
     @if (!string.IsNullOrEmpty(videoId))
     {
         <iframe id="trailerIframe"
