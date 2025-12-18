@@ -142,7 +142,7 @@
                            id="rowsInput"
                            class="form-control"
                            min="1"
-                           max="26"
+                           max="25"
                            value="@(Model.Seats.Any() ? Model.Seats.Max(s => s.Row[0]) - 'A' + 1 : 5)"
                            required />
                     <small class="text-muted">Current: @(Model.Seats.Any() ? (Model.Seats.Max(s => s.Row[0]) - 'A' + 1).ToString() : "0") rows</small>

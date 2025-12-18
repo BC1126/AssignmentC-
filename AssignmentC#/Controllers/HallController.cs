@@ -8,6 +8,7 @@ namespace AssignmentC_.Controllers;
 
 public class HallController(DB db, Helper hp) : Controller
 {
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult ManageHalls()
     {
@@ -33,6 +34,7 @@ public class HallController(DB db, Helper hp) : Controller
         return View(halls);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult AddHall()
     {
@@ -84,10 +86,8 @@ public class HallController(DB db, Helper hp) : Controller
             return View(vm);
         }
 
-        // Calculate capacity based on rows and seats per row
         int capacity = vm.Rows!.Value * vm.SeatsPerRow!.Value;
 
-        // Create the Hall
         var hall = new Hall
         {
             Name = vm.Name,
@@ -121,7 +121,7 @@ public class HallController(DB db, Helper hp) : Controller
         return RedirectToAction("EditHallSeats", new { id = hall.HallId });
     }
 
-
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult EditHallSeats(int id)
     {
@@ -233,6 +233,7 @@ public class HallController(DB db, Helper hp) : Controller
         public bool IsActive { get; set; }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult EditHall(int id)
     {
@@ -270,6 +271,9 @@ public class HallController(DB db, Helper hp) : Controller
     [ValidateAntiForgeryToken]
     public IActionResult EditHall(HallViewModel vm)
     {
+        ModelState.Remove("Rows");
+        ModelState.Remove("SeatsPerRow");
+
         if (!ModelState.IsValid)
         {
             vm.OutletList = db.Outlets
@@ -281,46 +285,14 @@ public class HallController(DB db, Helper hp) : Controller
             return View(vm);
         }
 
-        var hall = db.Halls.Include(h => h.Seats).FirstOrDefault(h => h.HallId == vm.HallId);
+        var hall = db.Halls.Find(vm.HallId);
         if (hall == null)
         {
             TempData["Error"] = "Hall not found";
             return RedirectToAction("ManageHalls");
         }
-        int newCapacity = (vm.Rows ?? 0) * (vm.SeatsPerRow ?? 0);
 
-        // Check if the user actually entered new dimensions and if they differ from current
-        bool dimensionsChanged = vm.Rows.HasValue && vm.SeatsPerRow.HasValue && hall.Capacity != newCapacity;
-
-        if (dimensionsChanged)
-        {
-            // Safety check: Don't allow regeneration if tickets are already being sold
-            var hasShowtimes = db.ShowTimes.Any(st => st.HallId == hall.HallId);
-            if (hasShowtimes)
-            {
-                TempData["Error"] = "Cannot change capacity: This hall has active showtimes.";
-                return RedirectToAction("EditHall", new { id = hall.HallId });
-            }
-
-            // Wipe and Recreate
-            db.Seats.RemoveRange(hall.Seats);
-            hall.Capacity = newCapacity;
-
-            for (int r = 0; r < vm.Rows.Value; r++)
-            {
-                for (int c = 1; c <= vm.SeatsPerRow.Value; c++)
-                {
-                    db.Seats.Add(new Seat
-                    {
-                        HallId = hall.HallId,
-                        SeatIdentifier = $"{(char)('A' + r)}{c}",
-                        IsActive = true
-                    });
-                }
-            }
-        }
-
-        // Update general hall info
+        // UPDATE ONLY GENERAL INFO
         hall.Name = vm.Name;
         hall.OutletId = vm.OutletId;
         hall.HallType = vm.HallType;
@@ -328,10 +300,7 @@ public class HallController(DB db, Helper hp) : Controller
 
         db.SaveChanges();
 
-        TempData["Info"] = dimensionsChanged
-            ? $"Hall layout updated to {hall.Capacity} seats."
-            : "Hall information updated successfully.";
-
+        TempData["Info"] = "Hall information updated successfully.";
         return RedirectToAction("ManageHalls");
     }
 

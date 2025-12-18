@@ -35,11 +35,13 @@
             <div class="row">
                 <div class="col">
                     <input asp-for="Rows" type="number" class="form-control"
-                           placeholder="Rows (e.g. 10)" />
+                           placeholder="Rows (e.g. 10),Range (1 - 25)" min="1" max="25"/>
+                    <span asp-validation-for="Rows" class="text-danger"></span>
                 </div>
                 <div class="col">
                     <input asp-for="SeatsPerRow" type="number" class="form-control"
-                           placeholder="Seats per row (e.g. 12)" />
+                           placeholder="Seats per row (e.g. 12),Range (1 - 50)" min="1" max="50" />
+                    <span asp-validation-for="SeatsPerRow" class="text-danger"></span>
                 </div>
             </div>
         </div>
