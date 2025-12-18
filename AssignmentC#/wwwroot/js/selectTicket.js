@@ -1,229 +1,473 @@
-﻿// Seat Selection Module
+﻿// Seat Selection with Real-time Locking - FIXED VERSION
 (function () {
     'use strict';
-
-    // Cache DOM elements
+    let connection;
     const elements = {
         seatMap: document.getElementById('seat-map'),
         seatForm: document.getElementById('seatForm'),
-        seatIdsContainer: document.getElementById('seatIdsContainer'),
-        ticketTypeSection: document.getElementById('ticketTypeSection'),
-        ticketWarning: document.getElementById('ticketWarning'),
         nextButton: document.getElementById('nextButton'),
+        ticketWarning: document.getElementById('ticketWarning'),
         countDisplay: document.getElementById('count'),
         totalDisplay: document.getElementById('total'),
-        totalSeatsDisplay: document.getElementById('totalSeatsSelected')
+        totalSeatsDisplay: document.getElementById('totalSeatsSelected'),
+        ticketTypeSection: document.getElementById('ticketTypeSection'),
+        seatTimer: document.getElementById('seatTimer'),
+        timerDisplay: document.getElementById('timerDisplay'),
+        childrenInput: null,
+        adultInput: null,
+        seniorInput: null
     };
 
-    // State management
     const state = {
-        ticketCounts: {
-            children: 0,
-            adult: 0,
-            senior: 0
-        },
-        selectedSeatsCount: 0,
-        prices: {
-            ticket: parseFloat(elements.seatForm.dataset.ticketPrice),
-            senior: parseFloat(elements.seatForm.dataset.seniorPrice)
-        }
+        showTimeId: 0,
+        selectedSeats: new Set(),
+        clientSessionId: Math.random().toString(36).substring(2, 15),
+        isLocking: false
     };
 
-    // Initialize the application
     function init() {
-        attachEventListeners();
-        updateUI();
-    }
+        if (!elements.seatMap || !elements.seatForm) {
+            console.error('Required elements not found');
+            return;
+        }
 
-    // Attach all event listeners
-    function attachEventListeners() {
-        // Seat selection with event delegation
+        // Get configuration
+        state.showTimeId = parseInt(elements.seatForm.dataset.showtimeId) || 0;
+        state.lockDurationMinutes = parseInt(elements.seatForm.dataset.lockDuration) || 5;
+
+        // Cache input elements
+        elements.childrenInput = document.querySelector('input[name="ChildrenCount"]');
+        elements.adultInput = document.querySelector('input[name="AdultCount"]');
+        elements.seniorInput = document.querySelector('input[name="SeniorCount"]');
+
+        if (!elements.childrenInput || !elements.adultInput || !elements.seniorInput) {
+            console.error('Ticket count inputs not found');
+            return;
+        }
+        document.querySelectorAll('.seat.selected').forEach(seat => {
+            const seatId = parseInt(seat.dataset.seatId);
+            state.selectedSeats.add(seatId);
+        });
+
+        // If there are seats selected, update the count and pricing UI
+        if (state.selectedSeats.size > 0) {
+            updateSeatCount();
+        }
+        // Event listeners
         elements.seatMap.addEventListener('click', handleSeatClick);
-
-        // Ticket counter buttons with event delegation
-        elements.ticketTypeSection.addEventListener('click', handleCounterClick);
-
-        // Form submission
+        document.querySelectorAll('.counter-btn').forEach(btn => {
+            btn.addEventListener('click', handleCounterChange);
+        });
         elements.seatForm.addEventListener('submit', handleFormSubmit);
-    }
 
-    // Handle seat clicks
-    function handleSeatClick(e) {
-        const seat = e.target;
-
-        if (!seat.classList.contains('seat') || seat.classList.contains('occupied')) {
-            return;
-        }
-
-        seat.classList.toggle('selected');
-        updateSelectedSeatsCount();
-    }
-
-    // Handle counter button clicks
-    function handleCounterClick(e) {
-        const button = e.target;
-
-        if (!button.classList.contains('counter-btn')) {
-            return;
-        }
-
-        const ticketCounter = button.closest('.ticket-counter');
-        if (!ticketCounter) return;
-
-        const ticketType = ticketCounter.dataset.ticketType;
-        const action = button.dataset.action;
-        const delta = action === 'increment' ? 1 : -1;
-
-        changeTicketCount(ticketType, delta);
-    }
-
-    // Update selected seats count
-    function updateSelectedSeatsCount() {
-        const selectedSeats = elements.seatMap.querySelectorAll('.seat.selected');
-        const previousCount = state.selectedSeatsCount;
-        state.selectedSeatsCount = selectedSeats.length;
-
-        // Auto-adjust adult count when seats are selected/deselected
-        if (state.selectedSeatsCount > 0) {
-            elements.ticketTypeSection.classList.add('show');
-
-            const difference = state.selectedSeatsCount - previousCount;
-            state.ticketCounts.adult = Math.max(0, state.ticketCounts.adult + difference);
-        } else {
-            elements.ticketTypeSection.classList.remove('show');
-            resetTicketCounts();
-        }
-
-        updateUI();
-    }
-
-    // Change ticket count for a specific type
-    function changeTicketCount(type, delta) {
-        const totalTickets = getTotalTickets();
-        const newTotal = totalTickets + delta;
-
-        // Validate the change
-        if (newTotal < 0 || newTotal > state.selectedSeatsCount) {
-            return;
-        }
-
-        const newCount = state.ticketCounts[type] + delta;
-        if (newCount >= 0) {
-            state.ticketCounts[type] = newCount;
-        }
-
-        updateUI();
-    }
-
-    // Get total number of tickets
-    function getTotalTickets() {
-        return state.ticketCounts.children +
-            state.ticketCounts.adult +
-            state.ticketCounts.senior;
-    }
-
-    // Calculate total price
-    function calculateTotal() {
-        return (state.ticketCounts.children * state.prices.ticket) +
-            (state.ticketCounts.adult * state.prices.ticket) +
-            (state.ticketCounts.senior * state.prices.senior);
-    }
-
-    // Validate ticket counts match selected seats
-    function validateTicketCounts() {
-        const totalTickets = getTotalTickets();
-        const isValid = totalTickets === state.selectedSeatsCount && state.selectedSeatsCount > 0;
-
-        if (state.selectedSeatsCount > 0 && totalTickets !== state.selectedSeatsCount) {
-            elements.ticketWarning.style.display = 'block';
-            elements.nextButton.disabled = true;
-        } else {
-            elements.ticketWarning.style.display = 'none';
-            elements.nextButton.disabled = state.selectedSeatsCount === 0;
-        }
-
-        return isValid;
-    }
-
-    // Reset all ticket counts
-    function resetTicketCounts() {
-        state.ticketCounts.children = 0;
-        state.ticketCounts.adult = 0;
-        state.ticketCounts.senior = 0;
-    }
-
-    // Update all UI elements
-    function updateUI() {
-        updateCountDisplays();
-        updateTotalDisplay();
-        updateSeatsDisplay();
-        validateTicketCounts();
-    }
-
-    // Update count displays
-    function updateCountDisplays() {
-        // Update visual displays
-        Object.keys(state.ticketCounts).forEach(type => {
-            const display = document.querySelector(`[data-count-display="${type}"]`);
-            if (display) {
-                display.textContent = state.ticketCounts[type];
-            }
-
-            // Update hidden form inputs
-            const input = document.querySelector(`[data-count-input="${type}"]`);
-            if (input) {
-                input.value = state.ticketCounts[type];
+        // Handle page unload - release locks
+        window.addEventListener('beforeunload', () => {
+            if (state.selectedSeats.size > 0) {
+                releaseSeatsSync();
             }
         });
+
+        // Initial state
+        if (elements.nextButton) {
+            elements.nextButton.disabled = true;
+        }
+
+        console.log('Seat locking system initialized');
+        if (typeof signalR !== 'undefined') {
+            setupSignalR();
+        } else {
+            console.error("SignalR library not found! Real-time updates disabled.");
+        }       
+    }
+    function setupSignalR() {
+        connection = new signalR.HubConnectionBuilder()
+            .withUrl("/seathub")
+            .withAutomaticReconnect()
+            .build();
+
+            connection.on("SeatStatusChanged", (showTimeId, seatIds, status) => {
+                console.log("📢 SignalR Update Received:", { showTimeId, seatIds, status });
+
+                if (Number(showTimeId) !== Number(state.showTimeId)) {
+                    console.log("❌ Update ignored: ShowTimeId mismatch");
+                    return;
+                }
+
+                seatIds.forEach(id => {
+                    const seatId = Number(id);
+                    const seatEl = document.querySelector(`[data-seat-id="${seatId}"]`);
+
+                    if (!seatEl) return;
+
+                    // CRITICAL: If I have this seat selected, don't let SignalR turn it grey!
+                    if (state.selectedSeats.has(seatId)) {
+                        console.log(`Ignoring update for seat ${seatId} because I own it.`);
+                        return;
+                    }
+
+                    if (status === "locked") {
+                        seatEl.classList.add("locked");
+                        console.log(`Seat ${seatId} is now LOCKED for others`);
+                    } else if (status === "available") {
+                        seatEl.classList.remove("locked");
+                        console.log(`Seat ${seatId} is now AVAILABLE`);
+                    }
+                });
+        });
+
+        connection.start()
+            .then(() => console.log("✅ SignalR Connected"))
+            .catch(err => console.error("❌ SignalR Error: ", err));
+    }
+    window.addEventListener('beforeunload', () => {
+        if (state.selectedSeats.size > 0) {
+            const data = {
+                showTimeId: state.showTimeId,
+                seatIds: Array.from(state.selectedSeats)
+            };
+            navigator.sendBeacon('/Booking/ReleaseSeats', JSON.stringify(data));
+        }
+    });
+    async function handleSeatClick(e) {
+        const seatEl = e.target;
+        const seatId = parseInt(seatEl.dataset.seatId);
+
+        if (state.selectedSeats.has(seatId)) {
+            const released = await releaseSingleSeat(seatId); // Call the API
+            if (released) {
+                state.selectedSeats.delete(seatId);
+                seatEl.classList.remove('selected');
+                updateSeatCount();
+                console.log(`Seat ${seatId} released and available for others.`);
+            }
+        } else {
+            const locked = await lockSingleSeat(seatId);
+            if (locked) {
+                state.selectedSeats.add(seatId);
+                seatEl.classList.add('selected');
+                updateSeatCount();
+            }
+        }
     }
 
-    // Update total price display
-    function updateTotalDisplay() {
-        const total = calculateTotal();
-        elements.totalDisplay.textContent = total.toFixed(2);
+
+
+    async function lockSingleSeat(seatId) {
+        try {
+            const res = await fetch('/Booking/LockSeats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    showTimeId: state.showTimeId,
+                    seatIds: [seatId]
+                })
+            });
+
+            const data = await res.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Seat is held');
+            }
+
+            // START THE TIMER HERE
+            if (data.expiresAt) {
+                state.lockExpiresAt = new Date(data.expiresAt);
+                startTimer();
+            }
+
+            return true;
+        } catch (err) {
+            console.error(err);
+
+            const seatEl = document.querySelector(`[data-seat-id="${seatId}"]`);
+            seatEl?.classList.remove('selected');
+            state.selectedSeats.delete(seatId);
+            updateSeatCount();
+
+            alert(err.message);
+            return false;
+        }
     }
 
-    // Update selected seats display
-    function updateSeatsDisplay() {
-        elements.countDisplay.textContent = state.selectedSeatsCount;
-        elements.totalSeatsDisplay.textContent = state.selectedSeatsCount;
+
+
+    async function releaseSingleSeat(seatId) {
+        try {
+            const res = await fetch('/Booking/ReleaseSeats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    showTimeId: state.showTimeId,
+                    seatIds: [seatId]
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                console.log(`Seat ${seatId} released in DB and broadcasted.`);
+                return true;
+            }
+        } catch (err) {
+            console.error("Failed to release seat:", err);
+        }
+        return false;
     }
 
-    // Handle form submission
+
+    function handleCounterChange(e) {
+        const btn = e.target;
+        if (!btn.classList.contains('counter-btn')) return;
+
+        const counter = btn.closest('.ticket-counter');
+        if (!counter) return;
+
+        const type = counter.dataset.ticketType;
+        const display = counter.querySelector('[data-count-display]');
+
+        let input = null;
+        if (type === 'children') input = elements.childrenInput;
+        else if (type === 'adult') input = elements.adultInput;
+        else if (type === 'senior') input = elements.seniorInput;
+
+        if (!input || !display) return;
+
+        let value = parseInt(input.value) || 0;
+        const delta = btn.dataset.action === 'increment' ? 1 : -1;
+        const newValue = Math.max(0, value + delta);
+
+        // Check total doesn't exceed selected seats
+        const children = parseInt(elements.childrenInput.value) || 0;
+        const adult = parseInt(elements.adultInput.value) || 0;
+        const senior = parseInt(elements.seniorInput.value) || 0;
+
+        let totalTickets = children + adult + senior - value + newValue;
+
+        if (totalTickets > state.selectedSeats.size) {
+            return;
+        }
+
+        value = newValue;
+        input.value = value;
+        display.textContent = value;
+
+        calculatePricing();
+    }
+
+    function updateSeatCount() {
+        const count = state.selectedSeats.size;
+
+        if (elements.countDisplay) {
+            elements.countDisplay.textContent = count;
+        }
+        if (elements.totalSeatsDisplay) {
+            elements.totalSeatsDisplay.textContent = count;
+        }
+
+        if (count === 0) {
+            if (elements.ticketTypeSection) {
+                elements.ticketTypeSection.style.display = 'none';
+            }
+            stopTimer();
+            resetCounters();
+        } else {
+            if (elements.ticketTypeSection) {
+                elements.ticketTypeSection.style.display = 'block';
+            }
+
+            // Auto-set adult count
+            if (elements.adultInput) {
+                const adultDisplay = document.querySelector('[data-count-display="adult"]');
+                elements.adultInput.value = count;
+                if (adultDisplay) {
+                    adultDisplay.textContent = count;
+                }
+            }
+            calculatePricing();
+        }
+    }
+
+    function resetCounters() {
+        if (elements.childrenInput) elements.childrenInput.value = 0;
+        if (elements.adultInput) elements.adultInput.value = 0;
+        if (elements.seniorInput) elements.seniorInput.value = 0;
+
+        document.querySelectorAll('[data-count-display]').forEach(display => {
+            display.textContent = 0;
+        });
+
+        if (elements.totalDisplay) {
+            elements.totalDisplay.textContent = '0.00';
+        }
+        if (elements.nextButton) {
+            elements.nextButton.disabled = true;
+        }
+        if (elements.ticketWarning) {
+            elements.ticketWarning.style.display = 'none';
+        }
+    }
+
+    
+   
+    function releaseSeatsSync() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/Booking/ReleaseSeats', false); // Synchronous
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({
+            showTimeId: state.showTimeId,
+            seatIds: Array.from(state.selectedSeats)
+        }));
+    }
+
+    // Start countdown timer
+    function startTimer() {
+        stopTimer();
+
+        if (elements.seatTimer) {
+            elements.seatTimer.style.display = 'inline-block';
+        }
+
+        state.timerInterval = setInterval(() => {
+            const now = new Date();
+            const remaining = Math.max(0, state.lockExpiresAt - now);
+
+            if (remaining <= 0) {
+                handleTimerExpired();
+                return;
+            }
+
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+
+            if (elements.timerDisplay) {
+                elements.timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                // Warning color when < 1 minute
+                if (remaining < 60000) {
+                    elements.timerDisplay.style.color = '#dc3545';
+                } else {
+                    elements.timerDisplay.style.color = '';
+                }
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        if (elements.seatTimer) {
+            elements.seatTimer.style.display = 'none';
+        }
+    }
+
+
+    function handleTimerExpired() {
+        stopTimer();
+        stopLockRenewal();
+        alert('Your seat selection has expired. Please select again.');
+        location.reload();
+    }
+
+    async function calculatePricing() {
+        if (!elements.childrenInput || !elements.adultInput || !elements.seniorInput) {
+            return;
+        }
+
+        const children = parseInt(elements.childrenInput.value) || 0;
+        const adult = parseInt(elements.adultInput.value) || 0;
+        const senior = parseInt(elements.seniorInput.value) || 0;
+
+        if (state.selectedSeats.size === 0) {
+            if (elements.totalDisplay) {
+                elements.totalDisplay.textContent = '0.00';
+            }
+            if (elements.nextButton) {
+                elements.nextButton.disabled = true;
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch('/Booking/CalculateTicketPrice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    showTimeId: state.showTimeId,
+                    childrenCount: children,
+                    adultCount: adult,
+                    seniorCount: senior,
+                    selectedSeatsCount: state.selectedSeats.size
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (elements.totalDisplay) {
+                    elements.totalDisplay.textContent = data.subtotal || '0.00';
+                }
+
+                if (data.isValid) {
+                    if (elements.ticketWarning) {
+                        elements.ticketWarning.style.display = 'none';
+                    }
+                    if (elements.nextButton) {
+                        elements.nextButton.disabled = false;
+                    }
+                } else {
+                    if (elements.ticketWarning) {
+                        elements.ticketWarning.style.display = 'block';
+                    }
+                    if (elements.nextButton) {
+                        elements.nextButton.disabled = true;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Pricing error:', err);
+        }
+    }
+
     function handleFormSubmit(e) {
-        const selectedSeats = elements.seatMap.querySelectorAll('.seat.selected');
-
-        // Validate seat selection
-        if (selectedSeats.length === 0) {
+        if (state.selectedSeats.size === 0) {
             e.preventDefault();
             alert('Please select at least one seat');
             return;
         }
 
-        // Validate ticket counts
-        const totalTickets = getTotalTickets();
-        if (totalTickets !== selectedSeats.length) {
+        const children = parseInt(elements.childrenInput.value) || 0;
+        const adult = parseInt(elements.adultInput.value) || 0;
+        const senior = parseInt(elements.seniorInput.value) || 0;
+        const totalTickets = children + adult + senior;
+
+        if (totalTickets !== state.selectedSeats.size) {
             e.preventDefault();
             alert('Ticket type count must match the number of selected seats');
             return;
         }
 
         // Add seat IDs to form
-        elements.seatIdsContainer.innerHTML = '';
-        selectedSeats.forEach(seat => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'seatIds';
-            input.value = seat.dataset.seatId;
-            elements.seatIdsContainer.appendChild(input);
-        });
+        const container = document.getElementById('seatIdsContainer');
+        if (container) {
+            container.innerHTML = '';
+            state.selectedSeats.forEach(seatId => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'SeatIds';
+                input.value = seatId;
+                container.appendChild(input);
+            });
+        }
+
+        // Stop timer but keep lock (we're proceeding to next page)
+        stopTimer();
+        stopLockRenewal();
     }
 
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
-
 })();

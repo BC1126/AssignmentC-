@@ -30,6 +30,7 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Voucher> Vouchers { get; set; }
     public DbSet<VoucherAssignment> VoucherAssignments { get; set; }
     public DbSet<VoucherCondition> VoucherConditions { get; set; }
+    public DbSet<SeatLock> SeatLocks { get; set; }
     public DbSet<ActionLog> ActionLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -417,7 +418,20 @@ public class Outlet
     // Navigation: An Outlet has many Halls
     public ICollection<Hall> Halls { get; set; } = new List<Hall>();
 }
+public class SeatLock
+{
+    public int SeatLockId { get; set; }
+    public int ShowTimeId { get; set; }
+    public int SeatId { get; set; }
+    public string SessionId { get; set; } 
+    public DateTime LockedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public bool IsExpired => DateTime.Now >= ExpiresAt;
 
+    // Navigation properties
+    public ShowTime ShowTime { get; set; }
+    public Seat Seat { get; set; }
+}
 public class ActionLog
 {
     [Key]
