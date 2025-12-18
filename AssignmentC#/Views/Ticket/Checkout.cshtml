@@ -1,11 +1,11 @@
-﻿@model CheckoutViewModel
+﻿@model PurchaseVM
 
 @section head {
     <link href="/css/ticket.css" rel="stylesheet" />
 }
 
 @{
-    var booking = ViewBag.BookingData as BookingSessionData;
+    var timer = ViewBag.Timer as CheckoutViewModel;
 }
 
 <main>
@@ -155,7 +155,7 @@
                 
 
                 <div id="timer">
-                    @Html.Partial("_Timer", Model.Timer)
+                    @Html.Partial("_Timer", timer.Timer)
                 </div>
 
                 <form id="timerAjaxForm"
@@ -168,9 +168,9 @@
 
             <div class="card">
                 <h3>Order Summary</h3>
-                <div class="summary-row"><span>Standard Ticket (x @booking.TicketQuantity)</span><span>@booking.TicketSubtotal</span></div>
-                <div class="summary-row"><span>Convenience Fee</span><span>$3.50</span></div>
-                <div class="summary-row summary-total"><span>Total Payable</span><span>@booking.TicketSubtotal</span></div>
+                <div class="summary-row"><span>Standard Ticket (x @Model.TicketQuantity)</span><span>@Model.TicketSubtotal</span></div>
+                <div class="summary-row"><span>Add-On</span><span>@Model.OrderSubtotal</span></div>
+                <div class="summary-row summary-total"><span>Total Payable</span><span>@Model.total</span></div>
             </div>
         </section>
         

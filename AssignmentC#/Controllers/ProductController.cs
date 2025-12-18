@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using X.PagedList.Extensions;
 using static AssignmentC_.Models.ProductUpdateVM;
 
@@ -367,8 +368,27 @@ public class ProductController(DB db, Helper hp) : Controller
     {
         ViewBag.Cart = hp.GetCart();
 
-        var region = HttpContext.Session.GetString("SelectedRegion");
-        var cinema = HttpContext.Session.GetString("SelectedCinema");
+        // Get Booking Data
+        var json = TempData.Peek("BookingData") as string;
+
+        if (json == null)
+        {
+            return RedirectToAction("SelectTicket", "Booking");
+        }
+
+
+        var bookingData = JsonSerializer.Deserialize<BookingSessionData>(json);
+
+        var showtime = db.ShowTimes
+                         .Include(s => s.Movie)
+                         .Include(s => s.Hall)
+                         .ThenInclude(h => h.Outlet)
+                         .FirstOrDefault(s => s.ShowTimeId == bookingData.ShowTimeId);
+
+
+
+        var region = showtime.Hall.Outlet.City;
+        var cinema = showtime.Hall.Outlet.Name;
 
         if (region == null || cinema == null)
             return RedirectToAction("UserSelectRegion");
@@ -385,7 +405,7 @@ public class ProductController(DB db, Helper hp) : Controller
 
         ViewBag.Region = region;
         ViewBag.Cinema = cinema;
-        ViewBag.CollectDate = HttpContext.Session.GetString("CollectDate");
+        ViewBag.CollectDate = showtime.StartTime.ToString("yyyy-MM-dd");
 
         ViewBag.Categories = new List<string>
     {
@@ -495,10 +515,11 @@ public class ProductController(DB db, Helper hp) : Controller
 
         db.SaveChanges(); // Save order and updated stock
 
-        hp.SetCart(); // Clear the cart
+        // hp.SetCart(); // Clear the cart
 
         TempData["Info"] = "Order placed successfully!";
-        return RedirectToAction("OrderComplete", new { order.Id });
+        //return RedirectToAction("OrderComplete", new { order.Id });
+        return RedirectToAction("Purchase", "Ticket");
     }
 
 

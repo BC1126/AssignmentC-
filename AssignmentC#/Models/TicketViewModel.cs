@@ -20,6 +20,12 @@ namespace AssignmentC_.Models
         public string OutletCity { get; set; }
         public string OutletName { get; set; }
 
+        // Order Info
+        public List<string> OrderName { get; set; }
+        public List<int> OrderQuantity { get; set; }
+        public List<decimal> OrderPrice { get; set; }
+        public decimal OrderSubtotal { get; set; }
+
         // Ticket Info
         public decimal TicketPrice { get; set; }
         public int TicketQuantity { get; set; }
@@ -33,6 +39,9 @@ namespace AssignmentC_.Models
         // Selected Seats
         public List<int> SelectedSeatIds { get; set; } = new();
         public List<string> SelectedSeatIdentifiers { get; set; } = new();
+
+        // Overall
+        public decimal total { get; set; }
     }
 
     public class TimerViewModel
