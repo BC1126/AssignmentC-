@@ -93,7 +93,7 @@ public class TicketController(DB db) : Controller
                     TicketQuantity = seating.Count,
                     TicketSubtotal = showtime.TicketPrice * seating.Count,
 
-                    SelectedSeatIdentifiers = seats.Select(s => s.SeatIdentifier).ToList(),
+                    SelectedSeatIdentifiers = seating.ToList(),
                 };
 
                 return View(bd);

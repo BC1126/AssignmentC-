@@ -4,6 +4,12 @@
     <link href="/css/ticket.css" rel="stylesheet" />
 }
 
+@{
+    int totalMinutes = Model.MovieDuration;
+    int hours = totalMinutes / 60;
+    int minutes = totalMinutes % 60;
+}
+
 <section id="detail" class="p_3">
 	<div class="container-xl">
 		
@@ -27,7 +33,13 @@
 							<div class="col-md-6 mb-3">
 								<div class="detail_1l">
 									<h2>@Model.MovieTitle</h2>
-									<h4 class="mb-0 text-muted">@Model.MovieRating . @Model.MovieDuration m </h4>
+									<h4 class="mb-0 text-muted">
+                                        @Model.MovieRating . 
+                                        @if (hours > 0)
+                                        {
+                                            @($"{hours} h ")
+                                        }
+                                        @minutes m </h4>
 								</div>
 							</div>
 
@@ -43,7 +55,7 @@
                                 </h5>
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-sm-4">Time</span><br />
-                                    @Model.StartTime.ToString("hh:mm");
+                                    @Model.StartTime.ToString("HH:mm")
                                 </h5>
 							</div>
 
