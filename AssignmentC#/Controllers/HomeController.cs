@@ -11,14 +11,30 @@ public class HomeController : Controller
     {
         _db = db;
     }
+    // In HomeController.cs
     public IActionResult Index()
     {
-        var movies = _db.Movies
-                             .OrderByDescending(m => m.PremierDate)
-                             .Take(5)  
-                             .ToList();
+        var today = DateTime.Today;
 
-        return View(movies);
+        var nowShowing = _db.Movies
+                            .Where(m => m.PremierDate <= today)
+                            .OrderByDescending(m => m.PremierDate)
+                            .Take(8) // Increased to 8 so we have enough for Carousel + Grid
+                            .ToList();
+
+        var comingSoon = _db.Movies
+                            .Where(m => m.PremierDate > today)
+                            .OrderBy(m => m.PremierDate)
+                            .Take(4)
+                            .ToList();
+
+        var viewModel = new HomeViewModel
+        {
+            NowShowing = nowShowing,
+            ComingSoon = comingSoon
+        };
+
+        return View(viewModel);
     }
 
     public IActionResult movie()

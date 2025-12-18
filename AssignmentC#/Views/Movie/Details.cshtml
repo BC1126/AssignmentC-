@@ -1,27 +1,128 @@
 ﻿@model Movie
 
-<div class="container my-5">
-    <div class="row">
-        <div class="col-md-4">
-            <img src="~/uploads/@Model.PosterUrl"
-                 class="img-fluid rounded shadow" />
+@{
+    ViewData["Title"] = "Movie Details";
+
+    // Logic extracted from selectShowtime.cshtml to parse Video ID
+    string videoId = "";
+    if (!string.IsNullOrEmpty(Model.TrailerUrl))
+    {
+        if (Model.TrailerUrl.Contains("watch?v="))
+        {
+            videoId = Model.TrailerUrl.Split("v=")[1].Split("&")[0];
+        }
+        else if (Model.TrailerUrl.Contains("youtu.be/"))
+        {
+            videoId = Model.TrailerUrl.Split("youtu.be/")[1].Split("?")[0];
+        }
+    }
+}
+
+@section title {
+    <section id="center" class="centre_o pt-5 pb-5">
+        <div class="container-xl">
+            <div class="row centre_o1 text-center">
+                <div class="col-md-12">
+                    <h1 class="text-white font_60">Movie Details</h1>
+                   </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section id="detail" class="p_3">
+    <div class="container-xl">
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="javascript:history.back()" class="btn btn-secondary rounded-0">
+                    <i class="fa fa-arrow-left me-2"></i> Back
+                </a>
+            </div>
         </div>
 
-        <div class="col-md-8">
-            <h3 class="fw-bold">@Model.Title</h3>
+        <div class="detail_1 row">
+            <div class="col-md-8">
+                <div class="detail_1l">
+                    <h2 class="fw-bold">@Model.Title</h2>
+                    <h6 class="mb-0 text-muted">@Model.Genre / @Model.DurationMinutes Mins</h6>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="detail_1r text-end">
+                    @if (DateTime.Now < Model.PremierDate.AddDays(-7))
+                    {
+                        <a class="button_2" href="#" style="background:gray; border:none; cursor:default; pointer-events: none;">
+                            Coming Soon
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="button_2" asp-controller="Booking" asp-action="selectShowtime" asp-route-movieId="@Model.MovieId">
+                            Get Ticket
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
 
-            <p class="text-muted">
-                @Model.Genre • @Model.DurationMinutes mins • @Model.Rating
-            </p>
+        <div class="detail_2 row mt-4">
+            <div class="col-md-4">
+                <div class="detail_2l">
+                    @if (!string.IsNullOrEmpty(Model.PosterUrl))
+                    {
+                        <img src="~/uploads/@Model.PosterUrl" class="w-100 shadow-sm rounded" alt="@Model.Title" style="object-fit:cover;">
+                    }
+                    else
+                    {
+                        <img src="~/img/default.jpg" class="w-100 shadow-sm rounded" alt="No Image">
+                    }
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="detail_2r h-100">
+                    @if (!string.IsNullOrEmpty(videoId))
+                    {
+                        <div class="ratio ratio-16x9 shadow-sm">
+                            <iframe src="https://www.youtube.com/embed/@videoId?rel=0"
+                                    title="@Model.Title Trailer"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                            </iframe>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center bg-light h-100 border rounded" style="min-height: 300px;">
+                            <p class="text-muted mb-0">No trailer available.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
 
-            <p>@Model.Description</p>
+        <div class="detail_3 row mt-4 p-3 bg-light rounded mx-1">
+            <div class="col-md-4">
+                <div class="detail_3l">
+                    <h6 class="mb-3 text-muted"><span class="fw-bold text-black me-3">Director:</span> @Model.Director</h6>
+                    <h6 class="mb-3 text-muted"><span class="fw-bold text-black me-3">Writer:</span> @Model.Writer</h6>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="detail_3l">
+                    <h6 class="mb-3 text-muted"><span class="fw-bold text-black me-3">Rating:</span> @Model.Rating</h6>
+                    <h6 class="mb-3 text-muted"><span class="fw-bold text-black me-3">Premiere:</span> @Model.PremierDate.ToString("dd MMM yyyy")</h6>
+                </div>
+            </div>
+        </div>
 
-            <hr />
+        <hr class="mt-4">
 
-            <div class="alert alert-info">
-                Showtime & seat selection will be added here.
+        <div class="detail_4 row mt-4">
+            <div class="col-md-12">
+                <h3 class="fw-bold">Story Line</h3>
+                <p class="mt-3 text-secondary" style="line-height: 1.8;">@Model.Description</p>
             </div>
         </div>
     </div>
-</div>
-q
+</section>
