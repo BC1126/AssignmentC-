@@ -1,0 +1,80 @@
+﻿@model MemberDetailsVM
+
+@{
+    ViewData["Title"] = "Member Details";
+}
+
+<section id="details" class="p_3">
+    <div class="container-xl">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="login_1m p-5 bg-light shadow-sm" style="background-color: white !important; border-radius: 8px;">
+
+                    <h2 class="text-center mb-4 fw-bold" style="font-family: 'Georgia', serif;">Member Profile</h2>
+
+                    <div class="row">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="mb-3">
+                                @* Using your correct path logic here *@
+                                <img src="/photos/@Model.PhotoPath"
+                                     class="rounded-circle img-thumbnail shadow-sm"
+                                     alt="Profile Photo"
+                                     style="width: 150px; height: 150px; object-fit: cover;"
+                                     onerror="this.onerror=null; this.src='/img/default.jpg';" />
+                            </div>
+
+                            <h5 class="fw-bold text-dark">@Model.Name</h5>
+                            <p class="text-muted small">@Model.Role</p>
+
+                            <div class="mt-3">
+                                @if (Model.IsEmailConfirmed)
+                                {
+                                    <span class="badge bg-success p-2">Verified Account</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark p-2">Pending Verification</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-md-8 ps-md-5">
+                            <h5 class="border-bottom pb-2 mb-3 fw-bold text-muted text-uppercase small">Contact Information</h5>
+
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark">Email Address</label>
+                                <p class="text-muted">@Model.Email</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="fw-bold text-dark">Phone Number</label>
+                                <p class="text-muted">@(string.IsNullOrEmpty(Model.Phone) ? "Not Provided" : Model.Phone)</p>
+                            </div>
+
+                            <h5 class="border-bottom pb-2 mb-3 mt-4 fw-bold text-muted text-uppercase small">Personal Information</h5>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="fw-bold text-dark">Gender</label>
+                                    <p class="text-muted">@(Model.Gender == "M" ? "Male" : "Female")</p>
+                                </div>
+                                <div class="col-6">
+                                    <label class="fw-bold text-dark">Joined Date</label>
+                                    @* Ensure CreatedAt is in your VM, otherwise remove this line *@
+                                    <p class="text-muted">@Model.JoinDate.ToString("dd MMM yyyy")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 text-center d-flex justify-content-center gap-3">
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

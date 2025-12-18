@@ -76,9 +76,15 @@ public class UserController : Controller
             SortOrder = sortOrder
         };
 
-        // 7. AJAX Check: Return only the table rows if requested via JavaScript
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
+            // If the user is Staff, send them the Read-Only table
+            if (User.IsInRole("Staff"))
+            {
+                return PartialView("_StaffMemberList", model);
+            }
+
+            // Everyone else (Admin) gets the full Edit/Delete table
             return PartialView("_MemberList", model);
         }
 

@@ -174,3 +174,4 @@ public class ChangePasswordVM
     [Required(ErrorMessage = "Please enter the CAPTCHA code")]
     public string CaptchaInput { get; set; } = "";
 }
+
