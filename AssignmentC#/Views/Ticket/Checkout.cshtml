@@ -4,6 +4,10 @@
     <link href="/css/ticket.css" rel="stylesheet" />
 }
 
+@{
+    var booking = ViewBag.BookingData as BookingSessionData;
+}
+
 <main>
     <div class="page">
 
@@ -13,6 +17,8 @@
             <p class="subtitle">Please review your order and enter payment details securely.</p>
 
             <!-- Promotion -->
+            
+
             <div class="card voucherList" data-OpenVoucher>
                 <div class="flex justify-between items-start mb-4 memberPoint ">
                     <div>
@@ -21,10 +27,13 @@
                             Voucher
                         </h3>
                     </div>
-
                     <button class="text-primary text-sm font-semibold hover:underline"><i class="fa-solid fa-angle-right arrowRight"></i></button>
                 </div>
 
+                <!-- Applied Voucher -->
+                <div id="appliedVoucher">
+                    <partial name="_AppliedVoucher">
+                </div>
             </div>
 
 
@@ -159,10 +168,9 @@
 
             <div class="card">
                 <h3>Order Summary</h3>
-                <div class="summary-row"><span>Standard Ticket (x2)</span><span>$30.00</span></div>
+                <div class="summary-row"><span>Standard Ticket (x @booking.TicketQuantity)</span><span>@booking.TicketSubtotal</span></div>
                 <div class="summary-row"><span>Convenience Fee</span><span>$3.50</span></div>
-                <div class="summary-row"><span>Tax</span><span>$1.90</span></div>
-                <div class="summary-row summary-total"><span>Total Payable</span><span>$35.40</span></div>
+                <div class="summary-row summary-total"><span>Total Payable</span><span>@booking.TicketSubtotal</span></div>
             </div>
         </section>
         
@@ -170,24 +178,37 @@
     </div>
 </main>
 
-<div id="voucherModal" class="modal-overlay">
+<form data-ajax="true"
+      data-ajax-update="#appliedVoucher"
+      asp-action="ApplyVoucher"
+      method="post"
+      id="appliedVoucherForm">
 
-    <!-- Modal box -->
+<div id="voucherModal" class="modal-overlay">
     <div class="voucher-modal">
 
-        <!-- Fixed header -->
         <div class="modal-header">
             <h3>Available Vouchers</h3>
             <button class="btnClose" data-CloseVoucher>✕</button>
         </div>
 
-        <!-- Scrollable content -->
         <div class="modal-body">
+
+                <label class="voucher-card">
+                    <input type="radio" name="SelectedVoucher" value="" checked>
+
+                    <div class="voucher-content">
+                        <div>
+                            <h5>Not apply any voucher</h5>
+                        </div>
+                    </div>
+                </label>
 
             @foreach (var v in ViewBag.Vouchers)
             {
                 <label class="voucher-card">
-                    <input type="radio" name="SelectedVoucher" value="@v.VoucherCode" checked>
+                    <input type="radio" name="SelectedVoucher" value="@v.VoucherCode">
+
                     <div class="voucher-content">
                         <div>
                             @if(@v.VoucherType == "percentage")
@@ -208,18 +229,22 @@
             
         </div>
 
-        <!-- Fixed footer -->
         <div class="modal-footer">
-            <button class="btn-primary" data-post="/Ticket/ApplyVoucher">Apply Voucher</button>
+                <button class="btn-primary" data-voucher="/Ticket/ApplyVoucher" data-CloseVoucher>Apply Voucher</button>
         </div>
 
     </div>
 </div>
+</form>
 
 @section foot{
     <script>
         setInterval(function () {
             $("#timerAjaxForm").submit();
         }, 1000);
+
+        $('[data-voucher]').on('click', e => {
+            $('#appliedVoucherForm').submit()
+        })
     </script>
 }

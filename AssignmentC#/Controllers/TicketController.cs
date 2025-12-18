@@ -12,7 +12,8 @@ public class TicketController(DB db) : Controller
 
     public IActionResult Checkout()
     {
-        
+
+        // Timer
             if (HttpContext.Session.GetString("StartTime") == null)
             {
                 HttpContext.Session.SetString("StartTime",DateTime.Now.ToString("O"));
@@ -40,33 +41,35 @@ public class TicketController(DB db) : Controller
             return PartialView("_Timer", timer);
         }
 
+        // Get all vouchers
         var vouchers = db.Vouchers.ToList();
 
         ViewBag.Vouchers = vouchers;
+
+
+        
+
         return View(vm);
     }
 
     public IActionResult Purchase()
     {
-        /*
-        if (TempData["BookingData"] != null)
+        // Get Booking Data
+        var json = TempData.Peek("BookingData") as string;
+
+        if (json == null)
         {
-            var json = TempData["BookingData"] as string;
+            return RedirectToAction("SelectTicket", "Booking");
+        }
 
-            if (string.IsNullOrEmpty(json))
-            {
-                TempData["Error"] = "Please select your seats first";
-                return RedirectToAction("SelectTicket", "Booking");
-            }
 
-            var bookingData = JsonSerializer.Deserialize<BookingSessionData>(json);
-            TempData.Keep("BookingData");
-
-            var showtime = db.ShowTimes
-                             .Include(s => s.Movie)
-                             .Include(s => s.Hall)
-                             .ThenInclude(h => h.Outlet)
-                             .FirstOrDefault(s => s.ShowTimeId == bookingData.ShowTimeId);
+        var bookingData = JsonSerializer.Deserialize<BookingSessionData>(json);
+        
+         var showtime = db.ShowTimes
+                          .Include(s => s.Movie)
+                          .Include(s => s.Hall)
+                          .ThenInclude(h => h.Outlet)
+                          .FirstOrDefault(s => s.ShowTimeId == bookingData.ShowTimeId);
 
             if (showtime != null)
             {
@@ -74,13 +77,16 @@ public class TicketController(DB db) : Controller
 
                 var seats = db.Seats.Where(s => seating.Contains(s.SeatIdentifier));
 
-                var bookingDatas = new PurchaseVM
+                var bd = new PurchaseVM
                 {
                     ShowTimeId = showtime.ShowTimeId,
                     MovieTitle = showtime.Movie.Title,
+                    MoviewUrl = showtime.Movie.PosterUrl,
                     MovieDuration = showtime.Movie.DurationMinutes,
+                    MovieRating = showtime.Movie.Rating,
                     StartTime = showtime.StartTime,
                     HallName = showtime.Hall.Name,
+                    OutletCity = showtime.Hall.Outlet.City,
                     OutletName = showtime.Hall.Outlet.Name,
 
                     TicketPrice = showtime.TicketPrice,
@@ -90,21 +96,12 @@ public class TicketController(DB db) : Controller
                     SelectedSeatIdentifiers = seats.Select(s => s.SeatIdentifier).ToList(),
                 };
 
-                return View(bookingDatas);
+                return View(bd);
             }
             else
             {
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "Movie");
             }
-
-        }
-        else
-        {
-            return RedirectToAction("Index");
-        }
-        */
-
-        return View();
     }
 
     public IActionResult Voucher()
@@ -381,7 +378,26 @@ public class TicketController(DB db) : Controller
     [HttpPost]
     public IActionResult ApplyVoucher(string? SelectedVoucher)
     {
-        return RedirectToAction("Checkout");
+        if(SelectedVoucher == null)
+        {
+            HttpContext.Session.Remove("AppliedVoucherCode");
+            return PartialView("_AppliedVoucher");
+        }
+
+        var voucher = db.Promotions
+                        .OfType<Voucher>()
+                        .FirstOrDefault(v => v.VoucherCode == SelectedVoucher); // May check date here
+
+        if(voucher == null)
+        {
+            HttpContext.Session.Remove("AppliedVoucherCode");
+            return PartialView("_AppliedVoucher");
+        }
+        else
+        {
+            HttpContext.Session.SetString("AppliedVoucherCode", voucher.VoucherCode);
+            return PartialView("_AppliedVoucher", voucher);
+        }
     }
 
     public IActionResult Receipt()

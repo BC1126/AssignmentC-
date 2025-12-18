@@ -154,7 +154,7 @@ public class BookingController : Controller
         var json = System.Text.Json.JsonSerializer.Serialize(bookingData);
         TempData["BookingData"] = json;
 
-        return RedirectToAction("Index", "Cart");
+        return RedirectToAction("Purchase", "Ticket");
     }
 
     [HttpGet]
