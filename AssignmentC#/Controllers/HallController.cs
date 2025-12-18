@@ -270,30 +270,18 @@ public class HallController(DB db, Helper hp) : Controller
     [ValidateAntiForgeryToken]
     public IActionResult EditHall(HallViewModel vm)
     {
-        Console.WriteLine("POST HIT");
         if (!ModelState.IsValid)
         {
-            foreach (var entry in ModelState)
-            {
-                foreach (var error in entry.Value.Errors)
-                {
-                    Console.WriteLine($"{entry.Key} => {error.ErrorMessage}");
-                }
-            }
-
             vm.OutletList = db.Outlets
                 .Select(o => new SelectListItem
                 {
                     Value = o.OutletId.ToString(),
                     Text = $"{o.Name} - {o.City}"
-                })
-                .ToList();
-
+                }).ToList();
             return View(vm);
         }
 
-
-        var hall = db.Halls.Find(vm.HallId);
+        var hall = db.Halls.Include(h => h.Seats).FirstOrDefault(h => h.HallId == vm.HallId);
 
         if (hall == null)
         {
@@ -301,6 +289,42 @@ public class HallController(DB db, Helper hp) : Controller
             return RedirectToAction("ManageHalls");
         }
 
+        bool dimensionsChanged = (vm.Rows.HasValue && vm.SeatsPerRow.HasValue) &&
+                                 (hall.Capacity != (vm.Rows.Value * vm.SeatsPerRow.Value));
+
+        if (dimensionsChanged)
+        {
+            // 1. Check if there are active bookings or showtimes
+            var hasShowtimes = db.ShowTimes.Any(st => st.HallId == hall.HallId);
+            if (hasShowtimes)
+            {
+                TempData["Error"] = "Cannot change seat capacity/layout for a hall that has active showtimes. Delete showtimes first.";
+                return RedirectToAction("EditHall", new { id = hall.HallId });
+            }
+
+            // 2. Remove old seats
+            db.Seats.RemoveRange(hall.Seats);
+
+            // 3. Update Capacity
+            hall.Capacity = vm.Rows.Value * vm.SeatsPerRow.Value;
+
+            // 4. Generate new seats
+            for (int r = 0; r < vm.Rows.Value; r++)
+            {
+                for (int c = 1; c <= vm.SeatsPerRow.Value; c++)
+                {
+                    db.Seats.Add(new Seat
+                    {
+                        HallId = hall.HallId,
+                        SeatIdentifier = $"{(char)('A' + r)}{c}",
+                        IsPremium = false,
+                        IsActive = true
+                    });
+                }
+            }
+        }
+
+        // Update general hall info
         hall.Name = vm.Name;
         hall.OutletId = vm.OutletId;
         hall.HallType = vm.HallType;
@@ -308,7 +332,10 @@ public class HallController(DB db, Helper hp) : Controller
 
         db.SaveChanges();
 
-        TempData["Info"] = $"Hall '{hall.Name}' updated successfully.";
+        TempData["Info"] = dimensionsChanged
+            ? $"Hall layout updated to {hall.Capacity} seats."
+            : "Hall information updated successfully.";
+
         return RedirectToAction("ManageHalls");
     }
 

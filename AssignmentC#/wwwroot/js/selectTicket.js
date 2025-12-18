@@ -450,7 +450,7 @@
         // Add seat IDs to form
         const container = document.getElementById('seatIdsContainer');
         if (container) {
-            container.innerHTML = '';
+            container.innerHTML = ''; 
             state.selectedSeats.forEach(seatId => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
