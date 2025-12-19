@@ -409,8 +409,12 @@ body {
     }
 }
 
-/* Optional: Pulse the next button while waiting */
-.btn-loading {
-    filter: grayscale(0.5);
+#total.price-calculating {
+    color: #6c757d; 
+    font-style: italic;
+}
+
+#nextButton.btn-loading {
+    opacity: 0.7;
     cursor: wait;
 }
