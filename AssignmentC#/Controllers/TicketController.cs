@@ -138,7 +138,7 @@ public class TicketController(DB db, Helper hp) : Controller
         var user = db.Users.FirstOrDefault(v => v.Email == User.Identity!.Name!);
         if (user == null)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Login", "User");
         }
 
 
@@ -225,7 +225,7 @@ public class TicketController(DB db, Helper hp) : Controller
                     if (quantity > p.Stock)
                     {
                         TempData["Error"] = $"Not enough stock for {p.Name}. Available: {p.Stock}";
-                        return RedirectToAction("ShoppingCart");
+                        return RedirectToAction("ShoppingCart","Product");
                     }
 
                     OrderNames.Add(p.Name);
@@ -243,6 +243,8 @@ public class TicketController(DB db, Helper hp) : Controller
                 List<string> seating = bookingData.SelectedSeatIdentifiers;
 
                 var seats = db.Seats.Where(s => seating.Contains(s.SeatIdentifier));
+
+
 
                 var bd = new PurchaseVM
                 {
@@ -629,7 +631,7 @@ public class TicketController(DB db, Helper hp) : Controller
 
         if (user == null)
         {
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Login", "User");
         }
 
         var vm = db.Payments
@@ -657,11 +659,45 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
-    public IActionResult TicketDetail()
+    public IActionResult TicketDetail(int? id)
     {
+        if(id == null)
+        {
+            return RedirectToAction("Login", "User");
+        }
 
+        var payment = db.Payments
+                        .Include(p => p.User)
+                        .Include(p => p.Booking)
+                        .ThenInclude(p => p.ShowTime)
+                        .ThenInclude(p => p.Hall)
+                        .ThenInclude(p => p.Outlet)
 
-        return View();
+                        .Include(p => p.Booking)
+                        .ThenInclude(p => p.ShowTime)
+                        .ThenInclude(p => p.Movie)
+
+                        .Include(p => p.Order)
+                        .FirstOrDefault(p => p.PaymentId == id);
+
+        
+
+        if (payment == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        var b = payment.Booking.BookingId;
+        var s = db.BookingSeats
+                     .Include(p => p.Booking)
+                     .Include(p => p.Seat)
+                     .Where(p => p.BookingId == b)
+                     .Select(p => p.Seat.SeatIdentifier)
+                     .ToList();
+
+        ViewBag.Seats = s;
+
+        return View(payment);
     }
 
     

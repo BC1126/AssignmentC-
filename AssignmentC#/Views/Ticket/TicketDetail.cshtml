@@ -4,6 +4,7 @@
     <link href="/css/myTicket.css" rel="stylesheet" />
 }
 
+
 <main class="main">
     <div class="container">
         <div class="title-row">
@@ -23,20 +24,22 @@
             <div class="ticket-card">
                 <div class="banner" style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuC_sxinD9rDKtXBLZ3LLGozlOxZQo5ITT7OK3pKYTI93YWcbDPx_R8Sjm0Ql7o_I7gbfVNfqOZp6oBIOII4VJdFb5WqUvYEwO-8qGG4Soec2b_FNBUb9_ABULGTmWwbas0J-39t28ZIw2O0tcK7sXw_zaeIZjAWna8m8VMv5rcHsxGJA_ZxNmZAkoB3OtTobHngtluNYCUBVlCceIvUhWLDzS0KKXn_kBXTeqFClcdlU6-6xgC1fPfoctcznjHa46QwV7nKjygzkp0');">
                     <div class="banner-content">
-                        <h2>Dune: Part Two</h2>
-                        <p>Sci‑Fi • Adventure • 2h 46m</p>
+                        <h2>@Model.Booking.ShowTime.Movie.Title</h2>
+                        <p>@Model.Booking.ShowTime.Movie.Rating • @Model.Booking.ShowTime.Movie.DurationMinutes m</p>
                     </div>
                 </div>
 
                 <div class="ticket-body">
                     <div>
                         <div class="info-grid">
-                            <div class="info-box"><div class="label">Date</div><div class="value">Fri, Oct 24</div></div>
-                            <div class="info-box"><div class="label">Time</div><div class="value">19:30</div></div>
-                            <div class="info-box"><div class="label">Hall</div><div class="value">IMAX 4</div></div>
-                            <div class="info-box"><div class="label">Seats</div><div class="value">F12, F13</div></div>
+                            <div class="info-box"><div class="label">Date</div><div class="value">@Model.date.ToString("dddd, dd MMMM yyyy")</div></div>
+                            <div class="info-box"><div class="label">Time</div><div class="value">@Model.Booking.ShowTime.StartTime.ToString()</div></div>
+                            <div class="info-box"><div class="label">Hall</div><div class="value">@Model.Booking.ShowTime.Hall.Name</div></div>
+                            <div class="info-box"><div class="label">Seats</div><div class="value">
+                                    @string.Join(", ", ViewBag.Seats)
+                            </div></div>
                         </div>
-                        <div class="cinema">📍 Grand Cinema, Downtown<br><span style="color:var(--text-muted)">123 Movie Lane, City Center</span></div>
+                        <div class="cinema">📍 @Model.Booking.ShowTime.Hall.Outlet.City , @Model.Booking.ShowTime.Hall.Outlet.Name </div>
                     </div>
 
                     <div class="qr">
@@ -55,14 +58,12 @@
             <!-- PAYMENT -->
             <div class="payment">
                 <h3>Payment Details</h3>
-                <div class="row muted"><span>Standard Ticket (x2)</span><span>$30.00</span></div>
-                <div class="row muted"><span>Convenience Fee</span><span>$3.50</span></div>
-                <div class="row muted"><span>Tax (8%)</span><span>$2.68</span></div>
-                <div class="row discount"><span>Discount (SUMMER20)</span><span>- $5.00</span></div>
+                <div class="row muted"><span>Standard Ticket (x2)</span><span> RM @Model.Booking.TotalPrice</span></div>
+                <div class="row muted"><span>Add-On</span><span>RM 0</span></div>
+                <div class="row discount"><span>Discount (SUMMER20)</span><span>- RM 0.00</span></div>
                 <hr style="border-color:var(--border)">
-                <div class="row"><span>Total Paid</span><span class="total">$31.18</span></div>
+                <div class="row"><span>Total Paid</span><span class="total">RM @Model.amount</span></div>
 
-                <div class="payment-method">Visa ending in 4242<br><span class="muted">Exp 12/25</span></div>
 
                 <div class="actions-grid">
                     <button>Download PDF</button>

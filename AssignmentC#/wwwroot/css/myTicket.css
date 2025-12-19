@@ -22,10 +22,11 @@ button {
        Layout
        ========================= */
 .app {
-    max-width: 1200px;
+    width: 1200px;
     display: flex;
     min-height: 100vh;
     overflow: hidden;
+    margin: auto;
 }
 
 /* Sidebar */
