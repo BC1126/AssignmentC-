@@ -1,14 +1,15 @@
 ﻿using AssignmentC_;
 using AssignmentC_.Models; // Added to ensure MemberDetailsVM is recognized
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-[Authorize(Roles = "Staff")]
+
 // Updated Primary Constructor to assign the field
 public class StaffController(DB db, Helper hp) : Controller
 {
-
+    [Authorize(Roles = "Staff")]
     public IActionResult StaffDashboard()
     {
         return View("~/Views/Home/StaffDashboard.cshtml");
@@ -19,6 +20,7 @@ public class StaffController(DB db, Helper hp) : Controller
         return View();
     }
 
+    [Authorize(Roles = "Staff")]
     [HttpPost]
     public IActionResult CompleteClaim(int orderId)
     {
@@ -36,6 +38,7 @@ public class StaffController(DB db, Helper hp) : Controller
         return Ok();
     }
 
+    [Authorize(Roles = "Staff, Admin")]
     public IActionResult MemberDetails(string id)
     {
         var member = db.Users
@@ -47,7 +50,8 @@ public class StaffController(DB db, Helper hp) : Controller
                 Phone = u.Phone,
                 Gender = u.Gender,
 
-                PhotoPath = (u as Member).PhotoURL,
+                PhotoURL = (u as Member).PhotoURL,
+                IsEmailConfirmed = u.IsEmailConfirmed,
 
                 Role = u.Role
             })

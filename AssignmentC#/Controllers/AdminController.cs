@@ -318,4 +318,122 @@ public class AdminController : Controller
 
         return View("../User/AdminAddUser", vm);
     }
+
+    // GET: Admin/StaffDetails/S001
+    public IActionResult StaffDetails(string id)
+    {
+        // 1. Find the Staff in the Staffs table (NOT Members table)
+        var staff = db.Staffs.Find(id);
+
+        if (staff == null)
+        {
+            TempData["Error"] = "Staff member not found.";
+            return RedirectToAction("StaffList");
+        }
+
+        // 2. We reuse the 'MemberDetailsVM' because the page looks exactly the same.
+        // We just map the Staff data into it.
+        var vm = new MemberDetailsVM
+        {
+            UserId = staff.UserId,
+            Name = staff.Name,
+            Email = staff.Email,
+            Role = staff.Role, // Usually "Staff"
+
+            // Staff don't usually have these fields, so we set defaults
+            Phone = staff.Phone,
+            Gender = staff.Gender,
+
+            // Staff are always considered "Verified"
+            IsEmailConfirmed = true
+        };
+
+        // 3. CRITICAL: We tell it to use the "MemberDetails" view file.
+        // This way, you don't have to create a new .cshtml page!
+        return View("~/Views/User/MemberDetails.cshtml", vm);
+    }
+
+    // GET: Admin/AdminDetails/A0001
+    public IActionResult AdminDetails(string id)
+    {
+        var admin = db.Admins.Find(id);
+        if (admin == null) return NotFound();
+
+        var vm = new MemberDetailsVM
+        {
+            UserId = admin.UserId,
+            Name = admin.Name,
+            Email = admin.Email,
+            Role = "Admin",
+
+            // Admins might not have these, so use defaults
+            Phone = admin.Phone,
+            Gender = admin.Gender,
+
+            // Admins are trusted
+            IsEmailConfirmed = true
+        };
+
+        // Reuse the existing View
+        return View("~/Views/User/MemberDetails.cshtml", vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> BatchDeleteMembers(string[] selectedIds)
+    {
+        // 1. Check if anything was selected
+        if (selectedIds == null || selectedIds.Length == 0)
+        {
+            TempData["Info"] = "No items were selected.";
+            return RedirectToAction("MemberList", "User"); // Redirect back to the list
+        }
+
+        // 2. Find all User records that match the selected IDs
+        // We use the Users table because deleting a User automatically deletes the Member
+        var usersToDelete = db.Users.Where(u => selectedIds.Contains(u.UserId)).ToList();
+
+        if (usersToDelete.Count > 0)
+        {
+            // 3. Remove them
+            db.Users.RemoveRange(usersToDelete);
+            await db.SaveChangesAsync();
+
+            TempData["Info"] = $"{usersToDelete.Count} member(s) deleted successfully.";
+        }
+        else
+        {
+            TempData["Info"] = "No matching records found to delete.";
+        }
+
+        // 4. Redirect back to the list
+        // Note: Adjust "MemberList" and "User" if your list is in a different controller!
+        return RedirectToAction("MemberList", "User");
+    }
+
+    // POST: Admin/BatchDeleteStaff
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")] // Only Admins can delete Staff
+    public async Task<IActionResult> BatchDeleteStaff(string[] selectedIds)
+    {
+        if (selectedIds == null || selectedIds.Length == 0)
+        {
+            TempData["Info"] = "No staff selected.";
+            return RedirectToAction("StaffList","User");
+        }
+
+        // 1. Find Users (Deleting the User automatically deletes the Staff record)
+        var staffToDelete = db.Users.Where(u => selectedIds.Contains(u.UserId)).ToList();
+
+        if (staffToDelete.Count > 0)
+        {
+            db.Users.RemoveRange(staffToDelete);
+            await db.SaveChangesAsync();
+            TempData["Info"] = $"{staffToDelete.Count} staff account(s) deleted successfully.";
+        }
+
+        return RedirectToAction("StaffList","User");
+    }
 }

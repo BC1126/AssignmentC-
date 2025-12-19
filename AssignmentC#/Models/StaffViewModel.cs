@@ -1,7 +1,10 @@
-﻿namespace AssignmentC_.Models;
+﻿using System.Globalization;
+
+namespace AssignmentC_.Models;
 
 public class MemberDetailsVM
 {
+    public string UserId {  get; set; }
     // Basic Information
     public string Name { get; set; }
     public string Email { get; set; }
@@ -9,7 +12,7 @@ public class MemberDetailsVM
     public string Gender { get; set; }
 
     // Profile Image
-    public string? PhotoPath { get; set; }
+    public string? PhotoURL { get; set; }
 
     // Account Status
     public DateTime JoinDate { get; set; }

@@ -15,8 +15,8 @@
                     <div class="row">
                         <div class="col-md-4 text-center border-end">
                             <div class="mb-3">
-                                @* Using your correct path logic here *@
-                                <img src="/photos/@Model.PhotoPath"
+                                @* LOGIC: If Role is Staff, use default.jpg. Otherwise, use the user's photo. *@
+                                <img src="@(Model.Role == "Staff" || Model.Role == "Admin" ? "/img/default.jpg" : Model.PhotoURL)"
                                      class="rounded-circle img-thumbnail shadow-sm"
                                      alt="Profile Photo"
                                      style="width: 150px; height: 150px; object-fit: cover;"
