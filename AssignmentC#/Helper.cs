@@ -147,26 +147,33 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db, ICon
     }
 
 
-    public void SignIn(string email, string role, bool rememberMe)
+    // Change 'void' to 'async Task' to ensure the cookie is set before the request ends
+    public async Task SignIn(string email, string role, bool rememberMe)
     {
-        // (1) Claim, identity and principal
-        List<Claim> claims =
-        [
-            new(ClaimTypes.Name, email),
-            new(ClaimTypes.Role, role),
-        ];
+        // (1) Create Claims (Only Email and Role, as you requested)
+        List<Claim> claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, email),
+        new Claim(ClaimTypes.Role, role)
+    };
 
-        ClaimsIdentity identity = new(claims, "Cookies");
+        // Note: Ensure "Cookies" matches the scheme name in your Program.cs
+        ClaimsIdentity identity = new ClaimsIdentity(claims, "Cookies");
+        ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
-        ClaimsPrincipal principal = new(identity);
-
-        // (2) Remember me (authentication properties)
-        AuthenticationProperties properties = new()
+        // (2) Authentication Properties (FIXED)
+        AuthenticationProperties properties = new AuthenticationProperties
         {
+            // Keeps user logged in even after closing browser
             IsPersistent = rememberMe,
+
+            // If checked, cookie lasts 7 days. If not, it dies when browser closes.
+            ExpiresUtc = rememberMe ? DateTime.UtcNow.AddDays(7) : null
         };
-        // (3) Sign in
-        ct.HttpContext!.SignInAsync(principal, properties);
+
+        // (3) Sign In
+        // Using await ensures the cookie is attached to the response headers
+        await ct.HttpContext!.SignInAsync(principal, properties);
     }
 
     public void SignOut()
