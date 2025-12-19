@@ -138,7 +138,16 @@
     border-radius: 10px;
     padding: 25px;
     margin-bottom: 20px;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
 }
+
+    .cinema-card[style*="display: none"] {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
 
 .cinema-header {
     display: flex;
@@ -173,6 +182,7 @@
     cursor: pointer;
     transition: all 0.3s;
     color: #fff;
+    background-color: #242424;
     text-decoration: none;
     display: block;
 }
@@ -214,4 +224,128 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+}
+
+/* Sold Out Styles */
+.showtime-btn.sold-out {
+    pointer-events: none;
+    cursor: not-allowed;
+    background: #1a1a1a !important;
+    border: 1px dashed #444 !important;
+    opacity: 0.5;
+    position: relative;
+}
+
+    .showtime-btn.sold-out::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient( 45deg, transparent, transparent 10px, rgba(255, 77, 77, 0.1) 10px, rgba(255, 77, 77, 0.1) 20px );
+        border-radius: 8px;
+        pointer-events: none;
+    }
+
+    .showtime-btn.sold-out:hover {
+        transform: none;
+        background: #1a1a1a !important;
+        border-color: #444 !important;
+    }
+
+    .showtime-btn.sold-out .seat-badge {
+        color: #ff4d4d !important;
+        font-weight: bold;
+        text-shadow: 0 0 5px rgba(255, 77, 77, 0.3);
+    }
+
+/* Seat Badge */
+.seat-badge {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Low availability warning */
+.showtime-btn .seat-badge.low-availability {
+    color: #ff9800;
+    animation: pulse 2s infinite;
+}
+
+/* Form Controls */
+.form-check-input:checked {
+    background-color: #e50914;
+    border-color: #e50914;
+}
+
+.form-check-input:focus {
+    border-color: #e50914;
+    box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25);
+}
+
+.form-check-label {
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Button Styles */
+.btn-outline-secondary {
+    color: #888;
+    border-color: #444;
+}
+
+    .btn-outline-secondary:hover {
+        background-color: #333;
+        border-color: #e50914;
+        color: #fff;
+    }
+
+/* Loading state for any spinning icons */
+.bi-arrow-clockwise[style*="animation"] {
+    display: inline-block;
+}
+
+/* Notification styles */
+.availability-notification,
+.availability-toast {
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Keyframe Animations */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }

@@ -39,28 +39,21 @@ public class SeatSelectionViewModel
 
 public class BookingSessionData
 {
-    // Showtime Info
     public int ShowTimeId { get; set; }
+    public string MemberId { get; set; }
+    public int TicketQuantity { get; set; }
+    public decimal TicketSubtotal { get; set; }
+    public List<int> SelectedSeatIds { get; set; } = new List<int>();
+
     public string MovieTitle { get; set; }
     public DateTime StartTime { get; set; }
     public string HallName { get; set; }
     public string OutletName { get; set; }
+    public List<string> SelectedSeatIdentifiers { get; set; } = new List<string>();
 
-    // Ticket Info
-    public decimal TicketPrice { get; set; }
-    public int TicketQuantity { get; set; }
-    public decimal TicketSubtotal { get; set; }
-
-    // Ticket Type Breakdown
     public int ChildrenCount { get; set; }
     public int AdultCount { get; set; }
     public int SeniorCount { get; set; }
     public int OkuCount { get; set; }
-
-    public List<int> SelectedSeatIds { get; set; } = new();
-    public List<string> SelectedSeatIdentifiers { get; set; } = new(); 
-    public decimal FoodBeverageTotal { get; set; } = 0;
-
-    // Auto-calculated total
-    public decimal GrandTotal => TicketSubtotal + FoodBeverageTotal;
+    public decimal TicketPrice { get; set; } // Base price
 }

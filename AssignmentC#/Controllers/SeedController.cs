@@ -704,4 +704,57 @@ public class SeedController : Controller
             return RedirectToAction("TestMovieList");
         }
     }
+    [HttpGet]
+    public IActionResult SeedSoldOutShowtime()
+    {
+        try
+        {
+            // 1. Get a Movie and Hall
+            var movie = db.Movies.FirstOrDefault() ?? GetOrCreateMovie("Avengers: Endgame", "Action", 181, "P13", "Desc", "url");
+            var hall = db.Halls.Include(h => h.Seats).FirstOrDefault() ?? GetOrCreateHall(1, "Hall 1", "Standard");
+            var member = GetOrCreateTestMember();
+
+            // 2. Create a specific Showtime for TODAY at 10:00 PM
+            var soldOutShow = new ShowTime
+            {
+                MovieId = movie.MovieId,
+                HallId = hall.HallId,
+                StartTime = DateTime.Today.AddHours(22), // 10 PM today
+                TicketPrice = 20.00m,
+                IsActive = true
+            };
+            db.ShowTimes.Add(soldOutShow);
+            db.SaveChanges();
+
+            // 3. FILL EVERY SEAT (This makes it Sold Out)
+            var seats = db.Seats.Where(s => s.HallId == hall.HallId).ToList();
+
+            var booking = new Booking
+            {
+                MemberId = member.UserId,
+                ShowTimeId = soldOutShow.ShowTimeId,
+                TicketQuantity = seats.Count,
+                TotalPrice = seats.Count * soldOutShow.TicketPrice,
+                BookingDate = DateTime.Now
+            };
+            db.Bookings.Add(booking);
+            db.SaveChanges();
+
+            foreach (var seat in seats)
+            {
+                db.BookingSeats.Add(new BookingSeat
+                {
+                    BookingId = booking.BookingId,
+                    SeatId = seat.SeatId
+                });
+            }
+            db.SaveChanges();
+
+            return Content($"✅ Success! Showtime ID {soldOutShow.ShowTimeId} is now 100% SOLD OUT. Go to your movie page and click 'Refresh Status'.");
+        }
+        catch (Exception ex)
+        {
+            return Content($"❌ Error: {ex.Message}");
+        }
+    }
 }

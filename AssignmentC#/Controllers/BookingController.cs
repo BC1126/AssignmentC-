@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using AssignmentC_.Hubs;
 using AssignmentC_.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -65,12 +67,12 @@ public class BookingController : Controller
             .Select(sl => sl.SeatId)
             .ToHashSet();
 
-            var myLockedSeatIds = db.SeatLocks
-            .Where(sl => sl.ShowTimeId == showtimeId
-                      && sl.ExpiresAt > now
-                      && sl.SessionId == sessionId)
-            .Select(sl => sl.SeatId)
-            .ToHashSet();
+        var myLockedSeatIds = db.SeatLocks
+        .Where(sl => sl.ShowTimeId == showtimeId
+                  && sl.ExpiresAt > now
+                  && sl.SessionId == sessionId)
+        .Select(sl => sl.SeatId)
+        .ToHashSet();
 
         var vm = new SelectTicketViewModel
         {
@@ -98,7 +100,7 @@ public class BookingController : Controller
                     IsWheelchair = s.IsWheelchair,
                     IsOccupied = bookedSeatIds.Contains(s.SeatId),
                     IsLocked = lockedByOthersIds.Contains(s.SeatId),
-                    IsSelected = myLockedSeatIds.Contains(s.SeatId), 
+                    IsSelected = myLockedSeatIds.Contains(s.SeatId),
                     Row = new string(s.SeatIdentifier.TakeWhile(char.IsLetter).ToArray()),
                     Column = int.Parse(new string(s.SeatIdentifier.SkipWhile(char.IsLetter).ToArray()))
                 })
@@ -186,28 +188,25 @@ public class BookingController : Controller
     [HttpPost]
     public IActionResult SelectTicket([FromForm] TicketSelectionSubmission submission)
     {
-
         var uniqueSeatIds = submission.SeatIds?.Distinct().ToList() ?? new List<int>();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (submission.ShowTimeId <= 0 || !uniqueSeatIds.Any())
         {
             TempData["Error"] = "Please select at least one seat";
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
+        
 
-        int totalTickets = submission.ChildrenCount + submission.AdultCount +
-                       submission.SeniorCount + submission.OkuCount;
-        if (totalTickets != uniqueSeatIds.Count)
+        if (string.IsNullOrEmpty(userId))
         {
-            TempData["Error"] = "Ticket type count must match the number of selected seats";
-            return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
+            return Content("Error: User is not logged in or ID not found.");
         }
-
         var showtime = db.ShowTimes
-        .Include(st => st.Movie)
-        .Include(st => st.Hall).ThenInclude(h => h.Outlet)
-        .Include(st => st.Hall).ThenInclude(h => h.Seats) 
-        .FirstOrDefault(st => st.ShowTimeId == submission.ShowTimeId);
+            .Include(st => st.Movie)
+            .Include(st => st.Hall).ThenInclude(h => h.Outlet)
+            .Include(st => st.Hall).ThenInclude(h => h.Seats)
+            .FirstOrDefault(st => st.ShowTimeId == submission.ShowTimeId);
 
         if (showtime == null)
         {
@@ -215,80 +214,63 @@ public class BookingController : Controller
             return RedirectToAction("Index", "Movie");
         }
 
-
-
-        var seats = db.Seats
-            .Where(s => uniqueSeatIds.Contains(s.SeatId) && s.HallId == showtime.HallId)
+        var seats = showtime.Hall.Seats
+            .Where(s => uniqueSeatIds.Contains(s.SeatId))
             .ToList();
 
         if (seats.Count != uniqueSeatIds.Count)
         {
-            TempData["Error"] = "Some seats are invalid";
+            TempData["Error"] = "Some selected seats are invalid for this hall.";
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
 
-        var bookedSeatIds = db.BookingSeats
-            .Where(bs => bs.Booking.ShowTimeId == submission.ShowTimeId)
-            .Select(bs => bs.SeatId)
-            .ToHashSet();
-
-
-        var alreadyBooked = uniqueSeatIds.Intersect(bookedSeatIds).ToList();
-        if (alreadyBooked.Any())
-        {
-            var bookedIdentifiers = seats
-                .Where(s => alreadyBooked.Contains(s.SeatId))
-                .Select(s => s.SeatIdentifier);
-
-            TempData["Error"] = $"Seats {string.Join(", ", bookedIdentifiers)} are already booked";
-            return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
-        }
-
-        // Pricing
-        var selectedSeats = showtime.Hall.Seats.Where(s => uniqueSeatIds.Contains(s.SeatId)).ToList();
         decimal subtotal = 0;
-        decimal childrenPrice = submission.ChildrenCount;
-        decimal seniorPrice = submission.SeniorCount;
-        decimal okuPrice = submission.OkuCount;
-        foreach (var seat in selectedSeats)
+        int tempChildren = submission.ChildrenCount;
+        int tempSenior = submission.SeniorCount;
+        int tempOku = submission.OkuCount;
+
+        foreach (var seat in seats)
         {
             decimal price = showtime.TicketPrice;
-            if (childrenPrice > 0) { price *= 0.80m; childrenPrice--; }
-            else if (seniorPrice > 0) { price *= 0.85m; seniorPrice--; }
-            else if (okuPrice > 0) { price *= 0.90m; okuPrice--; }
+
+            if (tempChildren > 0) { price *= 0.80m; tempChildren--; }
+            else if (tempSenior > 0) { price *= 0.85m; tempSenior--; }
+            else if (tempOku > 0) { price *= 0.90m; tempOku--; }
 
             if (seat.IsPremium) { price *= 1.20m; }
+
             subtotal += price;
         }
-
 
         var bookingData = new BookingSessionData
         {
             ShowTimeId = showtime.ShowTimeId,
+            MemberId = userId,
             MovieTitle = showtime.Movie.Title,
             StartTime = showtime.StartTime,
             HallName = showtime.Hall.Name,
             OutletName = showtime.Hall.Outlet.Name,
             TicketPrice = showtime.TicketPrice,
+
             ChildrenCount = submission.ChildrenCount,
             AdultCount = submission.AdultCount,
             SeniorCount = submission.SeniorCount,
             OkuCount = submission.OkuCount,
-            TicketQuantity = seats.Count,
-            SelectedSeatIds = uniqueSeatIds, 
+
+            TicketQuantity = uniqueSeatIds.Count,
+            SelectedSeatIds = uniqueSeatIds,
             SelectedSeatIdentifiers = seats
+                .OrderBy(s => s.SeatIdentifier)
                 .Select(s => s.SeatIdentifier)
-                .Distinct()
-                .OrderBy(s => s)
                 .ToList(),
             TicketSubtotal = subtotal
         };
 
-        HttpContext.Session.SetString("SelectedRegion", showtime.Hall.Outlet.City);
-        HttpContext.Session.SetString("SelectedCinema", showtime.Hall.Outlet.Name);
-        HttpContext.Session.SetString("CollectDate", showtime.StartTime.ToString("yyyy-MM-dd"));
+        var jsonData = JsonSerializer.Serialize(bookingData);
+        HttpContext.Session.SetString("BookingData", jsonData);
 
-        TempData["BookingData"] = JsonSerializer.Serialize(bookingData);
+        TempData["BookingData"] = jsonData;
+
         return RedirectToAction("UserIndex", "Product");
     }
 
@@ -401,7 +383,8 @@ public class BookingController : Controller
                 OutletId = g.Key.OutletId,
                 OutletName = g.Key.Name,
                 City = g.Key.City,
-                Showtimes = g.Select(st => {
+                Showtimes = g.Select(st =>
+                {
                     var bookedSeats = st.Bookings
                         .SelectMany(b => b.BookingSeats)
                         .Select(bs => bs.SeatId)
@@ -431,10 +414,80 @@ public class BookingController : Controller
 
         return View(viewModel);
     }
-}
 
-// Request models for AJAX endpoints
-public class TicketCalculationRequest
+    [HttpGet]
+    public IActionResult GetAvailability(int movieId, string date)
+    {
+        bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+        var targetDate = DateTime.Parse(date).Date;
+
+        var availability = db.ShowTimes
+            .Include(st => st.Hall)
+                .ThenInclude(h => h.Seats)
+            .Include(st => st.Bookings)
+                .ThenInclude(b => b.BookingSeats)
+            .Where(st => st.MovieId == movieId && st.StartTime.Date == targetDate && st.IsActive)
+            .Select(st => new
+            {
+                ShowTimeId = st.ShowTimeId,
+                TotalSeats = st.Hall.Seats.Count(s => s.IsActive),
+                BookedSeats = st.Bookings.SelectMany(b => b.BookingSeats).Select(bs => bs.SeatId).Distinct().Count(),
+                AvailableSeats = st.Hall.Seats.Count(s => s.IsActive) -
+                               st.Bookings.SelectMany(b => b.BookingSeats).Select(bs => bs.SeatId).Distinct().Count()
+            })
+            .Select(st => new
+            {
+                st.ShowTimeId,
+                st.AvailableSeats,
+                st.TotalSeats,
+                st.BookedSeats,
+                IsSoldOut = st.AvailableSeats <= 0
+            })
+            .ToList();
+
+        if (isAjax)
+        {
+            return Json(availability);
+        }
+
+        return Ok(availability);
+    }
+
+    [HttpGet]
+    public JsonResult GetShowtimeAvailabilityAjax(int movieId, string date)
+    {
+        var targetDate = DateTime.Parse(date).Date;
+
+        var availability = db.ShowTimes
+            .Include(st => st.Hall)
+                .ThenInclude(h => h.Seats)
+            .Include(st => st.Bookings)
+                .ThenInclude(b => b.BookingSeats)
+            .Where(st => st.MovieId == movieId && st.StartTime.Date == targetDate && st.IsActive)
+            .Select(st => new
+            {
+                ShowTimeId = st.ShowTimeId,
+                TotalSeats = st.Hall.Seats.Count(s => s.IsActive),
+                BookedSeats = st.Bookings.SelectMany(b => b.BookingSeats).Select(bs => bs.SeatId).Distinct().Count(),
+                AvailableSeats = st.Hall.Seats.Count(s => s.IsActive) -
+                               st.Bookings.SelectMany(b => b.BookingSeats).Select(bs => bs.SeatId).Distinct().Count()
+            })
+            .Select(st => new
+            {
+                st.ShowTimeId,
+                st.AvailableSeats,
+                st.TotalSeats,
+                st.BookedSeats,
+                IsSoldOut = st.AvailableSeats <= 0,
+                PercentageFull = st.TotalSeats > 0 ? (int)((double)st.BookedSeats / st.TotalSeats * 100) : 0
+            })
+            .ToList();
+
+        return Json(availability);
+    }
+}
+    public class TicketCalculationRequest
 {
     public int ShowTimeId { get; set; }
     public int ChildrenCount { get; set; }
