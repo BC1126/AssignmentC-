@@ -148,7 +148,6 @@ public class HallController(DB db, Helper hp) : Controller
                     IsPremium = s.IsPremium,
                     IsWheelchair = s.IsWheelchair,
                     IsActive = s.IsActive,
-                    // Extract Row and Column from SeatIdentifier (e.g., "A5" -> Row="A", Column=5)
                     Row = s.SeatIdentifier.Substring(0, 1),
                     Column = int.Parse(s.SeatIdentifier.Substring(1))
                 }).ToList()

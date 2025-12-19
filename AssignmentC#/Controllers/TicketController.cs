@@ -15,7 +15,7 @@ public class TicketController(DB db, Helper hp) : Controller
     {
         // Get PurchaseVM from session
         var session = HttpContext.Session.GetString("PurchaseVM");
-
+        var expiryStr = HttpContext.Session.GetString("LockExpiry");
         if (session == null)
         {
             return RedirectToAction("", "Home");
@@ -23,40 +23,31 @@ public class TicketController(DB db, Helper hp) : Controller
 
         var purchaseVM = JsonSerializer.Deserialize<PurchaseVM>(session);
 
-        // Timer
-        if (HttpContext.Session.GetString("StartTime") == null)
-            {
-                HttpContext.Session.SetString("StartTime",DateTime.Now.ToString("O"));
-            }
+        if (string.IsNullOrEmpty(expiryStr))
+        {
+            return RedirectToAction("SelectTicket", "Booking");
+        }
 
-            DateTime startTime = DateTime.Parse(HttpContext.Session.GetString("StartTime"));
+        // 3. Calculate EXACT remaining time based on the lock in the database
+        DateTime expiryTime = DateTime.Parse(expiryStr, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        int remainingSeconds = (int)(expiryTime - DateTime.UtcNow).TotalSeconds;
 
-            int elapsed = (int)(DateTime.Now - startTime).TotalSeconds;
-            int remaining = TIME_LIMIT - elapsed;
-
-            var timer = new TimerViewModel
-            {
-                Expired = remaining <= 0,
-                Minutes = Math.Max(remaining, 0) / 60,
-                Seconds = Math.Max(remaining, 0) % 60
-            };
-
-            var vm = new CheckoutViewModel
-            {
-                Timer = timer
-            };
-
-        ViewBag.Timer = vm;
+        // 4. Create the timer model
+        var timer = new TimerViewModel
+        {
+            Expired = remainingSeconds <= 0,
+            Minutes = Math.Max(remainingSeconds, 0) / 60,
+            Seconds = Math.Max(remainingSeconds, 0) % 60
+        };
 
         if (Request.IsAjax())
         {
             return PartialView("_Timer", timer);
         }
 
-        // Get all vouchers
-        var vouchers = db.Vouchers.ToList();
+        ViewBag.Timer = new CheckoutViewModel { Timer = timer };
+        ViewBag.Vouchers = db.Vouchers.ToList();
 
-        ViewBag.Vouchers = vouchers;
         return View(purchaseVM);
     }
 
