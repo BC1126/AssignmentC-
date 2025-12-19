@@ -24,6 +24,19 @@
 	@RenderSection("head", false)
 </head>
 <body>
+	@{
+		// Default link for Guests and Members
+		string logoLink = "/Home/Index";
+
+		if (User.IsInRole("Admin"))
+		{
+			logoLink = "/Admin/AdminDashboard";
+		}
+		else if (User.IsInRole("Staff"))
+		{
+			logoLink = "/Staff/StaffDashboard";
+		}
+	}
 	<div class="info">@Html.Raw(TempData["Info"])</div>
 	
 	<div class="main clearfix position-relative">
@@ -56,9 +69,10 @@
 				<section id="header">
 					<nav class="navbar navbar-expand-md navbar-light px_4" id="navbar_sticky">
 						<div class="container-fluid">
-							<a class="fw-bold text-white" href="/">
+							<a class="fw-bold text-white" href="@logoLink">
 								<img style="max-width:100px; height:30px;" src="/photos/logo.png" />
-							</a>							<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+							</a>
+							<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 								<span class="navbar-toggler-icon"></span>
 							</button>
 							<div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -253,9 +267,11 @@
 					<div class="col-md-3">
 						<div class="footer_1l">
 						<h4 class="mb-0">
-							<a class="fw-bold text-white" href="/">
-								<img style="max-width:100px; height:30px;" src="/photos/logo.png" />
-							</a>
+							<h4 class="mb-0">
+								<a class="fw-bold text-white" href="@logoLink">
+									<img style="max-width:100px; height:30px;" src="/photos/logo.png" />
+								</a>
+							</h4>
 						</h4>
 						</div>
 					</div>
