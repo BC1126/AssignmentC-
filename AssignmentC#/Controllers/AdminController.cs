@@ -437,7 +437,6 @@ public class AdminController : Controller
 
         return RedirectToAction("StaffList","User");
     }
-}
 
     [Authorize(Roles = "Admin")]
     public IActionResult ViewOrder(string search, string sort = "Id", string dir = "desc", int page = 1)
