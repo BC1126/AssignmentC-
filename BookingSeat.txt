@@ -1,0 +1,10 @@
+DECLARE @NewBookingId INT;
+
+INSERT INTO Bookings (MemberId, ShowTimeId, TicketQuantity, TotalPrice, BookingDate) 
+VALUES ('M0001', 1, 2, 50.00, GETDATE());
+
+SET @NewBookingId = SCOPE_IDENTITY();
+
+INSERT INTO BookingSeats (BookingId, SeatId) VALUES 
+(@NewBookingId, 1), 
+(@NewBookingId, 2);

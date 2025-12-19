@@ -1,0 +1,11 @@
+INSERT INTO Outlets (City, Name) VALUES 
+('Kuala Lumpur', 'Mid Valley Megamall'),
+('Kuala Lumpur', 'Pavilion KL'),
+('Petaling Jaya', '1 Utama Shopping Centre'),
+('Johor Bahru', 'Mid Valley Southkey'),
+('Penang', 'Gurney Plaza'),
+('Sunway', 'Sunway Pyramid'),
+('Puchong', 'IOI Mall Puchong'),
+('Cyberjaya', 'DPULZE Shopping Centre'),
+('Melaka', 'Mahkota Parade'),
+('Ipoh', 'Ipoh Parade');

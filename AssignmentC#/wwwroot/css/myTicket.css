@@ -1,0 +1,541 @@
+﻿
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-fill {
+    font-variation-settings: 'FILL' 1;
+}
+
+/* =========================
+       Layout
+       ========================= */
+.app {
+    max-width: 1200px;
+    display: flex;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 256px;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    display: none;
+    flex-direction: column;
+}
+
+.dark .sidebar {
+    background: #101323;
+    border-right-color: #1e293b;
+}
+
+.sidebar-inner {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.profile {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+}
+
+.nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #475569;
+    transition: background .2s, color .2s;
+}
+
+.dark .nav a {
+    color: #cbd5f5;
+}
+
+.nav a:hover {
+    background: #f1f5f9;
+}
+
+.dark .nav a:hover {
+    background: #222949;
+}
+
+.nav a.active {
+    background: rgba(13, 51, 242, .1);
+    color: #0d33f2;
+    font-weight: 600;
+}
+
+.dark .nav a.active {
+    background: #222949;
+    color: #ffffff;
+}
+
+/* =========================
+       Main Content
+       ========================= */
+.container {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 32px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+h1 {
+    margin: 0;
+    font-weight: 900;
+}
+
+.subtitle {
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.dark .subtitle {
+    color: black;
+}
+
+/* =========================
+       Tabs + Search
+       ========================= */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 16px;
+}
+
+.dark .controls {
+    border-bottom-color: #313a68;
+}
+
+.tabs {
+    display: flex;
+    gap: 24px;
+}
+
+.tab {
+    padding-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+}
+
+    .tab.active {
+        color: #0d33f2;
+        border-bottom-color: #0d33f2;
+    }
+
+.dark .tab {
+    color: #909acb;
+}
+
+    .dark .tab.active {
+        color: #ffffff;
+    }
+
+.search {
+    min-width: 280px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 8px;
+    height: 40px;
+}
+
+.dark .search {
+    background: #222949;
+    border-color: transparent;
+}
+
+.search input {
+    border: none;
+    outline: none;
+    flex: 1;
+    padding: 0 12px;
+    background: transparent;
+    color: inherit;
+}
+
+/* =========================
+       Ticket Card
+       ========================= */
+.ticket {
+    display: flex;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow .2s, opacity .2s;
+}
+
+    .ticket:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, .08);
+    }
+
+.dark .ticket {
+    background: rgba(53, 55, 65,0.2);
+    border-color: transparent;
+}
+
+.poster {
+    width: 160px;
+    min-height: 240px;
+    background-size: cover;
+    background-position: center;
+}
+
+.ticket-content {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.badges span {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.badge-confirmed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-format {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.actions button {
+    background: #0d33f2;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* =========================
+       Past Ticket Variant
+       ========================= */
+.ticket.past {
+    background: #f8fafc;
+    opacity: .8;
+}
+
+    .ticket.past .poster {
+        filter: grayscale(1);
+    }
+
+.dark .ticket.past {
+    background: rgba(24, 29, 52, .6);
+}
+
+/* =====================
+   CinePass Ticket View
+   Namespaced CSS
+   ===================== */
+
+:root {
+    --primary: #2563eb;
+    --bg-main: #0b1020;
+    --bg-panel: #121a32;
+    --bg-card: lightgray;
+    --border: #1f2a55;
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+    --success: #22c55e;
+}
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 30px;
+    background: lightgray;
+    border-radius: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 28px;
+}
+
+/* ================= TITLE ================= */
+.breadcrumb {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+}
+
+    .title-row h1 {
+        font-size: 32px;
+        font-weight: 900;
+    }
+
+.subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.actions button {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.actions .primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.actions .secondary {
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+/* ================= TICKET CARD ================= */
+.ticket-card {
+    background: linear-gradient(180deg, #6c757d, #0f162f);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.banner {
+    height: 220px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+    .banner::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to right, rgba(0, 0, 0, .6), rgba(0, 0, 0, .1));
+    }
+
+.banner-content {
+    position: absolute;
+    bottom: 20px;
+    left: 24px;
+    z-index: 2;
+}
+
+    .banner-content h2 {
+        font-size: 26px;
+        font-weight: 800;
+        color: white;
+    }
+
+    .banner-content p {
+        font-size: 13px;
+        color: #cbd5f5;
+    }
+
+.ticket-body {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 24px;
+    padding: 24px;
+}
+
+@media (max-width: 768px) {
+    .ticket-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ================= INFO BLOCKS ================= */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.info-box {
+    background: var(--bg-panel);
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.label {
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.value {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+}
+
+.cinema {
+    margin-top: 16px;
+    font-size: 14px;
+    color: white;
+}
+
+/* ================= QR ================= */
+.qr {
+    background: #0b1228;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    border: 1px dashed #334155;
+}
+
+    .qr img {
+        width: 150px;
+        height: 150px;
+        background: #fff;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    .qr p {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+/* ================= STATUS ================= */
+.status {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 20px;
+    font-size: 12px;
+    background: #0b1228;
+}
+
+    .status .ok {
+        color: var(--success);
+        font-weight: 600;
+    }
+
+/* ================= PAYMENT ================= */
+.payment {
+    background: linear-gradient(180deg, #6c757d, #0f162f);
+    ;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    padding: 22px;
+}
+
+    .payment h3 {
+        margin-top: 0;
+        margin-bottom: 16px;
+    }
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+    .row span {
+        color: white;
+    }
+
+    .row.muted {
+        color: var(--text-muted);
+    }
+
+    .row.discount {
+        color: #22c55e;
+    }
+
+.total {
+    font-size: 30px;
+    font-weight: 900;
+    margin-top: 10px;
+    color: white;
+}
+
+.payment-method {
+    background: var(--bg-panel);
+    color: white;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid black;
+    margin-top: 16px;
+    font-size: 13px;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+    .actions-grid button {
+        padding: 12px;
+        border-radius: 14px;
+        background: var(--bg-panel);
+        color: white;
+        border: 1px solid var(--border);
+    }
+
+.support {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 16px;
+}

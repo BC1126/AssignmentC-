@@ -267,6 +267,11 @@ public class Booking
     public ShowTime ShowTime { get; set; }
     public Member Member { get; set; }
     public ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
+
+    internal ShowTime Select(Func<object, Booking> value)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public class BookingSeat
@@ -375,11 +380,10 @@ public class Outlet
     [Key]
     public int OutletId { get; set; }
     [MaxLength(50)]
-    public string City { get; set; } // E.g., "Kuala Lumpur", "Johor Bahru"
+    public string City { get; set; } 
     [MaxLength(100)]
-    public string Name { get; set; } // E.g., "Mid Valley Megamall"
+    public string Name { get; set; } 
 
-    // Navigation: An Outlet has many Halls
     public ICollection<Hall> Halls { get; set; } = new List<Hall>();
 }
 public class SeatLock
