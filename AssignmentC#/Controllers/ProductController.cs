@@ -20,6 +20,19 @@ public class ProductController(DB db, Helper hp) : Controller
     {
         if (page < 1) page = 1;
 
+        string[] allowedSorts =
+        {
+    "Id", "Name", "Description", "Price", "Stock",
+    "Region", "Cinema", "Category"
+};
+
+        if (!allowedSorts.Contains(sort))
+            sort = "Stock";
+
+        if (dir != "asc" && dir != "des")
+            dir = "asc";
+
+
         try
         {
             var query = db.Products.AsQueryable();
@@ -118,6 +131,14 @@ public class ProductController(DB db, Helper hp) : Controller
     {
         try
         {
+            // Quantity must be at least 1
+            if (vm.Stock < 1)
+                ModelState.AddModelError("Stock", "Quantity must be at least 1.");
+
+            // Price must be at least 0.01
+            if (vm.Price < 0.01m)
+                ModelState.AddModelError("Price", "Price must be at least 0.01.");
+
             if (ModelState["Id"]?.Errors.Count == 0 && db.Products.Any(p => p.Id == vm.Id))
                 ModelState.AddModelError("Id", "Duplicated Id.");
 
@@ -203,6 +224,14 @@ public class ProductController(DB db, Helper hp) : Controller
 
         try
         {
+            // Quantity must be at least 1
+            if (vm.Stock < 1)
+                ModelState.AddModelError("Stock", "Quantity must be at least 1.");
+
+            // Price must be at least 0.01
+            if (vm.Price < 0.01m)
+                ModelState.AddModelError("Price", "Price must be at least 0.01.");
+
             if (vm.Photo != null)
             {
                 var e = hp.ValidatePhoto(vm.Photo);
@@ -304,8 +333,19 @@ public class ProductController(DB db, Helper hp) : Controller
     [HttpPost]
     public IActionResult UserSelectRegion(UserSelectCinemaVM vm)
     {
+
+        vm.Region = vm.Region?.Trim();
+        vm.Cinema = vm.Cinema?.Trim();
+
         var outlets = GetOutlets();
         ViewBag.Regions = outlets.Select(o => o.City).Distinct().ToList();
+
+        if (!GetOutlets().Any(o => o.City == vm.Region && o.Name == vm.Cinema))
+        {
+            ModelState.AddModelError("", "Invalid region or cinema selection.");
+            return View(vm);
+        }
+
 
         if (vm.Date == null)
         {
@@ -314,7 +354,7 @@ public class ProductController(DB db, Helper hp) : Controller
         }
 
         var today = DateTime.Today;
-        var maxDate = today.AddDays(3);
+        var maxDate = today.AddDays(6);
 
         if (vm.Date < today || vm.Date > maxDate)
         {
@@ -609,6 +649,12 @@ public class ProductController(DB db, Helper hp) : Controller
         if (order == null)
         {
             TempData["Error"] = "Order not found.";
+            return RedirectToAction("Order");
+        }
+
+        if (order.CollectDate < DateOnly.FromDateTime(DateTime.Today))
+        {
+            TempData["Error"] = "Collect date has passed.";
             return RedirectToAction("Order");
         }
 

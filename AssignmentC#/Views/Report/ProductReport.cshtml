@@ -1,0 +1,82 @@
+﻿@model X.PagedList.IPagedList<ProductReportVM>
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+
+<div class="container mt-4">
+
+    <div class="back-btn">
+        <button data-get="/Admin/AdminDashboard" style="background: #0d6efd;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;">
+            ← Back
+        </button>
+    </div>
+
+    <!-- Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">📊 Food Report</h2>
+    </div>
+
+    <!-- Search Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form id="searchForm" method="get" class="form-inline">
+                <div class="input-group w-50">
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control"
+                           placeholder="Search product name or cinema..." />
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            🔍 Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div id="reportTable" class="table-responsive">
+                @await Html.PartialAsync("_ProductReportTable", Model)
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            // Paging
+            $(document).on("click", "#reportTable .pagination a", function (e) {
+                e.preventDefault();
+                $.get($(this).attr("href"), function (data) {
+                    $("#reportTable").html(data);
+                });
+            });
+
+            // Search
+            $("#searchForm").submit(function (e) {
+                e.preventDefault();
+                $.get(window.location.href, $(this).serialize(), function (data) {
+                    $("#reportTable").html(data);
+                });
+            });
+
+            // Sorting
+            $(document).on("click", "#reportTable th a", function (e) {
+                e.preventDefault();
+                $.get($(this).attr("href"), function (data) {
+                    $("#reportTable").html(data);
+                });
+            });
+        });
+    </script>
+}
