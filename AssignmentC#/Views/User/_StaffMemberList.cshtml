@@ -1,0 +1,60 @@
+﻿@model PaginatedList<Member>
+
+<div class="table-container">
+    <table class="table table-hover mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Photo</th>
+                <th>
+                    <a href="#" class="sort-link text-decoration-none text-dark" data-sort="@(Model.SortOrder == "name_asc" ? "name_desc" : "name_asc")">
+                        Full Name <i class="bi bi-arrow-down-up small text-muted"></i>
+                    </a>
+                </th>
+                <th>Gender</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <img src="@u.PhotoURL" class="user-photo-thumbnail border" alt="User Photo"
+                             onerror="this.onerror=null; this.src='/images/default.jpg';" />
+                    </td>
+                    <td class="fw-bold">@u.Name</td>
+                    <td>@(u.Gender == "M" ? "Male" : "Female")</td>
+                    <td>@u.Email</td>
+                    <td>@u.Phone</td>
+                    <td class="text-center">
+                        <a asp-action="MemberDetails" asp-controller="Staff" asp-route-id="@u.UserId"
+                           class="btn btn-sm btn-info text-white shadow-sm">
+                            <i class="bi bi-eye-fill"></i> View Details
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link" href="#" data-page="@(Model.PageIndex - 1)">Previous</a>
+        </li>
+
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                <a class="page-link" href="#" data-page="@i">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+            <a class="page-link" href="#" data-page="@(Model.PageIndex + 1)">Next</a>
+        </li>
+    </ul>
+</nav>

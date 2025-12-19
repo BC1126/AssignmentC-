@@ -23,7 +23,6 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowTime> ShowTimes { get; set; }
     public DbSet<Outlet> Outlets { get; set; }
-    public DbSet<MovieReview> MovieReviews { get; set; }
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Promotion> Promotions { get; set; }
     public DbSet<Memberpoints> Memberpoints { get; set; }
@@ -78,6 +77,7 @@ public class User
     [MaxLength(11)]
     public string Phone { get; set; }
     public string Role => GetType().Name;
+    public bool IsEmailConfirmed { get; set; } = false;
 }
 
 public class Admin : User
@@ -281,42 +281,6 @@ public class BookingSeat
     public Seat Seat { get; set; }
 }
 
-public class MovieReview
-{
-    [Key]
-    public int MovieReviewId { get; set; }
-
-    [Required]
-    [MaxLength(5)]
-    public string UserId { get; set; }
-
-    [Required(ErrorMessage = "The review must be linked to a movie.")]
-    public int MovieId { get; set; }
-
-    [Required(ErrorMessage = "A title is required.")]
-    [MaxLength(100)]
-    public string Title { get; set; }
-
-    [Required(ErrorMessage = "A comment is required.")]
-    [StringLength(500, MinimumLength = 10, ErrorMessage = "Review must be between 10 and 500 characters.")]
-    public string Comment { get; set; }
-
-    [Required(ErrorMessage = "A rating is required.")]
-    [Range(1, 10, ErrorMessage = "Rating must be between 1 and 10.")]
-    public int Rating { get; set; }
-
-    public bool? Recommend { get; set; }
-
-    [Required]
-    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
-
-    public bool IsApproved { get; set; } = false;
-
-    // --- Navigation Properties ---
-    public User User { get; set; }
-    public Movie Movie { get; set; }
-}
-
 public class Movie{
     [Key]
     public int MovieId { get; set; }
@@ -341,8 +305,8 @@ public class Movie{
     [MaxLength(255)]
     public string TrailerUrl { get; set; }
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
-    public ICollection<MovieReview> Reviews { get; set; } = new List<MovieReview>();
 }
+
 public class ShowTime
 {
     [Key]
@@ -373,7 +337,6 @@ public class ShowTime
     [NotMapped]
     public DateTime EndTime => StartTime.AddMinutes(Movie?.DurationMinutes ?? 0);
 }
-
 
 public class Hall
 {

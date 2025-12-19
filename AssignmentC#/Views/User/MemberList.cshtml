@@ -30,43 +30,56 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>User Management</h2>
-
-        <div class="btn-group" role="group" aria-label="User Categories">
-            <a asp-action="MemberList" asp-controller="User"
-               class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "MemberList" ? "active" : "")">
-                All Members
-            </a>
-            <a asp-action="StaffList" asp-controller="User"
-               class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "StaffList" ? "active" : "")">
-                Staff Only
-            </a>
-            <a asp-action="AdminList" asp-controller="User"
-               class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "AdminList" ? "active" : "")">
-                Admins Only
-            </a>
-        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="btn-group" role="group" aria-label="User Categories">
+                <a asp-action="MemberList" asp-controller="User"
+                   class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "MemberList" ? "active" : "")">
+                    All Members
+                </a>
+                <a asp-action="StaffList" asp-controller="User"
+                   class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "StaffList" ? "active" : "")">
+                    Staff Only
+                </a>
+                <a asp-action="AdminList" asp-controller="User"
+                   class="btn btn-outline-primary @(ViewContext.RouteData.Values["action"].ToString() == "AdminList" ? "active" : "")">
+                    Admins Only
+                </a>
+            </div>
+        }
     </div>
 
-    @* Added Search Bar to match your StaffList improvement *@
+    @* Search Bar *@
     <div class="row mb-3 align-items-end">
         <div class="col-md-4">
             <h6 class="fw-bold">Search Members</h6>
             <input type="text" id="searchInput" class="form-control shadow-sm" placeholder="Search by name or email..." value="@Model.SearchString" />
         </div>
         <div class="col-md-8 text-end">
-            <a asp-action="AdminAddUser" asp-controller="Admin" asp-route-role="Member" class="btn btn-primary shadow-sm">
-                <i class="bi bi-plus-lg"></i> Add New Member
-            </a>
+            @* Only Admins should see the "Add New" button. If Staff shouldn't add members, wrap this in an if check too *@
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="AdminAddUser" asp-controller="Admin" asp-route-role="Member" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-plus-lg"></i> Add New Member
+                </a>
+            }
         </div>
     </div>
 
-    @* Wrapped the table in this ID for AJAX swapping *@
+    @* UPDATED SECTION: Swaps table based on Role *@
     <div id="tableContainer">
-        <partial name="_MemberList" model="Model" />
+        @if (User.IsInRole("Staff"))
+        {
+            <partial name="_StaffMemberList" model="Model" />
+        }
+        else
+        {
+            <partial name="_MemberList" model="Model" />
+        }
     </div>
 </div>
 
-@* Delete Modal remains exactly the same *@
+@* Delete Modal (Kept for Admins) *@
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -119,6 +132,7 @@
             });
 
             // Handles both Sorting and Pagination clicks
+            // This works for BOTH Admin and Staff tables automatically
             $(document).on('click', '.page-link, .sort-link', function (e) {
                 e.preventDefault();
                 let page = $(this).data('page') || 1;
