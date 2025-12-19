@@ -12,11 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-<<<<<<<< HEAD:AssignmentC#/Migrations/20251218224939_CreateDB.Designer.cs
-    [Migration("20251218224939_CreateDB")]
-========
-    [Migration("20251218192747_CreateDB")]
->>>>>>>> aaebd623948353777a3769ccdfa933ceb21b9673:AssignmentC#/Migrations/20251218192747_CreateDB.Designer.cs
+    [Migration("20251219003333_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -340,6 +336,9 @@ namespace AssignmentC_.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
@@ -357,6 +356,8 @@ namespace AssignmentC_.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PaymentId");
+
+                    b.HasIndex("BookingId");
 
                     b.HasIndex("OrderId");
 
@@ -823,6 +824,12 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
                 {
+                    b.HasOne("AssignmentC_.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("AssignmentC_.Models.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
@@ -832,6 +839,8 @@ namespace AssignmentC_.Migrations
                     b.HasOne("AssignmentC_.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
+
+                    b.Navigation("Booking");
 
                     b.Navigation("Order");
 
