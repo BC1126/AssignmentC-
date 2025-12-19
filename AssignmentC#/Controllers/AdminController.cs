@@ -377,4 +377,63 @@ public class AdminController : Controller
         // Reuse the existing View
         return View("~/Views/User/MemberDetails.cshtml", vm);
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> BatchDeleteMembers(string[] selectedIds)
+    {
+        // 1. Check if anything was selected
+        if (selectedIds == null || selectedIds.Length == 0)
+        {
+            TempData["Info"] = "No items were selected.";
+            return RedirectToAction("MemberList", "User"); // Redirect back to the list
+        }
+
+        // 2. Find all User records that match the selected IDs
+        // We use the Users table because deleting a User automatically deletes the Member
+        var usersToDelete = db.Users.Where(u => selectedIds.Contains(u.UserId)).ToList();
+
+        if (usersToDelete.Count > 0)
+        {
+            // 3. Remove them
+            db.Users.RemoveRange(usersToDelete);
+            await db.SaveChangesAsync();
+
+            TempData["Info"] = $"{usersToDelete.Count} member(s) deleted successfully.";
+        }
+        else
+        {
+            TempData["Info"] = "No matching records found to delete.";
+        }
+
+        // 4. Redirect back to the list
+        // Note: Adjust "MemberList" and "User" if your list is in a different controller!
+        return RedirectToAction("MemberList", "User");
+    }
+
+    // POST: Admin/BatchDeleteStaff
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")] // Only Admins can delete Staff
+    public async Task<IActionResult> BatchDeleteStaff(string[] selectedIds)
+    {
+        if (selectedIds == null || selectedIds.Length == 0)
+        {
+            TempData["Info"] = "No staff selected.";
+            return RedirectToAction("StaffList","User");
+        }
+
+        // 1. Find Users (Deleting the User automatically deletes the Staff record)
+        var staffToDelete = db.Users.Where(u => selectedIds.Contains(u.UserId)).ToList();
+
+        if (staffToDelete.Count > 0)
+        {
+            db.Users.RemoveRange(staffToDelete);
+            await db.SaveChangesAsync();
+            TempData["Info"] = $"{staffToDelete.Count} staff account(s) deleted successfully.";
+        }
+
+        return RedirectToAction("StaffList","User");
+    }
 }
