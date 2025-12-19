@@ -1,0 +1,114 @@
+﻿@model Order
+
+@{
+    ViewBag.Title = "Order Details (Admin)";
+}
+
+@section head {
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .back-btn button {
+            background: #0d6efd;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        .badge-paid {
+            background: #198754;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 5px;
+        }
+
+        .badge-unpaid {
+            background: #dc3545;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background: #6c757d;
+            color: #fff;
+        }
+    </style>
+}
+
+<div class="container">
+
+    <div class="back-btn">
+        <button data-get="/Admin/ViewOrder">← Back</button>
+    </div>
+
+    <p><b>Order ID:</b> @Model.Id</p>
+    <p><b>Date:</b> @Model.Date.ToString("yyyy-MM-dd")</p>
+
+    <p>
+        <b>Paid:</b>
+        <span class="@(Model.Paid ? "badge-paid" : "badge-unpaid")">
+            @(Model.Paid ? "Paid" : "Unpaid")
+        </span>
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int qty = 0;
+                decimal total = 0;
+            }
+
+            @foreach (var ol in Model.OrderLines)
+            {
+                var sub = ol.Price * ol.Quantity;
+                qty += ol.Quantity;
+                total += sub;
+
+                <tr>
+                    <td>@ol.ProductName</td>
+                    <td>@ol.Price</td>
+                    <td>@ol.Quantity</td>
+                    <td>@sub</td>
+                </tr>
+            }
+
+            <tr style="font-weight:bold;background:#e9ecef;">
+                <td colspan="2">Total</td>
+                <td>@qty</td>
+                <td>@total</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

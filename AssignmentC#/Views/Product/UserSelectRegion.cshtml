@@ -91,6 +91,7 @@
                 <option value="@r">@r</option>
             }
         </select>
+        <span asp-validation-for="Region"></span>
     </div>
 
     <div>
@@ -98,6 +99,7 @@
         <select asp-for="Cinema" id="cinema">
             <option value="">-- Select Cinema --</option>
         </select>
+        <span asp-validation-for="Cinema"></span>
     </div>
 
     <div>
@@ -105,7 +107,7 @@
         <input asp-for="Date" type="date" id="collectDate" />
         <span asp-validation-for="Date" class="text-danger"></span>
         <small class="text-muted">
-            You can select today up to 3 days ahead only.
+            You can select today up to 6 days ahead only.
         </small>
 
     </div>

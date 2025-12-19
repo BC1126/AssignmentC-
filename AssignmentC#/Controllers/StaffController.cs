@@ -15,6 +15,8 @@ public class StaffController(DB db, Helper hp) : Controller
         return View("~/Views/Home/StaffDashboard.cshtml");
     }
 
+    [Authorize(Roles = "Staff")]
+    // QR Scan page
     public IActionResult Scan()
     {
         return View();

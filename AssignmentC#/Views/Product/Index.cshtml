@@ -3,7 +3,20 @@
 
 @{
     ViewBag.Title = "Product | Index";
+
+    string backUrl = "/";
+
+    if (User.IsInRole("Admin"))
+    {
+        backUrl = "/Admin/AdminDashboard";
+    }
+    else if (User.IsInRole("Staff"))
+    {
+        backUrl = "/Staff/StaffDashboard";
+    }
+
 }
+
 
 @section head {
     <style>
@@ -182,7 +195,7 @@
 }
 
 <div class="container">
-    <button data-get="/"
+    <button data-get="@backUrl"
             style="background-color:#0d6efd;color:#fff;padding:8px 16px;border:none;border-radius:5px;cursor:pointer;">
         ← Back
     </button>
