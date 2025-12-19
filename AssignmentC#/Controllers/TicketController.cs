@@ -589,7 +589,22 @@ public class TicketController(DB db, Helper hp) : Controller
         return PartialView("_DiscountSummary", vm);
     }
 
-    public IActionResult Receipt()
+    public IActionResult MyTicket()
+    {
+        var email = User.Identity!.Name!;
+        var user = db.Users.FirstOrDefault(u => u.Email == email);
+
+        if (user == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        var p = db.Payments.Where(p => p.User.UserId == user.UserId);
+
+        return View(p);
+    }
+
+    public IActionResult TicketDetail()
     {
         return View();
     }
