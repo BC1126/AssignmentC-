@@ -172,11 +172,12 @@ public class Payment
 {
     [Key]
     public int PaymentId { get; set; }
-    public int amount { get; set; }
-    public bool status { get; set; }
+    public decimal amount { get; set; }
+    public string status { get; set; }
     public DateOnly date {  get; set; }
 
     //FK
+    public Booking Booking { get; set; }
     public User User { get; set; }
     public Order Order { get; set; }
     public List<Promotion> Promotions { get; set; } = [];

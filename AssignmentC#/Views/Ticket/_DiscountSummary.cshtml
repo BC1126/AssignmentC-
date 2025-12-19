@@ -1,0 +1,7 @@
+﻿@model PurchaseVM
+
+<h3>Order Summary</h3>
+<div class="summary-row"><span>Standard Ticket ( x @Model.TicketQuantity )</span><span>RM @Model.TicketSubtotal.ToString("0.00")</span></div>
+<div class="summary-row"><span>Add-On</span><span>RM @Model.OrderSubtotal.ToString("0.00")</span></div>
+<div class="summary-row"><span>Discount</span><span>- RM @Model.DiscountAmount.ToString("0.00")</span></div>
+<div class="summary-row summary-total"><span>Total Payable</span><span>RM @Model.TotalAmount.ToString("0.00")</span></div>

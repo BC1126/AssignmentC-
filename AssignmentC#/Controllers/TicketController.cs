@@ -1,4 +1,5 @@
 ﻿using AssignmentC_.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -14,6 +15,12 @@ public class TicketController(DB db, Helper hp) : Controller
     {
         // Get PurchaseVM from session
         var session = HttpContext.Session.GetString("PurchaseVM");
+
+        if (session == null)
+        {
+            return RedirectToAction("", "Home");
+        }
+
         var purchaseVM = JsonSerializer.Deserialize<PurchaseVM>(session);
 
         // Timer
@@ -50,13 +57,106 @@ public class TicketController(DB db, Helper hp) : Controller
         var vouchers = db.Vouchers.ToList();
 
         ViewBag.Vouchers = vouchers;
-
-
-        
-
         return View(purchaseVM);
     }
 
+    [HttpPost]
+    public IActionResult Checkout(Payment pm)
+    {
+        var voucherCode = HttpContext.Session.GetString("AppliedVoucherCode");
+
+        var v = db.Promotions.OfType<Voucher>().FirstOrDefault(v => v.VoucherCode == voucherCode);
+        List<Promotion> promo = new List<Promotion>();
+        promo.Add(v);
+
+        // Get Cart in Order
+        var cart = hp.GetCart();
+        if (!cart.Any())
+        {
+            TempData["Error"] = "Your cart is empty.";
+            return RedirectToAction("ShoppingCart");
+        }
+
+        var region = HttpContext.Session.GetString("SelectedRegion");
+        var cinema = HttpContext.Session.GetString("SelectedCinema");
+        var collectDateStr = HttpContext.Session.GetString("CollectDate");
+
+        if (region == null || cinema == null || collectDateStr == null)
+        {
+            TempData["Error"] = "Please select region, cinema, and collect date first.";
+            return RedirectToAction("UserSelectRegion");
+        }
+
+        var order = new Order
+        {
+            Date = DateOnly.FromDateTime(DateTime.Today),
+            Paid = true,
+            Region = region,
+            Cinema = cinema,
+            CollectDate = DateOnly.Parse(collectDateStr),
+            Claim = false,
+            MemberEmail = User.Identity!.Name!
+        };
+
+        db.Orders.Add(order);
+
+        foreach (var (productId, quantity) in cart)
+        {
+            var p = db.Products.Find(productId);
+            if (p == null) continue;
+
+            // Stock validation
+            if (quantity > p.Stock)
+            {
+                TempData["Error"] = $"Not enough stock for {p.Name}. Available: {p.Stock}";
+                return RedirectToAction("ShoppingCart","Product");
+            }
+
+            // Reduce stock
+            p.Stock -= quantity;
+
+            // Add order line
+            order.OrderLines.Add(new OrderLine
+            {
+                ProductId = productId,
+                ProductName = p.Name,
+                ProductPhotoURL = p.PhotoURL,
+                Price = p.Price,
+                Quantity = quantity
+            });
+
+        }
+
+        db.SaveChanges();
+        hp.SetCart();
+
+        // Order End
+        // -------------------------------------------------
+
+        // Get User
+
+        var user = db.Users.FirstOrDefault(v => v.Email == User.Identity!.Name!);
+
+
+        var a = HttpContext.Session.GetString("TotalAmount");
+        decimal amount = decimal.Parse(a);
+
+        var payment = new Payment
+        {
+            amount = amount,
+            status = "Paid",
+            date = DateOnly.FromDateTime(DateTime.Today),
+
+            Promotions = promo,
+            Order = order,
+            User = user,
+        };
+
+        db.Payments.Add(payment);
+        db.SaveChanges();
+
+        return RedirectToAction("Receipt", payment); ;
+    }
     public IActionResult Purchase()
     {
         // Get Booking Data
@@ -445,6 +545,48 @@ public class TicketController(DB db, Helper hp) : Controller
             HttpContext.Session.SetString("AppliedVoucherCode", voucher.VoucherCode);
             return PartialView("_AppliedVoucher", voucher);
         }
+    }
+
+    [HttpPost]
+    public IActionResult OrderSummary(decimal subtotal, decimal ticketSubtotal, int quantity, decimal addOn)
+    {
+        var voucherCode = HttpContext.Session.GetString("AppliedVoucherCode");
+
+        var vc = db.Vouchers.FirstOrDefault(v => v.VoucherCode == voucherCode);
+        decimal dv = 0;
+        decimal total = 0;
+
+        if(vc == null)
+        {
+            total = subtotal;
+        }
+        else
+        {
+            if (string.Equals(vc.VoucherType.Trim(), "percentage", StringComparison.OrdinalIgnoreCase))
+            {
+                decimal d = vc.DiscountValue / 100;
+                dv = subtotal * d;
+                total = subtotal - dv;
+            }
+            else
+            {
+                dv = vc.DiscountValue;
+                total = subtotal - dv;
+            }
+        }
+
+        var vm = new PurchaseVM
+        {
+            TicketSubtotal = ticketSubtotal,
+            TicketQuantity = quantity,
+            OrderSubtotal = addOn,
+            DiscountAmount = dv,
+            TotalAmount = total,
+        };
+
+        HttpContext.Session.SetString("TotalAmount", total.ToString("0.00"));
+
+        return PartialView("_DiscountSummary", vm);
     }
 
     public IActionResult Receipt()

@@ -386,14 +386,15 @@ namespace AssignmentC_.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(5)");
 
-                    b.Property<int>("amount")
-                        .HasColumnType("int");
+                    b.Property<decimal>("amount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateOnly>("date")
                         .HasColumnType("date");
 
-                    b.Property<bool>("status")
-                        .HasColumnType("bit");
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PaymentId");
 

@@ -3,11 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AssignmentC_.Models
 {
-    public class TicketViewModel
-    {
-
-    }
-
     public class PurchaseVM
     {
         public int ShowTimeId { get; set; }
@@ -42,6 +37,9 @@ namespace AssignmentC_.Models
 
         // Overall
         public decimal total { get; set; }
+
+        public decimal DiscountAmount { get; set; }
+        public decimal TotalAmount { get; set; }
     }
 
     public class TimerViewModel
@@ -96,5 +94,8 @@ namespace AssignmentC_.Models
         public List<int> BirthMonth { get; set; } = new List<int>();
         // Assigned User use
         public int? AssignedUserId { get; set; }
+
+        
     }
+
 }

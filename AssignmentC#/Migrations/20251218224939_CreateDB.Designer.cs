@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentC_.Migrations
 {
     [DbContext(typeof(DB))]
-    [Migration("20251218082823_CreateDB")]
+    [Migration("20251218224939_CreateDB")]
     partial class CreateDB
     {
         /// <inheritdoc />
@@ -389,14 +389,15 @@ namespace AssignmentC_.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(5)");
 
-                    b.Property<int>("amount")
-                        .HasColumnType("int");
+                    b.Property<decimal>("amount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateOnly>("date")
                         .HasColumnType("date");
 
-                    b.Property<bool>("status")
-                        .HasColumnType("bit");
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PaymentId");
 

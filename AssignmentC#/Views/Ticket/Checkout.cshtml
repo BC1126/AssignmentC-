@@ -139,10 +139,13 @@
                 </div>
             </div>
 
-            <div class="actions">
-                <a href="/Ticket/Receipt" class="btn-primary">Pay $35.40</a>
-                <button class="btn-secondary">Cancel</button>
-            </div>
+            <form method="post" action="/Ticket/Checkout">
+                <div class="actions">
+                    <button class="btn-primary">Pay</button>
+                    <button class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+            
         </section>
 
         <!-- Right -->
@@ -166,12 +169,22 @@
                 </form>
             </div>
 
-            <div class="card">
-                <h3>Order Summary</h3>
-                <div class="summary-row"><span>Standard Ticket (x @Model.TicketQuantity)</span><span>@Model.TicketSubtotal</span></div>
-                <div class="summary-row"><span>Add-On</span><span>@Model.OrderSubtotal</span></div>
-                <div class="summary-row summary-total"><span>Total Payable</span><span>@Model.total</span></div>
-            </div>
+            <form data-ajax="true"
+                  data-ajax-update="#discountSummary"
+                  asp-action="OrderSummary"
+                  method="post"
+                  id="orderSummaryForm">
+
+                <input type="hidden" name="subtotal" value="@Model.total" />
+                <input type="hidden" name="ticketSubtotal" value="@Model.TicketSubtotal" />
+                <input type="hidden" name="quantity" value="@Model.TicketQuantity" />
+                <input type="hidden" name="addOn" value="@Model.OrderSubtotal" />
+
+                <div class="card" id="discountSummary">
+                   <partial name="_DiscountSummary" />
+                </div>
+            </form>
+            
         </section>
         
 
@@ -211,6 +224,7 @@
 
                     <div class="voucher-content">
                         <div>
+                            <strong>Voucher Code : @v.VoucherCode</strong><br />
                             @if(@v.VoucherType == "percentage")
                             {
                                 <strong>@v.DiscountValue % off</strong>
@@ -220,7 +234,7 @@
                                 <strong>RM @v.DiscountValue off</strong>
                             }
                             
-                            <p>Minimum Spend : @v.MinSpend</p>
+                            <p>Minimum Spend : RM @v.MinSpend</p>
                         </div>
                         <span class="badge">@v.StartDate.ToString("dddd-MM-yyyy") - @v.EndDate.ToString("dddd-MM-yyyy") </span>
                     </div>
@@ -244,7 +258,29 @@
         }, 1000);
 
         $('[data-voucher]').on('click', e => {
-            $('#appliedVoucherForm').submit()
-        })
+            e.preventDefault(); // prevent normal button action
+
+            // submit appliedVoucherForm via AJAX
+            $.ajax({
+                url: $('#appliedVoucherForm').attr('action'),
+                type: 'POST',
+                data: $('#appliedVoucherForm').serialize(),
+                success: function (response) {
+                    // update appliedVoucher div
+                    $('#appliedVoucher').html(response);
+
+                    // now submit orderSummaryForm after appliedVoucherForm completes
+                    $.ajax({
+                        url: $('#orderSummaryForm').attr('action'),
+                        type: 'POST',
+                        data: $('#orderSummaryForm').serialize(),
+                        success: function (res) {
+                            // update discount summary
+                            $('#discountSummary').html(res);
+                        }
+                    });
+                }
+            });
+        });
     </script>
 }

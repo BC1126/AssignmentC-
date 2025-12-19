@@ -82,7 +82,7 @@
         var disabled = !Model.Any() || !User.IsInRole("Member");
     }
 
-    <button data-post="/Product/Checkout" disabled="@disabled" class="btn-checkout">
+    <button data-post="/Ticket/Purchase" disabled="@disabled" class="btn-checkout">
         Checkout
     </button>
 
