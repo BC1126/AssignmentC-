@@ -2,6 +2,11 @@
 
 @{
     var voucherCode = HttpContextAccessor.HttpContext.Session.GetString("AppliedVoucherCode");
+    var error = HttpContextAccessor.HttpContext.Session.GetString("VoucherError");
+}
+
+@if(error != null){
+    <b style="color: red;">@error</b>
 }
 
 @if (voucherCode == null)

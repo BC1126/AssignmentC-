@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 using System.Text.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -54,15 +55,66 @@ public class TicketController(DB db, Helper hp) : Controller
         }
 
         // Get all vouchers
-        var vouchers = db.Vouchers.ToList();
+        var today = DateTime.Today;
+        var vouchers = db.Promotions
+                         .OfType<Voucher>()
+                         .Where(v => v.StartDate <= today && v.EndDate >= today
+                         )
+                         .ToList();
 
         ViewBag.Vouchers = vouchers;
         return View(purchaseVM);
     }
 
     [HttpPost]
-    public IActionResult Checkout(Payment pm)
+    public IActionResult Checkout(PurchaseVM vm)
     {
+        ModelState.Clear();
+
+        if (vm.PaymentMethod == null)
+        {
+            ModelState.AddModelError("", "Please select a payment method.");
+        }
+
+        if (vm.PaymentMethod == "Card")
+        {
+            if (vm.CardNumber == null)
+            { 
+                ModelState.AddModelError("CardNumber", "Card number is required.");
+            }
+
+            if (vm.ExpiryDate == null)
+            {
+                ModelState.AddModelError("ExpiryDate", "Expiry date is required.");
+            }
+
+            if (vm.CVV == null)
+            {
+                ModelState.AddModelError("CVV", "CVV is required.");
+            }
+        }
+        else if (vm.PaymentMethod == "EWallet")
+        {
+            if (string.IsNullOrWhiteSpace(vm.PhoneNumber))
+            {
+                ModelState.AddModelError("PhoneNumber", "Phone number is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(vm.Pin))
+            {
+                ModelState.AddModelError("Pin", "PIN is required.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToList();
+            return RedirectToAction("Index");
+        }
+
         var voucherCode = HttpContext.Session.GetString("AppliedVoucherCode");
 
         var v = db.Promotions.OfType<Voucher>().FirstOrDefault(v => v.VoucherCode == voucherCode);
@@ -100,8 +152,10 @@ public class TicketController(DB db, Helper hp) : Controller
 
         db.Orders.Add(order);
 
+        decimal orderSub = 0;
         foreach (var (productId, quantity) in cart)
         {
+            
             var p = db.Products.Find(productId);
             if (p == null) continue;
 
@@ -124,6 +178,8 @@ public class TicketController(DB db, Helper hp) : Controller
                 Price = p.Price,
                 Quantity = quantity
             });
+
+            orderSub += (p.Price * quantity);
 
         }
 
@@ -151,6 +207,7 @@ public class TicketController(DB db, Helper hp) : Controller
             return RedirectToAction("Index", "Movie");
         }
 
+
         var finalBooking = new Booking
         {
             MemberId = data.MemberId,
@@ -167,24 +224,50 @@ public class TicketController(DB db, Helper hp) : Controller
         db.Bookings.Add(finalBooking);
 
         var a = HttpContext.Session.GetString("TotalAmount");
-        decimal amount = decimal.Parse(a);
-
-        var payment = new Payment
+        decimal amount = 0;
+        if (a != null)
         {
-            amount = amount,
-            status = "Paid",
-            date = DateOnly.FromDateTime(DateTime.Today),
+           amount  = decimal.Parse(a);
+        }
+        else
+        {
+            amount = data.TicketSubtotal + orderSub;
+        }
 
-            Booking = finalBooking,
-            Promotions = promo,
-            Order = order,
-            User = user,
-        };
 
-        db.Payments.Add(payment);
-        db.SaveChanges();
+        if(v != null)
+        {
+            var payment = new Payment
+            {
+                amount = amount,
+                status = "Paid",
+                date = DateOnly.FromDateTime(DateTime.Today),
 
-        return RedirectToAction("Receipt", payment); ;
+                Booking = finalBooking,
+                Promotions = promo,
+                Order = order,
+                User = user,
+            };
+            db.Payments.Add(payment);
+            db.SaveChanges();
+            return RedirectToAction("Receipt", payment.PaymentId); ;
+        }
+        else
+        {
+            var payment = new Payment
+            {
+                amount = amount,
+                status = "Paid",
+                date = DateOnly.FromDateTime(DateTime.Today),
+
+                Booking = finalBooking,
+                Order = order,
+                User = user,
+            };
+            db.Payments.Add(payment);
+            db.SaveChanges();
+            return RedirectToAction("Receipt", payment.PaymentId); ;
+        }
     }
     public IActionResult Purchase()
     {
@@ -554,11 +637,12 @@ public class TicketController(DB db, Helper hp) : Controller
     }
 
     [HttpPost]
-    public IActionResult ApplyVoucher(string? SelectedVoucher)
+    public IActionResult ApplyVoucher(string SelectedVoucher)
     {
         if(SelectedVoucher == null)
         {
             HttpContext.Session.Remove("AppliedVoucherCode");
+            HttpContext.Session.Remove("VoucherError");
             return PartialView("_AppliedVoucher");
         }
 
@@ -569,11 +653,36 @@ public class TicketController(DB db, Helper hp) : Controller
         if(voucher == null)
         {
             HttpContext.Session.Remove("AppliedVoucherCode");
+            HttpContext.Session.Remove("VoucherError");
             return PartialView("_AppliedVoucher");
         }
         else
         {
+            var subtotalStr = HttpContext.Session.GetString("Subtotal");
+            decimal subtotal = 0;
+            if (subtotalStr != null)
+            {
+                subtotal = decimal.Parse(subtotalStr);
+            }
+
+            if (subtotal < voucher.MinSpend)
+            {
+                HttpContext.Session.Remove("AppliedVoucherCode");
+                HttpContext.Session.SetString("VoucherError", $"Minimum spend RM {voucher.MinSpend:F2} required.");
+                return PartialView("_AppliedVoucher");
+            }
+
+            var today = DateTime.Today;
+
+            if (voucher.StartDate > today || voucher.EndDate < today)
+            {
+                HttpContext.Session.Remove("AppliedVoucherCode");
+                HttpContext.Session.SetString("VoucherError", "This voucher is expired.");
+                return PartialView("_AppliedVoucher");
+            }
+
             HttpContext.Session.SetString("AppliedVoucherCode", voucher.VoucherCode);
+            HttpContext.Session.Remove("VoucherError");
             return PartialView("_AppliedVoucher", voucher);
         }
     }
@@ -615,10 +724,13 @@ public class TicketController(DB db, Helper hp) : Controller
             TotalAmount = total,
         };
 
+        decimal sub = ticketSubtotal + addOn;
+        HttpContext.Session.SetString("Subtotal", sub.ToString("0.00"));
         HttpContext.Session.SetString("TotalAmount", total.ToString("0.00"));
 
         return PartialView("_DiscountSummary", vm);
     }
+
     public IActionResult Receipt()
     {
         return View();
@@ -700,5 +812,79 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(payment);
     }
 
-    
+    public IActionResult PaymentList()
+    {
+        var payment = db.Payments
+                        .Include(p => p.User)
+                        .Include(p => p.Booking)
+                        .ThenInclude(p => p.ShowTime)
+                        .ThenInclude(p => p.Hall)
+                        .ThenInclude(p => p.Outlet)
+
+                        .Include(p => p.Booking)
+                        .ThenInclude(p => p.ShowTime)
+                        .ThenInclude(p => p.Movie)
+
+                        .Include(p => p.Order)
+                        .ToList();
+
+        return View(payment);
+    }
+
+    [HttpPost]
+    public IActionResult Refund(int paymentId)
+    {
+        var payment = db.Payments
+                        .Include(p => p.User)
+                        .Include(p => p.Booking)
+                        .FirstOrDefault(p => p.PaymentId == paymentId);
+
+        if (payment == null)
+        {
+            return RedirectToAction("Index");
+        }
+
+        payment.status = "Refund";
+        db.SaveChanges();
+
+
+        // Send Email
+        string body = $@"
+        <h2>Your Ticket Has been successfully cancelled</h2>
+        <p>Dear {payment.User.Name},</p>
+        <p>Your refund has been issued. This make take 5 to 15 days to show in your bank account.</p><br>
+        <p>Thank you for your patient</p>
+
+        <ul>
+            <li><strong>Payment ID:</strong> {payment.PaymentId}</li>
+            <li><strong>Refund Amount:</strong> RM {payment.amount:F2}</li>
+        </ul>
+
+        <p>The amount will be returned to your original payment method.</p>
+        <p>Thank you.</p>
+    ";
+
+        try
+        {
+            var mail = new System.Net.Mail.MailMessage
+            {
+                Subject = "Verify Your Email",
+                Body = body,
+                IsBodyHtml = true
+            };
+            mail.To.Add(User.Identity!.Name!);
+            hp.SendEmail(mail);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = "User registered, but email failed: " + ex.Message;
+        }
+
+        // Set database
+        var booking = payment.Booking;
+        db.Bookings.Remove(booking);
+        db.SaveChanges();
+
+        return RedirectToAction("MyTicket");
+    }
 }

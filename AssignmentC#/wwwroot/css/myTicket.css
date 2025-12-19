@@ -103,8 +103,8 @@ button {
        Main Content
        ========================= */
 .container {
-    max-width: 1024px;
-    margin: 0 auto;
+    width: 1200px;
+    margin: 40px auto;
     padding: 32px 16px;
     display: flex;
     flex-direction: column;
@@ -230,9 +230,9 @@ h1 {
 }
 
 .badges span {
-    font-size: 10px;
+    font-size: 15px;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: 4px 16px;
     border-radius: 4px;
     text-transform: uppercase;
 }
@@ -240,6 +240,11 @@ h1 {
 .badge-confirmed {
     background: #dcfce7;
     color: #15803d;
+}
+
+.badge-refund {
+    background: #fcdcdc;
+    color: #801515;
 }
 
 .badge-format {
@@ -289,13 +294,7 @@ h1 {
     --text-muted: #94a3b8;
     --success: #22c55e;
 }
-.container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 30px;
-    background: lightgray;
-    border-radius: 20px;
-}
+
 
 .grid {
     display: grid;

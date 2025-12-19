@@ -1,0 +1,55 @@
+﻿@model IEnumerable<Payment>
+
+@section head{
+    <link href="/css/myTicket.css" rel="stylesheet" />
+}
+
+<div class="filters">
+    <input placeholder="Search by Name, Movie or Transaction ID" />
+    <input value="Oct 1 - Oct 31, 2023" />
+    <select>
+        <option>Payment Status</option>
+    </select>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th class="tableRow">Transaction</th>
+                <th class="tableRow">Name</th>
+                <th class="tableRow">Email</th>
+                <th class="tableRow">Date</th>
+                <th class="tableRow">Status</th>
+                <th class="tableRow">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vm in Model)
+            {
+                <tr>
+                    <td><input type="checkbox" name="paymentId" value="@vm.PaymentId"/></td>
+                    <td class="tableRow">@vm.User.Name</td>
+                    <td class="tableRow">@vm.User.Email</td>
+                    <td class="tableRow">@vm.Booking.ShowTime.Movie.Title</td>
+                    <td class="tableRow">@vm.date.ToString("dd MMMM yyyy")</td>
+                    <td class="tableRow"><span class="status paid">@vm.status</span></td>
+                    <td class="tableRow">@vm.amount</td>
+                    <!--
+                        <td class="actions tableRow">
+                            <button class="btnActions">Edit</button>
+                            <button class="btnActions">Delete</button>
+                        </td>
+                    -->
+                </tr>
+            }
+
+            
+
+
+
+
+        </tbody>
+    </table>
+</div>

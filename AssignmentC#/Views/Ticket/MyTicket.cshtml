@@ -4,6 +4,10 @@
     <link href="/css/myTicket.css" rel="stylesheet" />
 }
 
+@{
+    var css = "";
+}
+
 <div class="app">
     <!-- Main -->
     <main>
@@ -28,25 +32,42 @@
 
             @foreach(var vm in Model)
             {
+                if (vm.Status == "refund")
+                {
+                    css = "badge-confirmed";
+                }
+                else
+                {
+                    css = "badge-refund";
+                }
                 <div class="ticket">
                 <div class="poster"><img src="/uploads/@vm.Movie.PosterUrl" /></div>
                 <div class="ticket-content">
                     <div>
                         <div class="badges">
-                                <span class="badge-confirmed">@vm.Status</span>
+                                <span class="@css">@vm.Status</span>
                                 <span class="badge-format">Paid At : @vm.Date</span>
                         </div>
                             <h3 class="movieTitle">@vm.Movie.Title</h3>
                             <p class="subtitle">@vm.Movie.PremierDate.ToString("dddd, dd MMMM yyyy") • @vm.ShowTime.StartTime</p>
                     </div>
-                    <div class="actions">
-                            <a href="/Ticket/TicketDetail/@vm.PaymentId"><button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button></a>
-                    </div>
+                    
+                            <div class="actions">
+                               
+                                <a href="/Ticket/TicketDetail/@vm.PaymentId"><button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button></a>
+                                @if (vm.Status == "refund")
+                                {
+                                    <form method="post" action="/Ticket/Refund" id="refundForm">
+                                    <input type="hidden" name="paymentId" value="@vm.PaymentId" />
+                                        <button type="submit"><span class="material-symbols-outlined">qr_code_2</span>Refund</button>
+                                    </form>
+                                }
+                                
+                            </div>
+                    
                 </div>
             </div>
             }
-            
-
         </div>
     </main>
 

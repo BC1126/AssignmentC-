@@ -37,7 +37,7 @@
             </div>
 
 
-
+            <!--
                 <div class="card">
                     <div class="flex justify-between items-start mb-4 memberPoint">
                         <div>
@@ -80,14 +80,16 @@
                         </div>
                     </div>
                 </div>
+            -->
 
             <!-- Payment Method-->
+            <form method="post" action="/Ticket/Checkout">
             <div class="card">
                 <h3>Payment Method</h3>
 
                 <div class="paymentSelect">
                     <label for="creditCard" class="methodBtn" data-method="creditCard">
-                        <input type="radio" name="method" id="creditCard" checked/>
+                            <input type="radio" name="PaymentMethod" id="creditCard" value="Card" checked />
                         <div class="methodCard">
                             <span class="material-symbols-outlined">credit_card</span>
                             &nbsp; Card
@@ -96,7 +98,7 @@
                     </label>
 
                     <label for="ewallet" class="methodBtn" data-method="ewallet">
-                        <input type="radio" name="method" id="ewallet" />
+                            <input type="radio" name="PaymentMethod" id="ewallet" value="EWallet" />
                         <div class="methodCard">
                             <span class="material-symbols-outlined">account_balance_wallet</span>
                             &nbsp; E-wallet
@@ -106,21 +108,21 @@
 
                 <div id="payWithCard">
                     <label>Card Number</label>
-                    <input type="text" placeholder="0000 0000 0000 0000" />
+                        <input type="text" placeholder="0000 0000 0000 0000" name="CardNumber" />
 
                     <div class="cardInputDetail">
 
                         <div class="form-row">
                             <div>
                                 <label>Expiry Date</label>
-                                <input type="month" placeholder="MM/YY" />
+                                <input type="month" placeholder="MM/YY" name="ExpiryDate" />
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div>
                                 <label>CVV</label>
-                                <input type="text" placeholder="XXX" />
+                                <input type="text" placeholder="XXX" name="CVV" />
                             </div>
                         </div>
                     </div>
@@ -128,18 +130,18 @@
                 
                 <div id="payWithEwallet">
                     <label>Phone Number</label>
-                    <input type="text" placeholder="+6012 3456 789" />
+                    <input type="text" placeholder="+6012 3456 789" name="PhoneNumber" />
 
                     <div class="form-row">
                         <div>
                             <label>PIN Number</label>
-                            <input type="password" placeholder="PIN Number" />
+                            <input type="password" placeholder="PIN Number" name="Pin" />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <form method="post" action="/Ticket/Checkout">
+            
                 <div class="actions">
                     <button class="btn-primary">Pay</button>
                     <button class="btn-secondary">Cancel</button>

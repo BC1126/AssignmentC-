@@ -37,9 +37,15 @@ namespace AssignmentC_.Models
 
         // Overall
         public decimal total { get; set; }
-
         public decimal DiscountAmount { get; set; }
         public decimal TotalAmount { get; set; }
+
+        public string PaymentMethod { get; set; }
+        public string? CardNumber { get; set; }
+        public string? ExpiryDate { get; set; }
+        public string? CVV { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Pin { get; set; }
     }
 
     public class TimerViewModel
@@ -109,5 +115,4 @@ namespace AssignmentC_.Models
         public ShowTime ShowTime { get; set; }
         public Movie Movie { get; set; }
     }
-
 }

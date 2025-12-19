@@ -180,15 +180,14 @@ public class Payment
     public Booking Booking { get; set; }
     public User User { get; set; }
     public Order Order { get; set; }
-    public List<Promotion> Promotions { get; set; } = [];
+    public List<Promotion> Promotions { get; set; }
 }
 
 public class Promotion
 {
     [Key]
     public int PromotionId { get; set; }
-
-    public List<Payment> Payments { get; set; } = [];
+    public List<Payment> Payments { get; set; }
 }
 
 public class Memberpoints : Promotion
@@ -217,9 +216,17 @@ public class Voucher : Promotion
     public DateTime EndDate { get; set; }
     public DateTime CreatedTime { get; set; }
     public decimal MinSpend { get; set; }
+}
 
-    
+public class VoucherUsage
+{
+    public int VoucherUsageId { get; set; }
+    public decimal DiscounAmount { get; set; }
+    public DateTime UsedTime { get; set; }
 
+    // FK
+    public Promotion Promotion { get; set; }
+    public User User { get; set; }
 }
 
 public class VoucherCondition
