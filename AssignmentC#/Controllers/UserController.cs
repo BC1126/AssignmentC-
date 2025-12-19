@@ -1,12 +1,16 @@
 ﻿using AssignmentC_.Models;
+using AssignmentC_.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System.IO;
+using System.Net.Mail;
 using System.Security.Claims;
-using AssignmentC_.Models;
 
 namespace AssignmentC_.Controllers;
 
@@ -16,12 +20,17 @@ public class UserController : Controller
     private readonly DB db;
     private readonly Helper hp;
     private readonly IWebHostEnvironment en;
+    private readonly IDataProtector _protector;
+    private readonly IMemoryCache _cache;
 
-    public UserController(DB db, Helper hp, IWebHostEnvironment en)
+    public UserController(DB db, Helper hp, IWebHostEnvironment en, IDataProtectionProvider provider, IMemoryCache cache)
     {
         this.db = db;
         this.hp = hp;
         this.en = en;
+        _protector = provider.CreateProtector("PasswordResetPurpose");
+        _protector = provider.CreateProtector("CaptchaProtector");
+        _cache = cache;
     }
 
     public async Task<IActionResult> MemberList(string sortOrder, string searchString, int? pageNumber)
@@ -67,9 +76,15 @@ public class UserController : Controller
             SortOrder = sortOrder
         };
 
-        // 7. AJAX Check: Return only the table rows if requested via JavaScript
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
+            // If the user is Staff, send them the Read-Only table
+            if (User.IsInRole("Staff"))
+            {
+                return PartialView("_StaffMemberList", model);
+            }
+
+            // Everyone else (Admin) gets the full Edit/Delete table
             return PartialView("_MemberList", model);
         }
 
@@ -181,84 +196,149 @@ public class UserController : Controller
     // 1. REGISTER ACTIONS
     // ====================================================================
 
+    [HttpGet]
     public IActionResult Register()
     {
-        // FIX 1: Explicitly specify the view path since the file is in Views/Home/
+        string code = hp.GenerateCaptchaCode();
+
+        // 2. Set ViewBag BEFORE returning the view
+        ViewBag.CaptchaCode = code;
+        ViewBag.EncryptedCaptcha = _protector.Protect(code);
+
+        // 3. Return the view directly
         return View("~/Views/Home/Register.cshtml");
     }
 
-    // POST: User/Register (Route is /User/Register)
+    // POST: User/Register
     [HttpPost]
-    [ValidateAntiForgeryToken] // FIX 2: Security - Prevents CSRF Attacks
-    public IActionResult Register(RegisterVM vm)
+    [ValidateAntiForgeryToken]
+    public IActionResult Register(RegisterVM vm, string encryptedCaptcha)
     {
-        // 1. Check for email existence 
-        if (ModelState.GetValidationState("Email") != ModelValidationState.Invalid &&
-            db.Members.Any(u => u.Email == vm.Email))
+        // --- 1. CAPTCHA CHECK ---
+        try
         {
-            ModelState.AddModelError("Email", "Duplicated Email.");
+            string actualCode = _protector.Unprotect(encryptedCaptcha);
+            if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
+            {
+                ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
+            }
+        }
+        catch
+        {
+            ModelState.AddModelError("CaptchaInput", "Verification expired.");
         }
 
-        // --- PHOTO REQUIRED LOGIC ---
-        string photoUrl;
+        // --- 2. DUPLICATE CHECK ---
+        if (db.Users.Any(u => u.Email == vm.Email))
+        {
+            ModelState.AddModelError("Email", "Email already in use.");
+        }
 
+        // --- 3. PHOTO LOGIC ---
+        string photoUrl = "/photos/default.jpg"; // Default
         if (vm.Photo != null)
         {
-            // Use your existing helper for uploads
             photoUrl = hp.SavePhoto(vm.Photo, "photos");
         }
-        else
-        {
-            // 1. Generate a unique name just like your helper does
-            string fileName = Guid.NewGuid().ToString("n") + ".jpg";
+        // (You can add your default image copy logic here if needed)
 
-            // 2. Define where the master default is and where the new user photo goes
-            string sourceFile = Path.Combine(en.WebRootPath, "img", "default.jpg"); // Path to your original
-            string destFolder = Path.Combine(en.WebRootPath, "photos");
-            string destFile = Path.Combine(destFolder, fileName);
-
-            // 3. Ensure folder exists and copy
-            if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
-            System.IO.File.Copy(sourceFile, destFile);
-
-            photoUrl = $"/photos/{fileName}";
-        }
-        // --- END PHOTO LOGIC ---
-
+        // =========================================================
+        // MAIN LOGIC START
+        // =========================================================
         if (ModelState.IsValid)
         {
+            // A. CREATE USER OBJECT
+            string newUserId = hp.GenerateNextUserId("M");
+            var newMember = new Member
+            {
+                UserId = newUserId,
+                Email = vm.Email,
+                PasswordHash = hp.HashPassword(vm.Password),
+                Name = vm.Name,
+                PhotoURL = photoUrl,
+                Gender = vm.Gender,
+                Phone = vm.Phone,
+                IsEmailConfirmed = false
+            };
+
+            // B. TRY TO SAVE TO DB
             try
             {
-
-                // NEW STEP: Generate the Primary Key (UserId)
-                string newUserId = hp.GenerateNextUserId("M"); // Assuming 'M' is the prefix for Member/User
-
-                // Create and add new Member
-                db.Members.Add(new Member
-                {
-                    // CRITICAL FIX: Assign the generated Primary Key
-                    UserId = newUserId,
-
-                    Email = vm.Email,
-                    PasswordHash = hp.HashPassword(vm.Password),
-                    Name = vm.Name,
-                    PhotoURL = photoUrl,
-                    Gender = vm.Gender,
-                    Phone = vm.Phone
-                });
-
-                db.SaveChanges();
-
-                TempData["Info"] = "Register successfully. Please login.";
-                return RedirectToAction("Login");
+                db.Members.Add(newMember);
+                db.SaveChanges(); // <--- CRITICAL MOMENT
             }
             catch (Exception ex)
             {
-                // Log ex here for true errors (e.g., unique constraint violations, etc.)
+                // If DB fails, show error and STOP.
+                ModelState.AddModelError("", "Database Error: " + ex.Message);
+                goto Fail; // Jump to the end to reload page
             }
-            
+
+            // C. TRY TO SEND EMAIL (Separate Try/Catch)
+            // If this fails, we STILL redirect because the user is already created!
+            string secureToken = _protector.Protect(newUserId);
+            var verifyUrl = Url.Action("Verify", "User", new { token = secureToken }, protocol: Request.Scheme);
+
+            try
+            {
+                var mail = new System.Net.Mail.MailMessage
+                {
+                    Subject = "Verify Your Email",
+                    Body = $"<a href='{verifyUrl}'>Click here to verify</a>",
+                    IsBodyHtml = true
+                };
+                mail.To.Add(vm.Email);
+                hp.SendEmail(mail);
+            }
+            catch (Exception ex)
+            {
+                // Just log it to TempData, don't stop the redirect
+                TempData["Error"] = "User registered, but email failed: " + ex.Message;
+                TempData["DebugLink"] = verifyUrl; // Keep this so you can verify manually
+            }
+
+            // D. SUCCESS REDIRECT
+            return RedirectToAction("VerifyEmailSent", "User");
         }
+
+    // =========================================================
+    // FAILURE HANDLER
+    // =========================================================
+    Fail:
+        string newCode = hp.GenerateCaptchaCode();
+        ViewBag.CaptchaCode = newCode;
+        ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
         return View("~/Views/Home/Register.cshtml", vm);
+    }
+
+    public IActionResult Verify(string token)
+    {
+        if (string.IsNullOrEmpty(token)) return BadRequest("Token is missing");
+
+        try
+        {
+            string userId = _protector.Unprotect(token);
+
+            var user = db.Users.FirstOrDefault(u => u.UserId == userId);
+            if (user == null) return NotFound("User not found.");
+
+            if (!user.IsEmailConfirmed)
+            {
+                user.IsEmailConfirmed = true;
+                db.SaveChanges();
+            }
+
+            return View("VerifySuccess");
+        }
+        catch
+        {
+            return BadRequest("Invalid or expired token.");
+        }
+    }
+
+    public IActionResult VerifyEmailSent()
+    {
+        return View();
     }
 
     // ====================================================================
@@ -268,81 +348,125 @@ public class UserController : Controller
     // GET: Account/Login
     public IActionResult Login(string returnUrl = null)
     {
+        
         if (!string.IsNullOrEmpty(returnUrl))
         {
             TempData["Info"] = "Please Login First";
         }
+        string code = hp.GenerateCaptchaCode();
 
+        // 1. Show the code to the user
+        ViewBag.CaptchaCode = code;
+
+        // 2. Encrypt the answer for the hidden field
+        ViewBag.EncryptedCaptcha = _protector.Protect(code);
         ViewBag.ReturnUrl = returnUrl;
         return View("~/Views/Home/Login.cshtml");
     }
 
-
-    // POST: Account/Login - Handles user authentication
-    // UserController.cs
-
-    // ... (existing Register actions and GET Login action) ...
-
-    // POST: User/Login
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Login(LoginVM vm)
+    public IActionResult Login(LoginVM vm, string encryptedCaptcha)
     {
-        // 1. Basic Model State Validation
-        if (!ModelState.IsValid)
+        string cacheKey = $"LoginFail_{vm.Email}";
+        string loginViewPath = "~/Views/Home/Login.cshtml";
+
+        // 1. Lockout Check
+        if (_cache.TryGetValue(cacheKey, out int fails) && fails >= 3)
         {
-            // Re-display the view if client-side validation failed
-            return View("~/Views/Home/Login.cshtml", vm);
+            ModelState.AddModelError("", "Too many failed attempts. Locked for 15 minutes.");
+            goto SkipToView;
         }
 
-        // 2. Find the user by email
-        var user = db.Users.FirstOrDefault(u => u.Email == vm.Email);
-
-        if (user == null)
-        {
-            // Check if the user exists in the base Users table (if Members is empty)
-            // Note: For a robust system, you might check the base Users table first if Admin/Staff logins are handled here too.
-            ModelState.AddModelError("Email", "Invalid login attempt.");
-            return View("~/Views/Home/Login.cshtml", vm);
-        }
-
-        // 3. Verify the password hash
-        bool passwordMatch = hp.VerifyPassword(user.PasswordHash, vm.Password);
-
-        if (!passwordMatch)
-        {
-            ModelState.AddModelError("Password", "Invalid login attempt.");
-            return View("~/Views/Home/Login.cshtml", vm);
-        }
-
-        // 4. Authentication and Sign In
+        // 2. CAPTCHA Verification
         try
         {
-            hp.SignIn(user.Email, user.Role, vm.RememberMe); // user.Role should now be "Admin" or "Member"
-
-            TempData["Info"] = $"Welcome back, {user.Name}!";
-
-            // 5. Role-Based Redirect Logic
-            if (user.Role == "Admin")
+            string actualCode = _protector.Unprotect(encryptedCaptcha);
+            if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
             {
-                return RedirectToAction("AdminDashboard", "Admin"); // <-- Redirect to AdminController
+                ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
             }
-            else if (user.Role == "Staff")
+        }
+        catch
+        {
+            ModelState.AddModelError("CaptchaInput", "Verification expired.");
+        }
+
+        // 3. Sequential Database Search
+        if (ModelState.IsValid)
+        {
+            // Start by checking Members
+            User user = db.Members.FirstOrDefault(u => u.Email == vm.Email);
+
+            // Fallback to Staff
+            if (user == null) user = db.Staffs.FirstOrDefault(u => u.Email == vm.Email);
+
+            // Fallback to Admin
+            if (user == null) user = db.Admins.FirstOrDefault(u => u.Email == vm.Email);
+
+            if (user != null)
             {
-                return RedirectToAction("StaffDashboard", "Staff"); // <-- Redirect to StaffController
+                if (hp.VerifyPassword(user.PasswordHash, vm.Password))
+                {
+                    // ============================================================
+                    // MODIFIED PART: Check Email Verification Status
+                    // ============================================================
+                    if (!user.IsEmailConfirmed)
+                    {
+                        ModelState.AddModelError("", "Please verify your email address before logging in.");
+                        // Jump to end to refresh Captcha and show view
+                        goto SkipToView;
+                    }
+                    // ============================================================
+
+                    _cache.Remove(cacheKey);
+                    hp.SignIn(user.Email, user.Role, vm.RememberMe);
+                    TempData["Info"] = $"Welcome, {user.Name}!";
+
+                    if (user is Admin) return RedirectToAction("AdminDashboard", "Admin");
+                    if (user is Staff) return RedirectToAction("StaffDashboard", "Staff");
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    // 1. Increment cache counter
+                    if (!_cache.TryGetValue(cacheKey, out fails)) fails = 0;
+                    fails++;
+
+                    // Set lockout duration (e.g., 15 minutes)
+                    var cacheOptions = new MemoryCacheEntryOptions()
+                        .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
+                    _cache.Set(cacheKey, fails, cacheOptions);
+
+                    int remaining = 3 - fails;
+
+                    if (remaining <= 0)
+                    {
+                        // This keeps the message visible after they click "Login" again
+                        ModelState.AddModelError("Password", "Incorrect password. Account locked.");
+                        ModelState.AddModelError("", "Too many failed attempts. Locked for 15 minutes.");
+                        goto SkipToView;
+                    }
+                    else
+                    {
+                        // This triggers on the 1st and 2nd fail
+                        ModelState.AddModelError("Password", $"Incorrect password. {remaining} attempts left.");
+                    }
+                }
             }
             else
             {
-                return RedirectToAction("Index", "Home"); // Default for Members and Guests
+                ModelState.AddModelError("Email", "User account not found.");
             }
         }
-        catch (Exception ex)
-        {
-            // ... (catch block) ...
-        }
 
-        // 5. Fallback: Return the view on failure
-        return View("~/Views/Home/Login.cshtml", vm);
+    SkipToView:
+        // 4. Refresh CAPTCHA and return
+        string newCode = hp.GenerateCaptchaCode();
+        ViewBag.CaptchaCode = newCode;
+        ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
+
+        return View(loginViewPath, vm);
     }
 
     // ====================================================================
@@ -399,57 +523,77 @@ public class UserController : Controller
     // UserController.cs
 
     // GET: /User/EditProfile
+    // GET: /User/EditProfile
+    // GET: /User/EditProfile
+    // GET: /User/EditProfile
     [Authorize]
+    [HttpGet]
     public async Task<IActionResult> EditProfile()
     {
-        var userEmail = User.Identity?.Name;
+        string userId = null;
 
-        // Check 1: Ensure user is logged in (should be handled by [Authorize], but good safety)
-        if (string.IsNullOrEmpty(userEmail))
+        // 1. Try to get ID from Claims (The standard way)
+        userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                 ?? User.FindFirst("UserId")?.Value;
+
+        // 2. FALLBACK: If ID is null, use the Email (User.Identity.Name) to find the user
+        if (userId == null && User.Identity.IsAuthenticated)
         {
-            // If somehow the identity is missing, redirect to login
-            return RedirectToAction("Login", "Account");
+            string email = User.Identity.Name; // This holds the email from hp.SignIn()
+
+            // Find the user in the main Users table by Email
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user != null)
+            {
+                userId = user.UserId; // Recover the ID!
+            }
         }
 
-        // 1. Fetch the User record based on logged-in email
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+        // 3. If userId is STILL null, then we really must redirect to login
+        if (userId == null) return RedirectToAction("Login", "User");
 
-        // Check 2: Handle case where User record doesn't exist
-        if (user == null)
+        // ---------------------------------------------------------------
+        // From here on, the logic is exactly the same as before...
+        // ---------------------------------------------------------------
+
+        var vm = new EditProfileVM { Id = userId };
+
+        if (User.IsInRole("Member"))
         {
-            TempData["Error"] = "Error: Your User record was not found in the system. Contact IT.";
-            // Log out the user as their authentication cookie is invalid
-            // await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme); 
-            return RedirectToAction("Login", "Account");
+            var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == userId);
+            if (member == null) return RedirectToAction("Profile");
+
+            vm.Name = member.Name;
+            vm.Email = member.Email;
+            vm.Role = "Member";
+            vm.Phone = member.Phone;
+            vm.Gender = member.Gender;
+            vm.CurrentPhotoUrl = member.PhotoURL;
         }
-
-        // 2. Fetch the associated Member record using the UserId
-        // This is the CRITICAL point of failure for Admin accounts
-        var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == user.UserId);
-
-        // Check 3: Handle case where Member record doesn't exist (e.g., Admin was created manually)
-        if (member == null)
+        else if (User.IsInRole("Staff"))
         {
-            // If the Member record is missing, you must redirect to an action that can create it, 
-            // or show an error and prompt them to contact support.
-            TempData["Error"] = "Error: Your profile data is incomplete. Member record missing.";
-            return RedirectToAction("Profile", "User"); // Redirect to profile view or dashboard
+            var staff = await db.Staffs.FirstOrDefaultAsync(s => s.UserId == userId);
+            if (staff == null) return RedirectToAction("Profile");
+
+            vm.Name = staff.Name;
+            vm.Email = staff.Email;
+            vm.Role = "Staff";
+            vm.Phone = staff.Phone;
+            vm.Gender = staff.Gender;
+            vm.CurrentPhotoUrl = "/img/default.jpg"; // Default for Staff
         }
-
-        // 3. Map entities to ViewModel (NOW SAFE because user and member are not null)
-        var vm = new EditProfileVM
+        else if (User.IsInRole("Admin"))
         {
-            Id = user.UserId,
-            Name = user.Name,
-            Email = user.Email,
-            Role = user.Role,
+            var admin = await db.Admins.FirstOrDefaultAsync(a => a.UserId == userId);
+            if (admin == null) return RedirectToAction("Profile");
 
-            // Assuming Phone and Gender are on the Member entity
-            Phone = member.Phone,
-            Gender = member.Gender,
-
-            CurrentPhotoUrl = member.PhotoURL
-        };
+            vm.Name = admin.Name;
+            vm.Email = admin.Email;
+            vm.Role = "Admin";
+            vm.Phone = admin.Phone;
+            vm.Gender = admin.Gender;
+            vm.CurrentPhotoUrl = "/img/default.jpg"; // Default for Admin
+        }
 
         return View(vm);
     }
@@ -460,104 +604,102 @@ public class UserController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditProfile(EditProfileVM vm)
     {
-        // 1. Email Uniqueness Check (Your existing logic)
-        var existingUser = await db.Users.FirstOrDefaultAsync(u =>
-            u.Email == vm.Email && u.UserId != vm.Id);
+        if (!ModelState.IsValid) return View(vm);
 
-        if (existingUser != null)
+        // 1. Save Data based on Role
+        if (User.IsInRole("Member"))
         {
-            ModelState.AddModelError("Email", "This email is already registered by another user.");
-        }
-
-        // IMPORTANT: Check if the user is attempting to save the default photo URL back
-        if (vm.NewPhoto == null && string.IsNullOrEmpty(vm.CurrentPhotoUrl))
-        {
-            // If they cleared the photo and didn't upload a new one, force the default.jpg path
-            vm.CurrentPhotoUrl = "/img/default.jpg";
-        }
-
-        // 2. Validate the ViewModel
-        if (ModelState.IsValid)
-        {
-            var userToUpdate = await db.Users.FirstOrDefaultAsync(u => u.UserId == vm.Id);
-            // CRITICAL: Fetch the Member record
-            var memberToUpdate = await db.Members.FirstOrDefaultAsync(m => m.UserId == vm.Id);
-
-            if (userToUpdate == null || memberToUpdate == null)
+            var member = await db.Members.FirstOrDefaultAsync(m => m.UserId == vm.Id);
+            if (member != null)
             {
-                TempData["Error"] = "User profile record could not be found for update.";
-                // hp.SignOut(); 
-                return RedirectToAction("Profile");
-            }
+                member.Name = vm.Name;
+                member.Phone = vm.Phone;
+                member.Gender = vm.Gender;
 
-            // --- PHOTO UPLOAD AND DELETE LOGIC ---
-            if (vm.NewPhoto != null)
-            {
-                // a. Delete old photo (if not the default)
-                if (memberToUpdate.PhotoURL != "/img/default.jpg" && !string.IsNullOrEmpty(memberToUpdate.PhotoURL))
+                // --- PHOTO LOGIC ONLY FOR MEMBERS ---
+                if (vm.NewPhoto != null)
                 {
-                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", memberToUpdate.PhotoURL.TrimStart('~', '/'));
-                    if (System.IO.File.Exists(oldFilePath))
+                    var fileName = $"{vm.Id}_{DateTime.Now.Ticks}_{Path.GetExtension(vm.NewPhoto.FileName)}";
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
                     {
-                        System.IO.File.Delete(oldFilePath);
+                        await vm.NewPhoto.CopyToAsync(stream);
                     }
+                    // Update the database path
+                    member.PhotoURL = $"/img/{fileName}";
                 }
-
-                // b. Save new photo
-                // Generate a unique file name using UserId and a tick/timestamp
-                var fileName = $"{userToUpdate.UserId}_{DateTime.Now.Ticks}_{Path.GetExtension(vm.NewPhoto.FileName)}";
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await vm.NewPhoto.CopyToAsync(stream);
-                }
-
-                // c. Update PhotoUrl in Member table
-                memberToUpdate.PhotoURL = $"/img/{fileName}";
+                // ------------------------------------
             }
-            // --- END PHOTO UPLOAD/DELETE LOGIC ---
-
-
-            // 3. Update properties on User and Member entities
-            userToUpdate.Name = vm.Name;
-            userToUpdate.Email = vm.Email;
-
-            // Assuming Phone and Gender are on the Member table (adjust if they are on User)
-            memberToUpdate.Phone = vm.Phone;
-            memberToUpdate.Gender = vm.Gender;
-
-            // 4. Save changes (will save changes to both User and Member records tracked by the context)
-            await db.SaveChangesAsync();
-
-            // 5. Re-sign in the user if the Email or Name changed (if required)
-            // hp.SignIn(userToUpdate.Email, userToUpdate.Role, true); // Uncomment if Sign In logic is handled here
-
-            TempData["Info"] = "Your profile has been updated successfully!";
-            return RedirectToAction("Profile");
+        }
+        else if (User.IsInRole("Staff"))
+        {
+            var staff = await db.Staffs.FirstOrDefaultAsync(s => s.UserId == vm.Id);
+            if (staff != null)
+            {
+                staff.Name = vm.Name;
+                staff.Phone = vm.Phone;
+                staff.Gender = vm.Gender;
+                // No Photo update for Staff
+            }
+        }
+        else if (User.IsInRole("Admin"))
+        {
+            var admin = await db.Admins.FirstOrDefaultAsync(a => a.UserId == vm.Id);
+            if (admin != null)
+            {
+                admin.Name = vm.Name;
+                admin.Phone = vm.Phone;
+                admin.Gender = vm.Gender;
+                // No Photo update for Admin
+            }
         }
 
-        // If validation failed, return the ViewModel to the view with errors
-        // Note: You must ensure vm.CurrentPhotoUrl is populated correctly here if validation fails.
-        // Since CurrentPhotoUrl is a hidden field in the view, it should persist on failure.
-        return View(vm);
+        // 2. Sync the main User table
+        var user = await db.Users.FirstOrDefaultAsync(u => u.UserId == vm.Id);
+        if (user != null)
+        {
+            user.Name = vm.Name;
+        }
+
+        await db.SaveChangesAsync();
+
+        TempData["Info"] = "Profile updated successfully!";
+        return RedirectToAction("Profile");
     }
 
     [Authorize]
+    [HttpGet]
     public IActionResult ChangePassword()
     {
+        string code = hp.GenerateCaptchaCode(); // Get random string from Helper
+
+        ViewBag.CaptchaCode = code;
+        ViewBag.EncryptedCaptcha = _protector.Protect(code); // Encrypt answer
+
         return View();
     }
-
-    // POST: Account/UpdatePassword
-    // UserController.cs (assuming this is where the action resides)
 
     // POST: /User/ChangePassword
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken] // Recommended best practice for security
-    public async Task<IActionResult> ChangePassword(ChangePasswordVM vm)
+    public async Task<IActionResult> ChangePassword(ChangePasswordVM vm, string encryptedCaptcha)
     {
+        try
+        {
+            // Decrypt the hidden answer to verify identity
+            string actualCode = _protector.Unprotect(encryptedCaptcha);
+
+            if (string.IsNullOrEmpty(vm.CaptchaInput) || vm.CaptchaInput.ToUpper() != actualCode)
+            {
+                ModelState.AddModelError("CaptchaInput", "Invalid verification code.");
+            }
+        }
+        catch
+        {
+            ModelState.AddModelError("CaptchaInput", "Security check expired. Please try again.");
+        }
         // 1. Retrieve the user's email from the authentication claim
         var userEmail = User.Identity?.Name;
 
@@ -578,7 +720,7 @@ public class UserController : Controller
         if (ModelState.IsValid)
         {
             // 4. Verification Check
-            if (!hp.VerifyPassword(u.PasswordHash, vm.Current))
+            if (!hp.VerifyPassword(u.PasswordHash, vm.Token))
             {
                 ModelState.AddModelError("Current", "Current Password not matched.");
                 // If verification fails, we must return the view immediately
@@ -594,8 +736,124 @@ public class UserController : Controller
             return RedirectToAction("Profile");
         }
 
+        string newCode = hp.GenerateCaptchaCode();
+        ViewBag.CaptchaCode = newCode;
+        ViewBag.EncryptedCaptcha = _protector.Protect(newCode);
         // If ModelState was invalid from the start (e.g., New/Confirm mismatch)
         return View(vm);
     }
 
+    private void SendResetPasswordEmail(User u, string password)
+    {
+        var mail = new MailMessage();
+        mail.To.Add(new MailAddress(u.Email, u.Name));
+        mail.Subject = "Movie Theme - Your New Password";
+        mail.IsBodyHtml = true;
+
+        // Attach user photo logic (keeping your professional style)
+        var path = u switch
+        {
+            Admin => Path.Combine(en.WebRootPath, "photos", "admin.jpg"),
+            Member m => Path.Combine(en.WebRootPath, "photos", m.PhotoURL ?? "default.jpg"),
+            _ => Path.Combine(en.WebRootPath, "img", "default.jpg"),
+        };
+
+        if (System.IO.File.Exists(path))
+        {
+            var att = new Attachment(path);
+            att.ContentId = "photo";
+            mail.Attachments.Add(att);
+        }
+
+        mail.Body = $@"
+        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; text-align: center;'>
+            <div style='background: #1a1a1a; padding: 15px; margin-bottom: 20px;'>
+                <h2 style='color: #ff5500; margin: 0;'>MOVIE THEME</h2>
+            </div>
+            <img src='cid:photo' style='width: 100px; height: 100px; border-radius: 50%;'>
+            <h3>Hello {u.Name},</h3>
+            <p>Your password has been reset successfully. Please use the temporary password below to log in:</p>
+            <div style='background: #f4f4f4; padding: 15px; font-size: 20px; font-weight: bold; color: #ff5500; letter-spacing: 2px;'>
+                {password}
+            </div>
+            <p style='margin-top: 20px;'>We recommend changing this password immediately after logging in.</p>
+            <p style='color: #888;'>From, 🐱 Super Admin</p>
+        </div>";
+
+        hp.SendEmail(mail);
+    }
+
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            TempData["Info"] = "<div class='alert alert-danger'>Email not found!</div>";
+            return View();
+        }
+
+        // Generate a secure token (UserId + Expiration Ticks)
+        string payload = $"{user.UserId}|{DateTime.UtcNow.AddHours(1).Ticks}";
+        string token = _protector.Protect(payload);
+        string resetLink = Url.Action("ResetPassword", "User", new { token = token }, Request.Scheme);
+
+        // Create verification email
+        var mail = new MailMessage();
+        mail.To.Add(new MailAddress(user.Email));
+        mail.Subject = "Identity Verification - Reset Your Password";
+        mail.IsBodyHtml = true;
+        mail.Body = $@"<h3>Hello {user.Name},</h3>
+                  <p>Click the link below to verify your identity and set a new password:</p>
+                  <p><a href='{resetLink}'>VERIFY AND RESET PASSWORD</a></p>";
+
+        hp.SendEmail(mail);
+
+        TempData["Info"] = "<div class='alert alert-success'>Verification link sent to your Gmail!</div>";
+        return RedirectToAction("Login");
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string token)
+    {
+        // This passes the token from the email link into the hidden field in your View
+        return View(new ResetPasswordVM { Token = token });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(ResetPasswordVM vm)
+    {
+        try
+        {
+            // 1. Decrypt token to verify person's identity
+            string decrypted = _protector.Unprotect(vm.Token);
+            var parts = decrypted.Split('|');
+            string userId = parts[0];
+            long expiry = long.Parse(parts[1]);
+
+            // 2. Check if link has expired
+            if (DateTime.UtcNow.Ticks > expiry) return Content("Verification link expired.");
+
+            // 3. Update the password now that identity is proven
+            var user = await db.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.PasswordHash = hp.HashPassword(vm.New);
+                await db.SaveChangesAsync();
+                TempData["Info"] = "Identity verified. Password updated!";
+                return RedirectToAction("Login");
+            }
+        }
+        catch
+        {
+            return Content("Invalid or tampered security link.");
+        }
+        return RedirectToAction("Login");
+    }
 }

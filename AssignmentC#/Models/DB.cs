@@ -23,13 +23,14 @@ public class DB(DbContextOptions options) : DbContext(options)
     public DbSet<Seat> Seats { get; set; }
     public DbSet<ShowTime> ShowTimes { get; set; }
     public DbSet<Outlet> Outlets { get; set; }
-    public DbSet<MovieReview> MovieReviews { get; set; }
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Promotion> Promotions { get; set; }
     public DbSet<Memberpoints> Memberpoints { get; set; }
-    public DbSet<Voucher> Voucher { get; set; }
+    public DbSet<Voucher> Vouchers { get; set; }
     public DbSet<VoucherAssignment> VoucherAssignments { get; set; }
     public DbSet<VoucherCondition> VoucherConditions { get; set; }
+    public DbSet<SeatLock> SeatLocks { get; set; }
+    public DbSet<ActionLog> ActionLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,6 +77,7 @@ public class User
     [MaxLength(11)]
     public string Phone { get; set; }
     public string Role => GetType().Name;
+    public bool IsEmailConfirmed { get; set; } = false;
 }
 
 public class Admin : User
@@ -170,11 +172,12 @@ public class Payment
 {
     [Key]
     public int PaymentId { get; set; }
-    public int amount { get; set; }
-    public bool status { get; set; }
+    public decimal amount { get; set; }
+    public string status { get; set; }
     public DateOnly date {  get; set; }
 
     //FK
+    public Booking Booking { get; set; }
     public User User { get; set; }
     public Order Order { get; set; }
     public List<Promotion> Promotions { get; set; } = [];
@@ -184,11 +187,16 @@ public class Promotion
 {
     [Key]
     public int PromotionId { get; set; }
+
+    public List<Payment> Payments { get; set; } = [];
 }
 
 public class Memberpoints : Promotion
 {
     public int points { get; set; }
+
+    public VoucherCondition? VoucherCondition { get; set; }
+    public VoucherAssignment? VoucherAssignment { get; set; }
 }
 
 public class Voucher : Promotion
@@ -208,6 +216,9 @@ public class Voucher : Promotion
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public DateTime CreatedTime { get; set; }
+    public decimal MinSpend { get; set; }
+
+    
 
 }
 
@@ -221,12 +232,11 @@ public class VoucherCondition
 
     public int? MinAge { get; set; }
     public int? MaxAge { get; set; }
-    public decimal? MinSpend { get; set;}
+    
     public bool? IsFirstPurchase { get; set; }
     public List<int> BirthMonth { get; set; } = new List<int>();
 
-    // FK
-    public Promotion promotion { get; set; }
+    public Promotion Promotion { get; set; } = null;
 }
 
 public class VoucherAssignment
@@ -235,7 +245,7 @@ public class VoucherAssignment
     public int AssignmentId { get; set; }
 
     //FK
-    public Promotion promotion { get; set; }
+    public Promotion promotion { get; set; } = null;
     public User user { get; set; }
 }
 
@@ -257,6 +267,11 @@ public class Booking
     public ShowTime ShowTime { get; set; }
     public Member Member { get; set; }
     public ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
+
+    internal ShowTime Select(Func<object, Booking> value)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public class BookingSeat
@@ -269,42 +284,6 @@ public class BookingSeat
 
     public Booking Booking { get; set; }
     public Seat Seat { get; set; }
-}
-
-public class MovieReview
-{
-    [Key]
-    public int MovieReviewId { get; set; }
-
-    [Required]
-    [MaxLength(5)]
-    public string UserId { get; set; }
-
-    [Required(ErrorMessage = "The review must be linked to a movie.")]
-    public int MovieId { get; set; }
-
-    [Required(ErrorMessage = "A title is required.")]
-    [MaxLength(100)]
-    public string Title { get; set; }
-
-    [Required(ErrorMessage = "A comment is required.")]
-    [StringLength(500, MinimumLength = 10, ErrorMessage = "Review must be between 10 and 500 characters.")]
-    public string Comment { get; set; }
-
-    [Required(ErrorMessage = "A rating is required.")]
-    [Range(1, 10, ErrorMessage = "Rating must be between 1 and 10.")]
-    public int Rating { get; set; }
-
-    public bool? Recommend { get; set; }
-
-    [Required]
-    public DateTime DateCreated { get; set; } = DateTime.UtcNow;
-
-    public bool IsApproved { get; set; } = false;
-
-    // --- Navigation Properties ---
-    public User User { get; set; }
-    public Movie Movie { get; set; }
 }
 
 public class Movie{
@@ -331,8 +310,8 @@ public class Movie{
     [MaxLength(255)]
     public string TrailerUrl { get; set; }
     public ICollection<ShowTime> ShowTimes { get; set; } = new List<ShowTime>();
-    public ICollection<MovieReview> Reviews { get; set; } = new List<MovieReview>();
 }
+
 public class ShowTime
 {
     [Key]
@@ -363,7 +342,6 @@ public class ShowTime
     [NotMapped]
     public DateTime EndTime => StartTime.AddMinutes(Movie?.DurationMinutes ?? 0);
 }
-
 
 public class Hall
 {
@@ -402,11 +380,45 @@ public class Outlet
     [Key]
     public int OutletId { get; set; }
     [MaxLength(50)]
-    public string City { get; set; } // E.g., "Kuala Lumpur", "Johor Bahru"
+    public string City { get; set; } 
     [MaxLength(100)]
-    public string Name { get; set; } // E.g., "Mid Valley Megamall"
+    public string Name { get; set; } 
 
-    // Navigation: An Outlet has many Halls
     public ICollection<Hall> Halls { get; set; } = new List<Hall>();
 }
+public class SeatLock
+{
+    public int SeatLockId { get; set; }
+    public int ShowTimeId { get; set; }
+    public int SeatId { get; set; }
+    public string SessionId { get; set; } 
+    public DateTime LockedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public bool IsExpired => DateTime.Now >= ExpiresAt;
 
+    // Navigation properties
+    public ShowTime ShowTime { get; set; }
+    public Seat Seat { get; set; }
+}
+public class ActionLog
+{
+    [Key]
+    public int Id { get; set; }
+
+    [MaxLength(100)]
+    public string UserEmail { get; set; }
+
+    [MaxLength(100)]
+    public string UserName { get; set; }
+
+    [MaxLength(50)]
+    public string UserRole { get; set; }  
+
+    [MaxLength(100)]
+    public string Entity { get; set; }
+
+    [Column(TypeName = "nvarchar(MAX)")]
+    public string Action { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+}

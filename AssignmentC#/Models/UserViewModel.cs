@@ -23,6 +23,9 @@ public class LoginVM
     // This property tracks the "Remember Me" checkbox state.
     [Display(Name = "Remember Me")]
     public bool RememberMe { get; set; }
+
+    [Required(ErrorMessage = "Please enter the verification code")]
+    public string CaptchaInput { get; set; } = "";
 }
 
 public class RegisterVM
@@ -84,6 +87,9 @@ public class RegisterVM
     [RegularExpression(@"^01\d{8,9}$",
         ErrorMessage = "Must be a valid Malaysian phone number, starting with 01 and 10 or 11 digits total (e.g., 0123456789).")]
     public string Phone { get; set; }
+
+    [Required(ErrorMessage = "Please enter the verification code")]
+    public string CaptchaInput { get; set; } = "";
 }
 
 public class EditProfileVM
@@ -99,44 +105,74 @@ public class EditProfileVM
 
     [Required(ErrorMessage = "Email is required.")]
     [StringLength(100)]
-    // Using your desired Regex validation
     [RegularExpression(@"^[\w-\.]+@gmail\.com$",
-                       ErrorMessage = "Email must be a valid address ending with @gmail.com.")]
+                        ErrorMessage = "Email must be a valid address ending with @gmail.com.")]
     public string Email { get; set; }
 
     [Phone(ErrorMessage = "Invalid phone number format.")]
-    [StringLength(11)] // Adjusted to 11 to match User.Phone MaxLength
-    public string Phone { get; set; }
+    [StringLength(11)]
+    public string? Phone { get; set; } // Recommended: Make Phone optional too (?) just in case
 
     [Required(ErrorMessage = "Please select a gender")]
     [RegularExpression("^(M|F)$", ErrorMessage = "Invalid Gender selected")]
     public string Gender { get; set; }
 
-    // Read-only property for display/post-back integrity
-    public string Role { get; set; }
-    // Hidden field to store the current photo URL for display/reference
-    public string CurrentPhotoUrl { get; set; }
+    public string? Role { get; set; } // Recommended: Make Role optional (?)
 
-    // New property for photo upload (IFormFile is used for incoming files)
+    public string? CurrentPhotoUrl { get; set; } // Recommended: Make URL optional (?)
+
+    // =========================================================================
+    // CRITICAL FIX: Added '?' to make this Nullable.
+    // Now validation passes even if Admin doesn't upload a photo.
+    // =========================================================================
     [Display(Name = "Change Profile Photo")]
-    public IFormFile NewPhoto { get; set; }
+    public IFormFile? NewPhoto { get; set; }
 }
 
-public class ChangePasswordVM
+public class ResetPasswordVM
 {
-    [StringLength(100, MinimumLength = 5)]
-    [DataType(DataType.Password)]
-    [DisplayName("Current Password")]
-    public string Current { get; set; }
 
-    [StringLength(100, MinimumLength = 5)]
+    [Required]
+    public string Token { get; set; }
+
+    [Required]
     [DataType(DataType.Password)]
     [DisplayName("New Password")]
+    [RegularExpression(
+        @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$",
+        ErrorMessage = "Password must contain: at least one uppercase letter, one lowercase letter, one digit, one special character, and be at least 8 characters long."
+    )]
     public string New { get; set; }
 
-    [StringLength(100, MinimumLength = 5)]
-    [Compare("New")]
+    [Required]
     [DataType(DataType.Password)]
-    [DisplayName("Confirm Password")]
+    [DisplayName("Confirm New Password")]
+    [Compare("New", ErrorMessage = "Passwords do not match.")]
     public string Confirm { get; set; }
 }
+public class ChangePasswordVM
+{
+    [Required]
+    [DataType(DataType.Password)]
+    [Display(Name = "Current Password")]
+    public string Token { get; set; } = "";
+
+    [Required]
+    [DataType(DataType.Password)]
+    [DisplayName("New Password")]
+    [RegularExpression(
+        @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$",
+        ErrorMessage = "Password must contain: at least one uppercase letter, one lowercase letter, one digit, one special character, and be at least 8 characters long."
+    )]
+    public string New { get; set; }
+
+    [Required]
+    [DataType(DataType.Password)]
+    [Display(Name = "Confirm New Password")]
+    [Compare("New", ErrorMessage = "The new password and confirmation password do not match.")]
+    public string Confirm { get; set; } = "";
+
+    [Required(ErrorMessage = "Please enter the CAPTCHA code")]
+    public string CaptchaInput { get; set; } = "";
+}
+

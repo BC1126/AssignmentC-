@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="~/css/selectTicket.css" />
 }
 
+
 <section id="content">
     <div class="container mt-4">
         <div class="row mb-4">
@@ -30,6 +31,7 @@
             <li><div class="seat-legend"></div><small>Available</small></li>
             <li><div class="seat-legend selected"></div><small>Selected</small></li>
             <li><div class="seat-legend occupied"></div><small>Occupied</small></li>
+            <li><div class="seat-legend locked"></div><small>Being Held</small></li>
             <li><div class="seat-legend vip"></div><small>VIP</small></li>
             <li><div class="seat-legend wheelchair"></div><small>Wheelchair</small></li>
         </ul>
@@ -52,6 +54,10 @@
                         {
                             seatClass += " occupied";
                         }
+                        else if (seat.IsLocked)
+                        {
+                            seatClass += " locked";
+                        }
                         else if (seat.IsPremium)
                         {
                             seatClass += " vip";
@@ -60,7 +66,8 @@
                         {
                             seatClass += " wheelchair";
                         }
-
+                        else if (seat.IsSelected) seatClass += " selected";
+                            
                         <div class="@seatClass"
                              data-seat-id="@seat.SeatId"
                              data-identifier="@seat.SeatIdentifier">
@@ -75,14 +82,19 @@
         <div class="booking-sections-wrapper">
 
             <!-- Ticket Type Selection (LEFT SIDE) -->
-            <div id="ticketTypeSection" class="ticket-type-selector">
-                <h5 class="mb-3">Select Ticket Types</h5>
+            <div id="ticketTypeSection" class="ticket-type-selector" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Select Ticket Types</h5>
+                    <div id="seatTimer" class="seat-timer" style="display: none;">
+                        <i class="bi bi-clock"></i> <span id="timerDisplay">5:00</span>
+                    </div>
+                </div>
                 <p class="ticket-type-note">Total: <strong><span id="totalSeatsSelected">0</span></strong> seats selected</p>
 
                 <div class="ticket-counter" data-ticket-type="children">
                     <div class="ticket-counter-label">
                         <div>Children (3-12)</div>
-                        <small class="text-muted">RM @Model.TicketPrice</small>
+                        <small class="text-muted">RM @Model.ChildrenPrice.ToString("F2") <span style="color: #28a745;">(20% off)</span></small>
                     </div>
                     <div class="ticket-counter-controls">
                         <button type="button" class="counter-btn" data-action="decrement">−</button>
@@ -106,7 +118,7 @@
                 <div class="ticket-counter" data-ticket-type="senior">
                     <div class="ticket-counter-label">
                         <div>Seniors (60+)</div>
-                        <small class="text-muted">RM @(Model.TicketPrice * 0.8m) <span style="color: #28a745;">(20% off)</span></small>
+                        <small class="text-muted">RM @Model.SeniorPrice.ToString("F2") <span style="color: #28a745;">(15% off)</span></small>
                     </div>
                     <div class="ticket-counter-controls">
                         <button type="button" class="counter-btn" data-action="decrement">−</button>
@@ -114,7 +126,17 @@
                         <button type="button" class="counter-btn" data-action="increment">+</button>
                     </div>
                 </div>
-
+                <div class="ticket-counter" data-ticket-type="oku">
+                    <div class="ticket-counter-label">
+                        <div>OKU (Disability)</div>
+                        <small class="text-muted">RM @Model.OkuPrice.ToString("F2") <span style="color: #28a745;">(10% off)</span></small>
+                    </div>
+                    <div class="ticket-counter-controls">
+                        <button type="button" class="counter-btn" data-action="decrement">−</button>
+                        <span class="counter-value" data-count-display="oku">0</span>
+                        <button type="button" class="counter-btn" data-action="increment">+</button>
+                    </div>
+                </div>
                 <div class="alert alert-warning mt-3" id="ticketWarning" style="display: none; font-size: 13px; padding: 8px;">
                     <small>⚠️ Total must match selected seats</small>
                 </div>
@@ -124,13 +146,21 @@
             <form asp-action="SelectTicket"
                   method="post"
                   id="seatForm"
+                  data-showtime-id="@Model.ShowTimeId"
                   data-ticket-price="@Model.TicketPrice"
-                  data-senior-price="@(Model.TicketPrice * 0.8m)">
-                <input type="hidden" name="showTimeId" value="@Model.ShowTimeId" />
+                  data-children-price="@Model.ChildrenPrice.ToString("F2")"
+                  data-senior-price="@Model.SeniorPrice.ToString("F2")"
+                  data-oku-price="@Model.OkuPrice.ToString("F2")"
+                  data-lock-duration="@Model.LockDurationMinutes">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="ShowTimeId" value="@Model.ShowTimeId" />
                 <div id="seatIdsContainer"></div>
-                <input type="hidden" name="childrenCount" data-count-input="children" value="0" />
-                <input type="hidden" name="adultCount" data-count-input="adult" value="0" />
-                <input type="hidden" name="seniorCount" data-count-input="senior" value="0" />
+                <input type="hidden" name="OkuCount" data-count-input="oku" value="0" />
+                <input type="hidden" name="ChildrenCount" data-count-input="children" value="0" />
+                <input type="hidden" name="AdultCount" data-count-input="adult" value="0" />
+                <input type="hidden" name="SeniorCount" data-count-input="senior" value="0" />
 
                 <div class="booking-summary card p-4">
                     <div class="row align-items-center">
@@ -143,7 +173,7 @@
                             </p>
                         </div>
                         <div class="col-md-6 text-end">
-                            <button type="submit" class="btn btn-primary btn-lg" id="nextButton">
+                            <button type="submit" class="btn btn-primary btn-lg" id="nextButton" disabled>
                                 Next →
                             </button>
                         </div>
@@ -156,5 +186,6 @@
 </section>
 
 @section foot {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/selectTicket.js"></script>
 }

@@ -1,74 +1,38 @@
-﻿@model List<Movie>
-@{
-    ViewData["Title"] = "Movie Management";
-}
+﻿@model MovieListVM
 
 <div class="container-xl pt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>@ViewData["Title"]</h1>
-        <a href="/Movie/UpsertMovie" class="btn btn-primary">
-            <i class="fa fa-plus"></i> Add New Movie
-        </a>
+        <h1>Movie Management</h1>
+        <a href="/Movie/UpsertMovie" class="btn btn-primary">Add New Movie</a>
     </div>
 
-    @* Display TempData messages (Success or Error) *@
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
-    }
-
-    @* --- NEW: Check if the movie list is empty --- *@
-    @if (Model == null || !Model.Any())
-    {
-        <div class="alert alert-secondary text-center mt-5 p-4">
-            <h4>No Movies Found!</h4>
-            <p>There are currently no movies in the database. Use the button above to start adding new movie listings.</p>
+    <form data-ajax="true" data-ajax-update="#movieTableTarget" data-ajax-loading="#loader"
+          method="get" asp-action="Movies" id="searchForm" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="name" id="nameInput" class="form-control" placeholder="Search by title or genre..." autofocus />
+            <button class="btn btn-outline-secondary" type="submit">Search</button>
         </div>
-    }
-    else
-    {
-        @* --- Original Table Code (Only displays if movies exist) --- *@
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>Poster</th>
-                    <th>Title</th>
-                    <th>Genre</th>
-                    <th>Duration</th>
-                    <th>Rating</th>
-                    <th>Premier Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var movie in Model)
-                {
-                    <tr>
-                        <td>
-                            <img src="/uploads/@movie.PosterUrl" alt="@movie.Title Poster" style="width: 50px; height: 75px; object-fit: cover;" />
-                        </td>
-                        <td>@movie.Title</td>
-                        <td>@movie.Genre</td>
-                        <td>@movie.DurationMinutes min</td>
-                        <td>@movie.Rating</td>
-                        <td>@movie.PremierDate.ToString("dd MMM yyyy")</td>
-                        <td>
-                            <a asp-controller="Movie" asp-action="UpsertMovie" asp-route-id="@movie.MovieId" class="btn btn-sm btn-info text-white">Edit</a>
+    </form>
 
-                            <form asp-controller="Movie" asp-action="DeleteMovie" method="post" asp-route-id="@movie.MovieId" style="display: inline;"
-                                  onsubmit="return confirm('Are you sure you want to delete the movie: @movie.Title? This action cannot be undone.');">
-                                
-                                @Html.AntiForgeryToken()
-                                <a asp-action="Delete"
-                                   asp-route-id="@movie.MovieId"
-                                   class="btn btn-sm btn-danger">
-                                    Delete
-                                </a>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+    <div id="loader" style="display:none;" class="text-center mb-3">
+        <img src="~/img/loader.gif" width="40" />
+    </div>
+
+    <div id="movieTableTarget">
+        <partial name="_MovieTable" model="Model" />
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/jquery.unobtrusive-ajax.min.js"></script>
+    <script>
+        // Search-as-you-type (Demo 2 improved)
+        let timer = null;
+        $('#nameInput').on('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                $(this).closest('form').submit();
+            }, 500); // 500ms delay
+        });
+    </script>
+}

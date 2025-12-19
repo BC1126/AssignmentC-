@@ -1,0 +1,53 @@
+﻿@model IEnumerable<PaymentVM>
+
+@section head{
+    <link href="/css/myTicket.css" rel="stylesheet" />
+}
+
+<div class="app">
+    <!-- Main -->
+    <main>
+        <div class="container">
+            <div>
+                <h1>My Tickets</h1>
+                <p class="subtitle">View and manage your upcoming and past movie bookings</p>
+            </div>
+
+            <div class="controls">
+                <div class="tabs">
+                    <a class="tab active">Upcoming</a>
+                    <a class="tab">Past</a>
+                    <a class="tab">Cancelled</a>
+                </div>
+
+                <div class="search">
+                    <span class="material-symbols-outlined" style="padding:0 8px;">search</span>
+                    <input placeholder="Search by movie title...">
+                </div>
+            </div>
+
+            @foreach(var vm in Model)
+            {
+                <div class="ticket">
+                <div class="poster"><img src="/uploads/@vm.Movie.PosterUrl" /></div>
+                <div class="ticket-content">
+                    <div>
+                        <div class="badges">
+                                <span class="badge-confirmed">@vm.Status</span>
+                                <span class="badge-format">Paid At : @vm.Date</span>
+                        </div>
+                            <h3 class="movieTitle">@vm.Movie.Title</h3>
+                            <p class="subtitle">@vm.Movie.PremierDate.ToString("dddd, dd MMMM yyyy") • @vm.ShowTime.StartTime</p>
+                    </div>
+                    <div class="actions">
+                            <a href="/Ticket/TicketDetail/@vm.PaymentId"><button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button></a>
+                    </div>
+                </div>
+            </div>
+            }
+            
+
+        </div>
+    </main>
+
+</div>

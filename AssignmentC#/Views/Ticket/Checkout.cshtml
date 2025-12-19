@@ -1,7 +1,11 @@
-﻿@model CheckoutViewModel
+﻿@model PurchaseVM
 
 @section head {
     <link href="/css/ticket.css" rel="stylesheet" />
+}
+
+@{
+    var timer = ViewBag.Timer as CheckoutViewModel;
 }
 
 <main>
@@ -13,6 +17,8 @@
             <p class="subtitle">Please review your order and enter payment details securely.</p>
 
             <!-- Promotion -->
+            
+
             <div class="card voucherList" data-OpenVoucher>
                 <div class="flex justify-between items-start mb-4 memberPoint ">
                     <div>
@@ -21,10 +27,13 @@
                             Voucher
                         </h3>
                     </div>
-
                     <button class="text-primary text-sm font-semibold hover:underline"><i class="fa-solid fa-angle-right arrowRight"></i></button>
                 </div>
 
+                <!-- Applied Voucher -->
+                <div id="appliedVoucher">
+                    <partial name="_AppliedVoucher">
+                </div>
             </div>
 
 
@@ -130,10 +139,13 @@
                 </div>
             </div>
 
-            <div class="actions">
-                <a href="/Ticket/Receipt" class="btn-primary">Pay $35.40</a>
-                <button class="btn-secondary">Cancel</button>
-            </div>
+            <form method="post" action="/Ticket/Checkout">
+                <div class="actions">
+                    <button class="btn-primary">Pay</button>
+                    <button class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+            
         </section>
 
         <!-- Right -->
@@ -146,7 +158,7 @@
                 
 
                 <div id="timer">
-                    @Html.Partial("_Timer", Model.Timer)
+                    @Html.Partial("_Timer", timer.Timer)
                 </div>
 
                 <form id="timerAjaxForm"
@@ -157,135 +169,118 @@
                 </form>
             </div>
 
-            <div class="card">
-                <h3>Order Summary</h3>
-                <div class="summary-row"><span>Standard Ticket (x2)</span><span>$30.00</span></div>
-                <div class="summary-row"><span>Convenience Fee</span><span>$3.50</span></div>
-                <div class="summary-row"><span>Tax</span><span>$1.90</span></div>
-                <div class="summary-row summary-total"><span>Total Payable</span><span>$35.40</span></div>
-            </div>
+            <form data-ajax="true"
+                  data-ajax-update="#discountSummary"
+                  asp-action="OrderSummary"
+                  method="post"
+                  id="orderSummaryForm">
+
+                <input type="hidden" name="subtotal" value="@Model.total" />
+                <input type="hidden" name="ticketSubtotal" value="@Model.TicketSubtotal" />
+                <input type="hidden" name="quantity" value="@Model.TicketQuantity" />
+                <input type="hidden" name="addOn" value="@Model.OrderSubtotal" />
+
+                <div class="card" id="discountSummary">
+                   <partial name="_DiscountSummary" />
+                </div>
+            </form>
+            
         </section>
         
 
     </div>
 </main>
 
-<div id="voucherModal" class="modal-overlay">
+<form data-ajax="true"
+      data-ajax-update="#appliedVoucher"
+      asp-action="ApplyVoucher"
+      method="post"
+      id="appliedVoucherForm">
 
-    <!-- Modal box -->
+<div id="voucherModal" class="modal-overlay">
     <div class="voucher-modal">
 
-        <!-- Fixed header -->
         <div class="modal-header">
             <h3>Available Vouchers</h3>
             <button class="btnClose" data-CloseVoucher>✕</button>
         </div>
 
-        <!-- Scrollable content -->
         <div class="modal-body">
 
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10" checked>
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
+                <label class="voucher-card">
+                    <input type="radio" name="SelectedVoucher" value="" checked>
 
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
+                    <div class="voucher-content">
+                        <div>
+                            <h5>Not apply any voucher</h5>
+                        </div>
                     </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
+                </label>
 
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
+            @foreach (var v in ViewBag.Vouchers)
+            {
+                <label class="voucher-card">
+                    <input type="radio" name="SelectedVoucher" value="@v.VoucherCode">
+
+                    <div class="voucher-content">
+                        <div>
+                            <strong>Voucher Code : @v.VoucherCode</strong><br />
+                            @if(@v.VoucherType == "percentage")
+                            {
+                                <strong>@v.DiscountValue % off</strong>
+                            }
+                            else
+                            {
+                                <strong>RM @v.DiscountValue off</strong>
+                            }
+                            
+                            <p>Minimum Spend : RM @v.MinSpend</p>
+                        </div>
+                        <span class="badge">@v.StartDate.ToString("dddd-MM-yyyy") - @v.EndDate.ToString("dddd-MM-yyyy") </span>
                     </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
-            <label class="voucher-card">
-                <input type="radio" name="SelectedVoucher" value="STUDENT10">
-                <div class="voucher-content">
-                    <div>
-                        <strong>Student Discount</strong>
-                        <p>Valid with Student ID</p>
-                    </div>
-                    <span class="badge">10% OFF</span>
-                </div>
-            </label>
-
+                </label>
+            }
+            
         </div>
 
-        <!-- Fixed footer -->
         <div class="modal-footer">
-            <button class="btn-primary">Apply Voucher</button>
+                <button class="btn-primary" data-voucher="/Ticket/ApplyVoucher" data-CloseVoucher>Apply Voucher</button>
         </div>
 
     </div>
 </div>
+</form>
 
 @section foot{
     <script>
         setInterval(function () {
             $("#timerAjaxForm").submit();
         }, 1000);
+
+        $('[data-voucher]').on('click', e => {
+            e.preventDefault(); // prevent normal button action
+
+            // submit appliedVoucherForm via AJAX
+            $.ajax({
+                url: $('#appliedVoucherForm').attr('action'),
+                type: 'POST',
+                data: $('#appliedVoucherForm').serialize(),
+                success: function (response) {
+                    // update appliedVoucher div
+                    $('#appliedVoucher').html(response);
+
+                    // now submit orderSummaryForm after appliedVoucherForm completes
+                    $.ajax({
+                        url: $('#orderSummaryForm').attr('action'),
+                        type: 'POST',
+                        data: $('#orderSummaryForm').serialize(),
+                        success: function (res) {
+                            // update discount summary
+                            $('#discountSummary').html(res);
+                        }
+                    });
+                }
+            });
+        });
     </script>
 }

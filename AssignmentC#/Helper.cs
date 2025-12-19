@@ -1,20 +1,22 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 using System.IO; // Required for FileStream and Path operations and Directory.CreateDirectory
 using System.Linq;
-using Microsoft.AspNetCore.Hosting;
+using System.Net;
+using System.Net.Mail;
 using System.Reflection.Metadata.Ecma335; // Required for IWebHostEnvironment
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace AssignmentC_;
 
 // CRITICAL MODIFICATION: Added DB context to the constructor for GenerateNextUserId method.
 // NOTE: Make sure your DB context type (DB) is available to this class.
-public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
+public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db, IConfiguration cf)
 {
     // Private field for PasswordHasher
     private readonly PasswordHasher<object> ph = new();
@@ -145,26 +147,33 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
     }
 
 
-    public void SignIn(string email, string role, bool rememberMe)
+    // Change 'void' to 'async Task' to ensure the cookie is set before the request ends
+    public async Task SignIn(string email, string role, bool rememberMe)
     {
-        // (1) Claim, identity and principal
-        List<Claim> claims =
-        [
-            new(ClaimTypes.Name, email),
-            new(ClaimTypes.Role, role),
-        ];
+        // (1) Create Claims (Only Email and Role, as you requested)
+        List<Claim> claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, email),
+        new Claim(ClaimTypes.Role, role)
+    };
 
-        ClaimsIdentity identity = new(claims, "Cookies");
+        // Note: Ensure "Cookies" matches the scheme name in your Program.cs
+        ClaimsIdentity identity = new ClaimsIdentity(claims, "Cookies");
+        ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
-        ClaimsPrincipal principal = new(identity);
-
-        // (2) Remember me (authentication properties)
-        AuthenticationProperties properties = new()
+        // (2) Authentication Properties (FIXED)
+        AuthenticationProperties properties = new AuthenticationProperties
         {
+            // Keeps user logged in even after closing browser
             IsPersistent = rememberMe,
+
+            // If checked, cookie lasts 7 days. If not, it dies when browser closes.
+            ExpiresUtc = rememberMe ? DateTime.UtcNow.AddDays(7) : null
         };
-        // (3) Sign in
-        ct.HttpContext!.SignInAsync(principal, properties);
+
+        // (3) Sign In
+        // Using await ensures the cookie is attached to the response headers
+        await ct.HttpContext!.SignInAsync(principal, properties);
     }
 
     public void SignOut()
@@ -270,6 +279,72 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db)
             ct.HttpContext!.Session.Set("Cart", dict);
         }
     }
+    public void SendEmail(MailMessage mail)
+    {
+        string user = cf["Smtp:User"]?.Trim();
+        string pass = cf["Smtp:Pass"]?.Replace(" ", "");
+
+        mail.From = new MailAddress(user, cf["Smtp:Name"]);
+
+        using (var smtp = new SmtpClient())
+        {
+            smtp.Host = cf["Smtp:Host"];
+            smtp.Port = cf.GetValue<int>("Smtp:Port");
+            smtp.EnableSsl = true;
+            smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
+            smtp.UseDefaultCredentials = false;
+            smtp.Credentials = new System.Net.NetworkCredential(user, pass);
+
+            try
+            {
+                smtp.Send(mail);
+            }
+            catch (Exception ex)
+            {
+                // This logs the error to your Visual Studio Output window instead of crashing
+                System.Diagnostics.Debug.WriteLine($"SMTP Error: {ex.Message}");
+                throw new Exception("Email failed to send. Check your App Password or internet connection.", ex);
+            }
+        }
+    }
+
+    public string GenerateCaptchaCode()
+    {
+        // Just return the string; the View/Controller will handle the "memory" via encryption
+        return Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
+    }
+
+    public void LogAction(string entity, string action)
+    {
+        // Get current user email from claims
+        var email = ct.HttpContext!.User?.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrEmpty(email))
+        {
+            email = "Unknown"; // fallback
+        }
+
+        // Get user name from DB using email
+        var user = db.Users.FirstOrDefault(u => u.Email == email);
+        string name = user?.Name ?? "Unknown";
+
+        // Create log entry
+        var log = new ActionLog
+        {
+            UserEmail = user?.Email ?? "Unknown",
+            UserName = user?.Name ?? "Unknown",
+            UserRole = user?.Role ?? "Unknown",  // <-- store role here
+            Entity = entity,                     // e.g., "Movie", "ShowTime"
+            Action = action,                     // e.g., "Create", "Delete"
+            CreatedAt = DateTime.Now
+        };
+
+        db.ActionLogs.Add(log);
+        db.SaveChanges();
+
+    }
+
 
 
 }

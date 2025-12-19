@@ -1,0 +1,79 @@
+﻿@model Payment
+
+@section head{
+    <link href="/css/myTicket.css" rel="stylesheet" />
+}
+
+
+<main class="main">
+    <div class="container">
+        <div class="title-row">
+            <div>
+                <h1>Ticket Details</h1>
+                <div class="subtitle">Order #TRX-8859201 • Purchased on Oct 21, 2023</div>
+            </div>
+            <div class="actions">
+                <button class="primary">Email Ticket</button>
+                <button class="secondary">Print</button>
+            </div>
+        </div>
+
+        <div class="grid">
+
+            <!-- TICKET -->
+            <div class="ticket-card">
+                <div class="banner" style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuC_sxinD9rDKtXBLZ3LLGozlOxZQo5ITT7OK3pKYTI93YWcbDPx_R8Sjm0Ql7o_I7gbfVNfqOZp6oBIOII4VJdFb5WqUvYEwO-8qGG4Soec2b_FNBUb9_ABULGTmWwbas0J-39t28ZIw2O0tcK7sXw_zaeIZjAWna8m8VMv5rcHsxGJA_ZxNmZAkoB3OtTobHngtluNYCUBVlCceIvUhWLDzS0KKXn_kBXTeqFClcdlU6-6xgC1fPfoctcznjHa46QwV7nKjygzkp0');">
+                    <div class="banner-content">
+                        <h2>@Model.Booking.ShowTime.Movie.Title</h2>
+                        <p>@Model.Booking.ShowTime.Movie.Rating • @Model.Booking.ShowTime.Movie.DurationMinutes m</p>
+                    </div>
+                </div>
+
+                <div class="ticket-body">
+                    <div>
+                        <div class="info-grid">
+                            <div class="info-box"><div class="label">Date</div><div class="value">@Model.date.ToString("dddd, dd MMMM yyyy")</div></div>
+                            <div class="info-box"><div class="label">Time</div><div class="value">@Model.Booking.ShowTime.StartTime.ToString()</div></div>
+                            <div class="info-box"><div class="label">Hall</div><div class="value">@Model.Booking.ShowTime.Hall.Name</div></div>
+                            <div class="info-box"><div class="label">Seats</div><div class="value">
+                                    @string.Join(", ", ViewBag.Seats)
+                            </div></div>
+                        </div>
+                        <div class="cinema">📍 @Model.Booking.ShowTime.Hall.Outlet.City , @Model.Booking.ShowTime.Hall.Outlet.Name </div>
+                    </div>
+
+                    <div class="qr">
+                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuO7kygYsRZVwXHVRvvk85HkJBYFiwah_FzpA5AofvHWOgcF-6ilbtqI6Bt12LV0vUnG4x2AohtHpW3PX6S3HfUmgMgbchML3wpFJ6VRrvG680VU_YZ9o0B5arjP4tYZfyjRHVKriSA27LGnL84eGGspTvUPtY5fL49Vue-deQw65657ZUT0POxhGqbyshszWEyUMZJsZlSL1_usaVb7fuVK0glJH0JX-_kemTSGJgiOYKQ1DJTuaSHirlFPtjKVcrHh2HeoBUYGM" alt="QR">
+                        <strong>Scan to enter</strong>
+                        <p>Please increase your screen brightness</p>
+                    </div>
+                </div>
+
+                <div class="status">
+                    <span>Ticket ID: 8859201-AFX</span>
+                    <span class="ok">✔ Valid for Entry</span>
+                </div>
+            </div>
+
+            <!-- PAYMENT -->
+            <div class="payment">
+                <h3>Payment Details</h3>
+                <div class="row muted"><span>Standard Ticket (x2)</span><span> RM @Model.Booking.TotalPrice</span></div>
+                <div class="row muted"><span>Add-On</span><span>RM 0</span></div>
+                <div class="row discount"><span>Discount (SUMMER20)</span><span>- RM 0.00</span></div>
+                <hr style="border-color:var(--border)">
+                <div class="row"><span>Total Paid</span><span class="total">RM @Model.amount</span></div>
+
+
+                <div class="actions-grid">
+                    <button>Download PDF</button>
+                    <button>Share Ticket</button>
+                </div>
+
+                <div class="support">Need help? <u>Contact Support</u><br>Reference ID: TRX-8859201</div>
+            </div>
+
+        </div>
+
+    </div>
+</main>

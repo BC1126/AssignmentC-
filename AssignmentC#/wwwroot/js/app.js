@@ -122,3 +122,17 @@ $('[data-CloseVoucher]').on('click', e => {
 $('[data-OpenVoucher]').on('click', e => {
     document.getElementById("voucherModal").style.display = "flex";
 });
+
+
+
+// Delete Voucher (with Confirmation)
+$(document).on('click', '[data-delete]', e => {
+    e.preventDefault();
+    const url = e.target.dataset.delete;
+
+    const confirmed = confirm("Are you sure want to delete?");
+    if (confirmed) {
+        location = url || location;
+    }
+    
+});

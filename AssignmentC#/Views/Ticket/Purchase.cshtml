@@ -1,7 +1,13 @@
-﻿@model BookingSessionData
+﻿@model PurchaseVM
 
 @section head{
     <link href="/css/ticket.css" rel="stylesheet" />
+}
+
+@{
+    int totalMinutes = Model.MovieDuration;
+    int hours = totalMinutes / 60;
+    int minutes = totalMinutes % 60;
 }
 
 <section id="detail" class="p_3">
@@ -12,7 +18,7 @@
 				<div class="detail_2l">
 					<div class="grid clearfix">
 						<figure class="effect-jazz mb-0">
-							<a href="#"><img src="/img/45.jpg" height="530" class="w-100" alt="abc"></a>
+							<a href="#"><img src="/uploads/@Model.MoviewUrl" height="530" class="w-100" alt="abc"></a>
 						</figure>
 					</div>
 				</div>
@@ -26,35 +32,41 @@
 
 							<div class="col-md-6 mb-3">
 								<div class="detail_1l">
-									<h2>Movie Name</h2>
-									<h4 class="mb-0 text-muted">P12 . ENG . 1 h 30 m . 2D</h4>
+									<h2>@Model.MovieTitle</h2>
+									<h4 class="mb-0 text-muted">
+                                        @Model.MovieRating . 
+                                        @if (hours > 0)
+                                        {
+                                            @($"{hours} h ")
+                                        }
+                                        @minutes m </h4>
 								</div>
 							</div>
 
                             <h5 class="mb-3 text-muted">
                                 <span class="fw-bold text-black me-md-4">Cinema</span><br />
-                                Penang
+                                @Model.OutletCity - @Model.OutletName
                             </h5>
 
 							<div class="changeRow">
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-lg-4">Date</span><br />
-                                    Monday, 1 Dec 2025
+                                    @Model.StartTime.ToString("dddd, d MM yyyy")
                                 </h5>
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-sm-4">Time</span><br />
-                                    18:00
+                                    @Model.StartTime.ToString("HH:mm")
                                 </h5>
 							</div>
 
                             <div class="changeRow">
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-4">Hall</span><br />
-                                    10
+                                    @Model.HallName
                                 </h5>
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-4">Seat</span><br />
-                                    A01
+                                    @string.Join(", ", Model.SelectedSeatIdentifiers)
                                 </h5>
 							</div>
 
@@ -64,12 +76,12 @@
                             <div class="changeRow">
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-4">Ticket</span><br />
-                                    Adult x 1 
+                                    Standard x @Model.TicketQuantity
                                 </h5>
                                 <div>
                                     <br />
                                     <h5 class="mb-3 text-muted displayPrice">
-                                        RM20.00
+                                        RM @Model.TicketSubtotal
                                     </h5>
                                 </div>
                             </div>
@@ -77,12 +89,19 @@
                             <div class="changeRow">
                                 <h5 class="mb-3 text-muted">
                                     <span class="fw-bold text-black me-4">Add-On</span><br />
-                                    N/A
+                                    @for (int i = 0; i < Model.OrderName.Count; i++)
+                                    {
+                                        @Model.OrderName[i] <span>x</span> @Model.OrderQuantity[i] <br />
+                                    }
                                 </h5>
                                 <div>
                                     <br />
                                     <h5 class="mb-3 text-muted displayPrice">
-                                        RM20.00
+                                        @for (int i = 0; i < Model.OrderName.Count; i++)
+                                        {
+                                            decimal subtotal = Model.OrderPrice[i] * Model.OrderQuantity[i];
+                                            <span>RM</span> @subtotal <br />
+                                        }
                                     </h5>
                                 </div>
                             </div>
@@ -95,7 +114,7 @@
                                 </h5>
                                 <div>
                                     <h5 class="mb-3 text-muted displayPrice">
-                                        RM20.00
+                                        RM @Model.total
                                     </h5>
                                 </div>
                             </div>
@@ -112,8 +131,11 @@
 		By click on the "Checkout & Pay" button, I agree to Terms & Conditions and Privacy Policy, and hereby confirm my selection and movie details
 	</p>
 
-	<button class="checkoutbtn">
-        <b>Check out & Pay</b>
+    <a href="/Ticket/Checkout">
+        <button class="checkoutbtn">
+            <b>Check out & Pay</b>
         <span><i class="fa-regular fa-clock"></i> Time Left: 01:00</span>		
-	</button>
+	    </button>
+    </a>
+	
 </div>

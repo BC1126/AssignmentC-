@@ -22,6 +22,46 @@ namespace AssignmentC_.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AssignmentC_.Models.ActionLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(MAX)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Entity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ActionLogs");
+                });
+
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
                 {
                     b.Property<int>("BookingId")
@@ -173,53 +213,6 @@ namespace AssignmentC_.Migrations
                     b.ToTable("Movies");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.MovieReview", b =>
-                {
-                    b.Property<int>("MovieReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MovieReviewId"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("DateCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("MovieId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<bool?>("Recommend")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
-                    b.HasKey("MovieReviewId");
-
-                    b.HasIndex("MovieId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("MovieReviews");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -340,22 +333,28 @@ namespace AssignmentC_.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(5)");
 
-                    b.Property<int>("amount")
-                        .HasColumnType("int");
+                    b.Property<decimal>("amount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateOnly>("date")
                         .HasColumnType("date");
 
-                    b.Property<bool>("status")
-                        .HasColumnType("bit");
+                    b.Property<string>("status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("PaymentId");
+
+                    b.HasIndex("BookingId");
 
                     b.HasIndex("OrderId");
 
@@ -425,12 +424,7 @@ namespace AssignmentC_.Migrations
                         .HasMaxLength(13)
                         .HasColumnType("nvarchar(13)");
 
-                    b.Property<int>("PaymentId")
-                        .HasColumnType("int");
-
                     b.HasKey("PromotionId");
-
-                    b.HasIndex("PaymentId");
 
                     b.ToTable("Promotions");
 
@@ -469,6 +463,39 @@ namespace AssignmentC_.Migrations
                     b.HasIndex("HallId");
 
                     b.ToTable("Seats");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.SeatLock", b =>
+                {
+                    b.Property<int>("SeatLockId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SeatLockId"));
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SeatId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ShowTimeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SeatLockId");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("ShowTimeId");
+
+                    b.ToTable("SeatLocks");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>
@@ -524,6 +551,9 @@ namespace AssignmentC_.Migrations
                         .HasMaxLength(1)
                         .HasColumnType("nvarchar(1)");
 
+                    b.Property<bool>("IsEmailConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -560,7 +590,6 @@ namespace AssignmentC_.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(5)");
 
                     b.HasKey("AssignmentId");
@@ -598,9 +627,6 @@ namespace AssignmentC_.Migrations
                     b.Property<int?>("MinAge")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("MinSpend")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("PromotionId")
                         .HasColumnType("int");
 
@@ -611,12 +637,37 @@ namespace AssignmentC_.Migrations
                     b.ToTable("VoucherConditions");
                 });
 
+            modelBuilder.Entity("PaymentPromotion", b =>
+                {
+                    b.Property<int>("PaymentsPaymentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PromotionsPromotionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PaymentsPaymentId", "PromotionsPromotionId");
+
+                    b.HasIndex("PromotionsPromotionId");
+
+                    b.ToTable("PaymentPromotion");
+                });
+
             modelBuilder.Entity("AssignmentC_.Models.Memberpoints", b =>
                 {
                     b.HasBaseType("AssignmentC_.Models.Promotion");
 
+                    b.Property<int?>("VoucherAssignmentAssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VoucherConditionConditionId")
+                        .HasColumnType("int");
+
                     b.Property<int>("points")
                         .HasColumnType("int");
+
+                    b.HasIndex("VoucherAssignmentAssignmentId");
+
+                    b.HasIndex("VoucherConditionConditionId");
 
                     b.HasDiscriminator().HasValue("Memberpoints");
                 });
@@ -637,6 +688,9 @@ namespace AssignmentC_.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("MinSpend")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
@@ -734,25 +788,6 @@ namespace AssignmentC_.Migrations
                     b.Navigation("Outlet");
                 });
 
-            modelBuilder.Entity("AssignmentC_.Models.MovieReview", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Movie", "Movie")
-                        .WithMany("Reviews")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AssignmentC_.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Movie");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("AssignmentC_.Models.Order", b =>
                 {
                     b.HasOne("AssignmentC_.Models.Member", "Member")
@@ -786,6 +821,12 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
                 {
+                    b.HasOne("AssignmentC_.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("AssignmentC_.Models.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
@@ -796,20 +837,11 @@ namespace AssignmentC_.Migrations
                         .WithMany()
                         .HasForeignKey("UserId");
 
+                    b.Navigation("Booking");
+
                     b.Navigation("Order");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.Promotion", b =>
-                {
-                    b.HasOne("AssignmentC_.Models.Payment", "Payment")
-                        .WithMany("Promotions")
-                        .HasForeignKey("PaymentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Payment");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Seat", b =>
@@ -821,6 +853,25 @@ namespace AssignmentC_.Migrations
                         .IsRequired();
 
                     b.Navigation("Hall");
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.SeatLock", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Seat", "Seat")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentC_.Models.ShowTime", "ShowTime")
+                        .WithMany()
+                        .HasForeignKey("ShowTimeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Seat");
+
+                    b.Navigation("ShowTime");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.ShowTime", b =>
@@ -852,9 +903,7 @@ namespace AssignmentC_.Migrations
 
                     b.HasOne("AssignmentC_.Models.User", "user")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("promotion");
 
@@ -863,13 +912,43 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.VoucherCondition", b =>
                 {
-                    b.HasOne("AssignmentC_.Models.Promotion", "promotion")
+                    b.HasOne("AssignmentC_.Models.Promotion", "Promotion")
                         .WithMany()
                         .HasForeignKey("PromotionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("promotion");
+                    b.Navigation("Promotion");
+                });
+
+            modelBuilder.Entity("PaymentPromotion", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.Payment", null)
+                        .WithMany()
+                        .HasForeignKey("PaymentsPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AssignmentC_.Models.Promotion", null)
+                        .WithMany()
+                        .HasForeignKey("PromotionsPromotionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AssignmentC_.Models.Memberpoints", b =>
+                {
+                    b.HasOne("AssignmentC_.Models.VoucherAssignment", "VoucherAssignment")
+                        .WithMany()
+                        .HasForeignKey("VoucherAssignmentAssignmentId");
+
+                    b.HasOne("AssignmentC_.Models.VoucherCondition", "VoucherCondition")
+                        .WithMany()
+                        .HasForeignKey("VoucherConditionConditionId");
+
+                    b.Navigation("VoucherAssignment");
+
+                    b.Navigation("VoucherCondition");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Booking", b =>
@@ -886,8 +965,6 @@ namespace AssignmentC_.Migrations
 
             modelBuilder.Entity("AssignmentC_.Models.Movie", b =>
                 {
-                    b.Navigation("Reviews");
-
                     b.Navigation("ShowTimes");
                 });
 
@@ -899,11 +976,6 @@ namespace AssignmentC_.Migrations
             modelBuilder.Entity("AssignmentC_.Models.Outlet", b =>
                 {
                     b.Navigation("Halls");
-                });
-
-            modelBuilder.Entity("AssignmentC_.Models.Payment", b =>
-                {
-                    b.Navigation("Promotions");
                 });
 
             modelBuilder.Entity("AssignmentC_.Models.Product", b =>

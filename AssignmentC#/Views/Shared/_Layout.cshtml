@@ -5,6 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Movie Theme</title>
+	<link rel="icon" type="image/png" sizes="32x32" href="/photos/android-chrome-192x192.png" />
 	<link href="/css/bootstrap.min.css" rel="stylesheet">
 	<link href="/css/font-awesome.min.css" rel="stylesheet">
 	<link href="/css/global.css" rel="stylesheet">
@@ -55,8 +56,9 @@
 				<section id="header">
 					<nav class="navbar navbar-expand-md navbar-light px_4" id="navbar_sticky">
 						<div class="container-fluid">
-							<a class="navbar-brand  p-0 fw-bold text-white" href="/"><i class="fa fa-modx col_oran"></i> Movie Theme </a>
-							<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+							<a class="fw-bold text-white" href="/">
+								<img style="max-width:100px; height:30px;" src="/photos/logo.png" />
+							</a>							<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 								<span class="navbar-toggler-icon"></span>
 							</button>
 							<div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -95,10 +97,10 @@
 													@* IMPORTANT: Hide Login/Register links if the user is a LOGGED-IN Member *@
 													@if (!User.Identity.IsAuthenticated)
 													{
-														<li><a class="dropdown-item" href="/Home/login"><i class="fa fa-chevron-right font_12 me-1"></i> Login</a></li>
-														<li><a class="dropdown-item" href="/Home/register"><i class="fa fa-chevron-right font_12 me-1"></i> Register</a></li>
+														<li><a class="dropdown-item" asp-controller="User" asp-action="Login"><i class="fa fa-chevron-right font_12 me-1"></i> Login</a></li>
+														<li><a class="dropdown-item" asp-controller="User" asp-action="Register"><i class="fa fa-chevron-right font_12 me-1"></i> Register</a></li>
 													}
-													<li><a class="dropdown-item border-0" href="/Home/ticket"><i class="fa fa-chevron-right font_12 me-1"></i> Ticket</a></li>
+													<li><a class="dropdown-item border-0" href="/Ticket/MyTicket"><i class="fa fa-chevron-right font_12 me-1"></i> Ticket</a></li>
 												</ul>
 											</li>
 										}
@@ -113,6 +115,12 @@
 											   asp-action="StaffDashboard"
 											   asp-controller="Staff">
 												Dashboard
+											</a>
+										</li>
+										<li class="nav-item">
+											<a class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "MemberList" ? "active" : "")"
+											   href="/User/MemberList">
+												User
 											</a>
 										</li>
 										<li class="nav-item dropdown">
@@ -138,6 +146,7 @@
 
 									@if (User.IsInRole("Admin"))
 									{
+
 										<li class="nav-item">
 											<a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "AdminDashboard" ? "active" : "")"
 											   aria-current="page"
@@ -177,6 +186,15 @@
 											<ul class="dropdown-menu drop_1" aria-labelledby="navbarDropdownAdminMovie">
 												<li><a class="dropdown-item" href="/Movie/Movies"><i class="fa fa-chevron-right font_12 me-1"></i> Manage Movie</a></li>
 												<li><a class="dropdown-item" href="/ShowTime/ShowTimeManage"><i class="fa fa-chevron-right font_12 me-1"></i> ShowTime Manage</a></li>
+												<li><a class="dropdown-item" href="/ActionLog/ActionLogList"><i class="fa fa-chevron-right font_12 me-1"></i> Logs</a></li>
+											</ul>
+										</li>
+										<li class="nav-item dropdown">
+											<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownAdminMovie" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+												Hall
+											</a>
+											<ul class="dropdown-menu drop_1" aria-labelledby="navbarDropdownAdminMovie">
+												<li><a class="dropdown-item" href="/Hall/ManageHalls"><i class="fa fa-chevron-right font_12 me-1"></i> Manage Hall</a></li>
 											</ul>
 										</li>
 									}
@@ -205,7 +223,12 @@
 									else
 									{
 										<li class="nav-item">
-											<a class="nav-link fs-5 drop_icon" href="/User/Login" title="Login/Register"><i class="fa fa-user"></i></a>
+											<a class="nav-link fs-5 drop_icon"
+											   asp-controller="User"
+											   asp-action="Login"
+											   title="Login/Register">
+												<i class="fa fa-user"></i>
+											</a>
 										</li>
 									}
 								</ul>
@@ -231,7 +254,11 @@
 				<div class="footer_1 row pb-4">
 					<div class="col-md-3">
 						<div class="footer_1l">
-							<h4 class="mb-0"><a class="fw-bold text-white" href="/"><i class="fa fa-modx col_oran"></i>  Movie Theme </a></h4>
+						<h4 class="mb-0">
+							<a class="fw-bold text-white" href="/">
+								<img style="max-width:100px; height:30px;" src="/photos/logo.png" />
+							</a>
+						</h4>
 						</div>
 					</div>
 					<div class="col-md-9">
