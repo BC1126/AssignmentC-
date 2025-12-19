@@ -189,7 +189,8 @@ public class BookingController : Controller
     public IActionResult SelectTicket([FromForm] TicketSelectionSubmission submission)
     {
         var uniqueSeatIds = submission.SeatIds?.Distinct().ToList() ?? new List<int>();
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = User.Identity!.Name!;
+        var user = db.Users.FirstOrDefault(u => u.Email == email);
 
         if (submission.ShowTimeId <= 0 || !uniqueSeatIds.Any())
         {
@@ -198,10 +199,11 @@ public class BookingController : Controller
         }
         
 
-        if (string.IsNullOrEmpty(userId))
+        if (user == null)
         {
-            return Content("Error: User is not logged in or ID not found.");
+            return RedirectToAction("Login", "User");
         }
+
         var showtime = db.ShowTimes
             .Include(st => st.Movie)
             .Include(st => st.Hall).ThenInclude(h => h.Outlet)
@@ -242,10 +244,14 @@ public class BookingController : Controller
             subtotal += price;
         }
 
+        HttpContext.Session.SetString("SelectedRegion", showtime.Hall.Outlet.City);
+        HttpContext.Session.SetString("SelectedCinema", showtime.Hall.Outlet.Name);
+        HttpContext.Session.SetString("CollectDate", DateOnly.FromDateTime(showtime.StartTime).ToString());
+
         var bookingData = new BookingSessionData
         {
             ShowTimeId = showtime.ShowTimeId,
-            MemberId = userId,
+            MemberId = user.UserId,
             MovieTitle = showtime.Movie.Title,
             StartTime = showtime.StartTime,
             HallName = showtime.Hall.Name,

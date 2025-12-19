@@ -1,4 +1,6 @@
-﻿@section head{
+﻿@model IEnumerable<PaymentVM>
+
+@section head{
     <link href="/css/myTicket.css" rel="stylesheet" />
 }
 
@@ -24,26 +26,28 @@
                 </div>
             </div>
 
-            <!-- Ticket Example -->
-            <div class="ticket">
-                <div class="poster"><img src="/uploads/@Model.Movie." /></div>
+            @foreach(var vm in Model)
+            {
+                <div class="ticket">
+                <div class="poster"><img src="/uploads/@vm.Movie.PosterUrl" /></div>
                 <div class="ticket-content">
                     <div>
                         <div class="badges">
-                            <span class="badge-confirmed">Confirmed</span>
-                            <span class="badge-format">IMAX</span>
+                                <span class="badge-confirmed">@vm.Status</span>
+                                <span class="badge-format">Paid At : @vm.Date</span>
                         </div>
-                        <h3 class="movieTitle">Dune: Part Two</h3>
-                        <p class="subtitle">Tomorrow, 14 Mar • 19:00</p>
+                            <h3 class="movieTitle">@vm.Movie.Title</h3>
+                            <p class="subtitle">@vm.Movie.PremierDate.ToString("dddd, dd MMMM yyyy") • @vm.ShowTime.StartTime</p>
                     </div>
                     <div class="actions">
-                        <button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button>
+                            <a href="/Ticket/TicketDetail/@vm.PaymentId"><button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button></a>
                     </div>
                 </div>
             </div>
+            }
+            
 
         </div>
     </main>
-    ```
 
 </div>

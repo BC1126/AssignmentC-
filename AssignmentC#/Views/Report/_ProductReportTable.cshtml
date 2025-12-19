@@ -1,0 +1,30 @@
+﻿@model X.PagedList.IPagedList<ProductReportVM>
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>@Html.ActionLink("Name", "ProductReport", new { sort = "Name", dir = ViewBag.Dir == "asc" ? "desc" : "asc", search = ViewBag.Search })</th>
+            <th>Cinema</th>
+            <th>Price</th>
+            <th>@Html.ActionLink("Quantity Sold", "ProductReport", new { sort = "TotalQuantitySold", dir = ViewBag.Dir == "asc" ? "desc" : "asc", search = ViewBag.Search })</th>
+            <th>@Html.ActionLink("Revenue", "ProductReport", new { sort = "TotalRevenue", dir = ViewBag.Dir == "asc" ? "desc" : "asc", search = ViewBag.Search })</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Name</td>
+                <td>@p.Cinema</td>
+                <td>@("RM " + p.Price.ToString("N2"))</td>
+                <td>@p.TotalQuantitySold</td>
+                <td>@("RM " + p.TotalRevenue.ToString("N2"))</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@Html.PagedListPager(Model, page => Url.Action("ProductReport", new { page, sort = ViewBag.Sort, dir = ViewBag.Dir, search = ViewBag.Search }), new PagedListRenderOptions { LiElementClasses = new[] { "page-item" }, PageClasses = new[] { "page-link" } })

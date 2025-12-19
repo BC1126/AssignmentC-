@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using X.PagedList.Extensions;
 
 namespace AssignmentC_.Controllers;
 
@@ -436,4 +437,65 @@ public class AdminController : Controller
 
         return RedirectToAction("StaffList","User");
     }
+
+    [Authorize(Roles = "Admin")]
+    public IActionResult ViewOrder(string search, string sort = "Id", string dir = "desc", int page = 1)
+    {
+        var orders = db.Orders
+            .Include(o => o.OrderLines)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            orders = orders.Where(o =>
+                o.Id.ToString().Contains(search) ||
+                o.Cinema.Contains(search) ||
+                o.MemberEmail.Contains(search));
+        }
+
+        orders = (sort, dir) switch
+        {
+            ("Date", "asc") => orders.OrderBy(o => o.Date),
+            ("Date", "des") => orders.OrderByDescending(o => o.Date),
+            ("Id", "asc") => orders.OrderBy(o => o.Id),
+            ("Id", "des") => orders.OrderByDescending(o => o.Id),
+            _ => orders.OrderByDescending(o => o.Id)
+        };
+
+        var model = orders.ToPagedList(page, 5);
+
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.Dir = dir;
+
+        if (Request.IsAjax())
+        {
+            return PartialView("_AdminProductOrder", model);
+        }
+        else
+        {
+            return View("~/Views/Admin/AdminViewProductOrder.cshtml", model);
+        }
+    }
+
+
+
+    [Authorize(Roles = "Admin")]
+    public IActionResult ViewOrderDetails(int id)
+    {
+        var order = db.Orders
+            .Include(o => o.OrderLines)
+            .ThenInclude(ol => ol.Product)
+            .FirstOrDefault(o => o.Id == id);
+
+        if (order == null)
+        {
+            TempData["Error"] = "Order not found.";
+            return RedirectToAction("ViewOrder");
+        }
+
+        return View("~/Views/Admin/AdminViewProductOrderDetails.cshtml", order);
+    }
+
+
 }

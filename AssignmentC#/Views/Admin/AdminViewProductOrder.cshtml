@@ -1,0 +1,173 @@
+﻿@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model IPagedList<Order>
+
+@{
+    ViewBag.Title = "All Orders (Admin)";
+}
+
+@section head {
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            table-layout: fixed;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        th {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+            th a.asc::after {
+                content: ' ▴';
+            }
+
+            th a.des::after {
+                content: ' ▾';
+            }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #fff;
+        }
+
+        .badge-paid {
+            background-color: #198754;
+        }
+
+        .badge-unpaid {
+            background-color: #dc3545;
+        }
+
+        .badge-claimed {
+            background-color: #0d6efd;
+        }
+
+        .badge-unclaimed {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .detail-btn {
+            background: #0d6efd;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .back-btn {
+            background: #0d6efd;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pagination-wrapper {
+            text-align: center;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+
+            .pagination-wrapper .pagination {
+                display: inline-flex;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+                .pagination-wrapper .pagination li {
+                    margin: 0 3px;
+                }
+
+                    .pagination-wrapper .pagination li a,
+                    .pagination-wrapper .pagination li span {
+                        display: block;
+                        padding: 8px 12px;
+                        color: #0d6efd;
+                        text-decoration: none;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        transition: all 0.3s ease;
+                    }
+
+                        .pagination-wrapper .pagination li a:hover {
+                            background-color: #0d6efd;
+                            color: #fff;
+                            border-color: #0d6efd;
+                        }
+
+                    .pagination-wrapper .pagination li.active span {
+                        background-color: #0d6efd;
+                        color: #fff;
+                        border-color: #0d6efd;
+                    }
+
+                    .pagination-wrapper .pagination li.disabled span {
+                        color: #aaa;
+                        cursor: default;
+                        border-color: #ddd;
+                    }
+    </style>
+}
+
+<div class="container">
+    <button data-get="/Admin/AdminDashboard" class="back-btn">← Back</button>
+    <h2>All Orders</h2>
+
+    <form id="searchForm" data-ajax="true" data-ajax-update="#target" data-ajax-loading="#loader">
+        <input type="search" name="search" value="@ViewBag.Search" placeholder="Search orders..." />
+        <input type="hidden" name="sort" value="@ViewBag.Sort" />
+        <input type="hidden" name="dir" value="@ViewBag.Dir" />
+    </form>
+
+    <img src="/img/loader.gif" id="loader" style="display:none" />
+
+    <div id="target">
+        <partial name="_AdminProductOrder" model="Model" />
+    </div>
+</div>
+
+
+@section foot {
+    <script>
+        let timer = null;
+        $('#searchForm input[name="search"]').on('input', e => {
+            clearTimeout(timer);
+            timer = setTimeout(() => $(e.target.form).submit(), 500);
+        });
+    </script>
+}
