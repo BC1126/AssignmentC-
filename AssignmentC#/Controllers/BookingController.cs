@@ -189,13 +189,19 @@ public class BookingController : Controller
     public IActionResult SelectTicket([FromForm] TicketSelectionSubmission submission)
     {
         var uniqueSeatIds = submission.SeatIds?.Distinct().ToList() ?? new List<int>();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (submission.ShowTimeId <= 0 || !uniqueSeatIds.Any())
         {
             TempData["Error"] = "Please select at least one seat";
             return RedirectToAction("SelectTicket", new { showtimeId = submission.ShowTimeId });
         }
+        
 
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Content("Error: User is not logged in or ID not found.");
+        }
         var showtime = db.ShowTimes
             .Include(st => st.Movie)
             .Include(st => st.Hall).ThenInclude(h => h.Outlet)
@@ -239,7 +245,7 @@ public class BookingController : Controller
         var bookingData = new BookingSessionData
         {
             ShowTimeId = showtime.ShowTimeId,
-            MemberId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+            MemberId = userId,
             MovieTitle = showtime.Movie.Title,
             StartTime = showtime.StartTime,
             HallName = showtime.Hall.Name,
@@ -263,7 +269,6 @@ public class BookingController : Controller
         var jsonData = JsonSerializer.Serialize(bookingData);
         HttpContext.Session.SetString("BookingData", jsonData);
 
-        // Also keeping your TempData for immediate redirection needs
         TempData["BookingData"] = jsonData;
 
         return RedirectToAction("UserIndex", "Product");

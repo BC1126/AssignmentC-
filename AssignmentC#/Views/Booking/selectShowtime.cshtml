@@ -158,6 +158,7 @@
                             <span class="showtime-time">@showtime.StartTime.ToString("HH:mm")</span>
                             <span class="showtime-type">@showtime.HallType</span>
                             <span class="showtime-price">RM @showtime.TicketPrice</span>
+                        <span class="seat-badge">Loading...</span>
                         </a>
                     }
                 </div>
@@ -286,7 +287,6 @@
                             btn.appendChild(badge);
                         }
 
-                        // Update button state based on availability
                         if (isNowSoldOut) {
                             btn.classList.add('sold-out');
                             btn.style.pointerEvents = 'none';
