@@ -32,14 +32,29 @@
                             <img src="@u.PhotoURL" class="user-photo-thumbnail border" alt="User Photo"
                                  onerror="this.onerror=null; this.src='/images/default.jpg';" />
                         </td>
-                        <td class="text-center">
-                            <a asp-controller="Admin" asp-action="AdminEditUser" asp-route-id="@u.UserId"
-                               asp-route-returnUrl="@currentUrl" class="btn btn-sm btn-info text-white">Update</a>
-                            @* The button below triggers the modal via JavaScript *@
-                            <button type="button" class="btn btn-sm btn-danger"
-                                    onclick="openDeleteModal('@u.UserId', '@u.Name')">
-                                Delete
-                            </button>
+                        <td class="text-center align-middle">
+                            <div class="d-flex justify-content-center gap-2">
+
+                                <a asp-action="MemberDetails" asp-controller="Staff" asp-route-id="@u.UserId"
+                                   class="btn btn-sm btn-info text-white shadow-sm"
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i> Details
+                                </a>
+
+                                <a asp-controller="Admin" asp-action="AdminEditUser" asp-route-id="@u.UserId"
+                                   asp-route-returnUrl="@currentUrl"
+                                   class="btn btn-sm btn-warning text-dark shadow-sm"
+                                   title="Edit User">
+                                    <i class="bi bi-pencil-square"></i> Update
+                                </a>
+
+                                <button type="button" class="btn btn-sm btn-danger shadow-sm"
+                                        onclick="openDeleteModal('@u.UserId', '@u.Name')"
+                                        title="Delete User">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+
+                            </div>
                         </td>
                     </tr>
                 }

@@ -12,6 +12,7 @@
                     <th>Gender</th>
                     <th><a href="javascript:void(0)" class="sort-link" data-sort="@ViewData["EmailSort"]">Email</a></th>
                     <th>Phone</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -23,8 +24,20 @@
                         <td>@u.Gender</td>
                         <td>@u.Email</td>
                         <td>@u.Phone</td>
+                        <td class="text-center align-middle">
+                            <div class="d-flex justify-content-center">
+
+                                <a asp-controller="Admin" asp-action="AdminDetails" asp-route-id="@u.UserId"
+                                   class="btn btn-sm btn-info text-white shadow-sm"
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i> Details
+                                </a>
+
+                            </div>
+                        </td>
                     </tr>
                 }
+
             </tbody>
         </table>
     </div>

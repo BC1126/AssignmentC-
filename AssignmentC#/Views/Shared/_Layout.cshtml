@@ -142,6 +142,7 @@
 
 									@if (User.IsInRole("Admin"))
 									{
+
 										<li class="nav-item">
 											<a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "AdminDashboard" ? "active" : "")"
 											   aria-current="page"
