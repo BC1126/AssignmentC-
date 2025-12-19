@@ -95,7 +95,19 @@ namespace AssignmentC_.Models
         // Assigned User use
         public int? AssignedUserId { get; set; }
 
-        
+    }
+
+    public class PaymentVM
+    {
+        public int PaymentId { get; set; }
+        public decimal Amount { get; set; }
+        public string Status { get; set; }
+        public DateOnly Date { get; set; }
+        public Booking Booking { get; set; }
+        public User User { get; set; }
+        public Order Order { get; set; }
+        public ShowTime ShowTime { get; set; }
+        public Movie Movie { get; set; }
     }
 
 }

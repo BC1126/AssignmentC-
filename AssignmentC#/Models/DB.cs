@@ -267,6 +267,11 @@ public class Booking
     public ShowTime ShowTime { get; set; }
     public Member Member { get; set; }
     public ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
+
+    internal ShowTime Select(Func<object, Booking> value)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public class BookingSeat

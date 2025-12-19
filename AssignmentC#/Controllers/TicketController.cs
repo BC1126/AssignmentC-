@@ -136,7 +136,35 @@ public class TicketController(DB db, Helper hp) : Controller
         // Get User
 
         var user = db.Users.FirstOrDefault(v => v.Email == User.Identity!.Name!);
+        if (user == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
 
+
+        // Get Booking
+        var sessionJson = HttpContext.Session.GetString("BookingData");
+        var data = JsonSerializer.Deserialize<BookingSessionData>(sessionJson);
+
+        if (data == null)
+        {
+            return RedirectToAction("Index", "Movie");
+        }
+
+        var finalBooking = new Booking
+        {
+            MemberId = data.MemberId,
+            ShowTimeId = data.ShowTimeId,
+            TicketQuantity = data.TicketQuantity,
+            TotalPrice = data.TicketSubtotal,
+            BookingDate = DateTime.Now,
+            BookingSeats = data.SelectedSeatIds.Select(sid => new BookingSeat
+            {
+                SeatId = sid
+            }).ToList()
+        };
+
+        db.Bookings.Add(finalBooking);
 
         var a = HttpContext.Session.GetString("TotalAmount");
         decimal amount = decimal.Parse(a);
@@ -147,6 +175,7 @@ public class TicketController(DB db, Helper hp) : Controller
             status = "Paid",
             date = DateOnly.FromDateTime(DateTime.Today),
 
+            Booking = finalBooking,
             Promotions = promo,
             Order = order,
             User = user,
@@ -588,6 +617,10 @@ public class TicketController(DB db, Helper hp) : Controller
 
         return PartialView("_DiscountSummary", vm);
     }
+    public IActionResult Receipt()
+    {
+        return View();
+    }
 
     public IActionResult MyTicket()
     {
@@ -599,13 +632,37 @@ public class TicketController(DB db, Helper hp) : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var p = db.Payments.Where(p => p.User.UserId == user.UserId);
+        var vm = db.Payments
+                  .Include(p => p.User)
+                  .Include(p => p.Booking)
+                  .ThenInclude(b => b.ShowTime)
+                  .ThenInclude(p => p.Movie)
+                  .Include(p => p.Order)
+                  .Where(p => p.User.UserId == user.UserId)
+                  .Select(p => new PaymentVM
+                  {
+                      PaymentId = p.PaymentId,
+                      Amount = p.amount,
+                      Status = p.status,
+                      Date = p.date,
 
-        return View(p);
+                      Booking = p.Booking,
+                      User = p.User,
+                      Order = p.Order,
+                      ShowTime = p.Booking.ShowTime,
+                      Movie = p.Booking.ShowTime.Movie,
+                  })
+                  .ToList();
+
+        return View(vm);
     }
 
     public IActionResult TicketDetail()
     {
+
+
         return View();
     }
+
+    
 }

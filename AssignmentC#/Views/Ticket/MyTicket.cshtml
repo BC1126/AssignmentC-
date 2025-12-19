@@ -1,0 +1,49 @@
+﻿@section head{
+    <link href="/css/myTicket.css" rel="stylesheet" />
+}
+
+<div class="app">
+    <!-- Main -->
+    <main>
+        <div class="container">
+            <div>
+                <h1>My Tickets</h1>
+                <p class="subtitle">View and manage your upcoming and past movie bookings</p>
+            </div>
+
+            <div class="controls">
+                <div class="tabs">
+                    <a class="tab active">Upcoming</a>
+                    <a class="tab">Past</a>
+                    <a class="tab">Cancelled</a>
+                </div>
+
+                <div class="search">
+                    <span class="material-symbols-outlined" style="padding:0 8px;">search</span>
+                    <input placeholder="Search by movie title...">
+                </div>
+            </div>
+
+            <!-- Ticket Example -->
+            <div class="ticket">
+                <div class="poster"><img src="/uploads/@Model.Movie." /></div>
+                <div class="ticket-content">
+                    <div>
+                        <div class="badges">
+                            <span class="badge-confirmed">Confirmed</span>
+                            <span class="badge-format">IMAX</span>
+                        </div>
+                        <h3 class="movieTitle">Dune: Part Two</h3>
+                        <p class="subtitle">Tomorrow, 14 Mar • 19:00</p>
+                    </div>
+                    <div class="actions">
+                        <button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+    ```
+
+</div>
