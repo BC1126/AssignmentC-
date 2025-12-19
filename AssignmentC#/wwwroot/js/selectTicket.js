@@ -394,6 +394,9 @@
             return;
         }
 
+        if (elements.totalDisplay) elements.totalDisplay.classList.add('price-calculating');
+        if (elements.nextButton) elements.nextButton.classList.add('btn-loading');
+
         try {
             const response = await fetch('/Booking/CalculateTicketPrice', {
                 method: 'POST',
@@ -403,9 +406,9 @@
                     childrenCount: children,
                     adultCount: adult,
                     seniorCount: senior,
-                    okuCount: oku, // ADDED
+                    okuCount: oku,
                     selectedSeatsCount: state.selectedSeats.size,
-                    selectedSeatIds: Array.from(state.selectedSeats) 
+                    selectedSeatIds: Array.from(state.selectedSeats)
                 })
             });
 
@@ -429,7 +432,11 @@
             }
         } catch (err) {
             console.error('Pricing error:', err);
+        } finally {
+            if (elements.totalDisplay) elements.totalDisplay.classList.remove('price-calculating');
+            if (elements.nextButton) elements.nextButton.classList.remove('btn-loading');
         }
+
     }
 
     function handleFormSubmit(e) {

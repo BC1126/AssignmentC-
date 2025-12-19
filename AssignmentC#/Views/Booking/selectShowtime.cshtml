@@ -109,6 +109,13 @@
         </div>
     </div>
 
+    <div class="d-flex align-items-center mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="showAvailableOnly">
+            <label class="form-check-label" for="showAvailableOnly" style="color: #0d0d0d !important;">Show Available Only</label>
+        </div>
+    </div>
+
     <!-- Experience Filter -->
     <div class="experience-filter">
         <button class="experience-btn active" data-type="all" onclick="filterExperience(this)">
@@ -163,31 +170,33 @@
     <script>
         let selectedDate = '@initialActiveDate';
         let selectedExperience = 'all';
+        let availabilityData = [];
+        let lastUpdateTime = null;
 
         function selectDate(element) {
             document.querySelectorAll('.date-pill').forEach(pill => {
-            pill.classList.remove('active');});
-        element.classList.add('active');
-        selectedDate = element.dataset.date;
-        filterShowtimes();
+                pill.classList.remove('active');
+            });
+            element.classList.add('active');
+            selectedDate = element.dataset.date;
+
+            // Refresh availability immediately when date changes
+            refreshAvailability(true);
         }
 
         function filterExperience(element) {
-            // Remove active from all buttons
             document.querySelectorAll('.experience-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-
-            // Add active to clicked button
             element.classList.add('active');
             selectedExperience = element.dataset.type;
-
             filterShowtimes();
         }
 
         function filterShowtimes() {
             const showtimes = document.querySelectorAll('.showtime-btn');
             const cinemaCards = document.querySelectorAll('.cinema-card');
+            const showAvailableOnly = document.getElementById('showAvailableOnly').checked;
 
             cinemaCards.forEach(card => {
                 const cardShowtimes = card.querySelectorAll('.showtime-btn');
@@ -196,11 +205,13 @@
                 cardShowtimes.forEach(showtime => {
                     const showtimeDate = showtime.dataset.date;
                     const showtimeType = showtime.dataset.type;
+                    const isSoldOut = showtime.classList.contains('sold-out');
 
                     const dateMatch = showtimeDate === selectedDate;
                     const typeMatch = selectedExperience === 'all' || showtimeType === selectedExperience;
+                    const availabilityMatch = !showAvailableOnly || !isSoldOut;
 
-                    if (dateMatch && typeMatch) {
+                    if (dateMatch && typeMatch && availabilityMatch) {
                         showtime.style.display = 'block';
                         hasVisibleShowtimes = true;
                     } else {
@@ -208,7 +219,6 @@
                     }
                 });
 
-                // Show/hide entire cinema card
                 if (hasVisibleShowtimes) {
                     card.style.display = 'block';
                 } else {
@@ -235,23 +245,203 @@
             }
         }
 
-            document.addEventListener("DOMContentLoaded", function() {
+        async function refreshAvailability(showNotification = false) {
+            const movieId = '@Model.Movie.MovieId';
+
+            // Update last update indicator
+            updateLastRefreshIndicator(true);
+
+            try {
+                const response = await fetch(`/Booking/GetAvailability?movieId=${movieId}&date=${selectedDate}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch availability');
+                }
+
+                const data = await response.json();
+                availabilityData = data;
+                let hasChanges = false;
+
+                data.forEach(item => {
+                    const btn = document.querySelector(`.showtime-btn[href*="showtimeId=${item.showTimeId}"]`);
+
+                    if (btn) {
+                        const wasSoldOut = btn.classList.contains('sold-out');
+                        const isNowSoldOut = item.isSoldOut || item.availableSeats <= 0;
+
+                        // Detect changes
+                        if (wasSoldOut !== isNowSoldOut) {
+                            hasChanges = true;
+                        }
+
+                        // Remove existing badge if present
+                        let badge = btn.querySelector('.seat-badge');
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'seat-badge';
+                            btn.appendChild(badge);
+                        }
+
+                        // Update button state based on availability
+                        if (isNowSoldOut) {
+                            btn.classList.add('sold-out');
+                            btn.style.pointerEvents = 'none';
+                            btn.style.cursor = 'not-allowed';
+                            badge.textContent = 'SOLD OUT';
+                            badge.style.color = '#ff4d4d';
+                            badge.classList.remove('low-availability');
+                        } else {
+                            btn.classList.remove('sold-out');
+                            btn.style.pointerEvents = 'auto';
+                            btn.style.cursor = 'pointer';
+
+                            // Show different messages based on availability
+                            if (item.availableSeats <= 5) {
+                                badge.textContent = `Only ${item.availableSeats} left!`;
+                                badge.style.color = '#ff9800';
+                                badge.classList.add('low-availability');
+                            } else {
+                                badge.textContent = `${item.availableSeats} seats`;
+                                badge.style.color = '#4caf50';
+                                badge.classList.remove('low-availability');
+                            }
+                        }
+                    }
+                });
+
+                // Re-apply filters after updating availability
+                filterShowtimes();
+
+                // Update timestamp
+                lastUpdateTime = new Date();
+                updateLastRefreshIndicator(false);
+
+                // Only show notification if explicitly requested or if there were changes
+                if (showNotification && hasChanges) {
+                    showToast('Availability updated - some showtimes changed!', 'info');
+                }
+
+            } catch (error) {
+                console.error('Error fetching availability:', error);
+                updateLastRefreshIndicator(false, true);
+            }
+        }
+
+        function updateLastRefreshIndicator(isLoading, hasError = false) {
+            let indicator = document.getElementById('lastUpdateIndicator');
+
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'lastUpdateIndicator';
+                indicator.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    padding: 8px 16px;
+                    background: rgba(36, 36, 36, 0.95);
+                    border: 1px solid #333;
+                    border-radius: 20px;
+                    font-size: 0.75rem;
+                    color: #888;
+                    z-index: 1000;
+                    transition: all 0.3s ease;
+                `;
+                document.body.appendChild(indicator);
+            }
+
+            if (isLoading) {
+                indicator.innerHTML = '<i class="bi bi-arrow-clockwise" style="animation: spin 1s linear infinite;"></i> Updating...';
+                indicator.style.borderColor = '#e50914';
+                indicator.style.color = '#e50914';
+            } else if (hasError) {
+                indicator.innerHTML = '<i class="bi bi-exclamation-circle"></i> Update failed';
+                indicator.style.borderColor = '#ff4d4d';
+                indicator.style.color = '#ff4d4d';
+            } else {
+                const timeStr = lastUpdateTime ? formatTimeAgo(lastUpdateTime) : 'just now';
+                indicator.innerHTML = `<i class="bi bi-check-circle"></i> Updated ${timeStr}`;
+                indicator.style.borderColor = '#333';
+                indicator.style.color = '#888';
+            }
+        }
+
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+
+            if (seconds < 10) return 'just now';
+            if (seconds < 60) return `${seconds}s ago`;
+
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+
+            const hours = Math.floor(minutes / 60);
+            return `${hours}h ago`;
+        }
+
+        function showToast(message, type = 'info') {
+            const existing = document.querySelector('.availability-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'availability-toast';
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'info' ? '#e50914' : '#4caf50'};
+                color: white;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                z-index: 9999;
+                animation: slideInRight 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        document.getElementById('showAvailableOnly').addEventListener('change', function() {
             filterShowtimes();
         });
-    </script>
-    <script>
+
+        let autoRefreshInterval = setInterval(() => {
+            refreshAvailability(false);
+        }, 30000);
+
+        let timeUpdateInterval = setInterval(() => {
+            updateLastRefreshIndicator(false);
+        }, 10000);
+
+        window.addEventListener('beforeunload', () => {
+            clearInterval(autoRefreshInterval);
+            clearInterval(timeUpdateInterval);
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            refreshAvailability(false);
+        });
+
         const iframe = document.getElementById('trailerIframe');
         const unmuteBtn = document.getElementById('unmuteBtn');
 
-        unmuteBtn.addEventListener('click', function () {
-            if (iframe.src.includes('mute=1')) {
-                iframe.src = iframe.src.replace('mute=1', 'mute=0');
-                this.innerText = '🔇 Mute';
-            } else {
-                iframe.src = iframe.src.replace('mute=0', 'mute=1');
-                this.innerText = '🔊 Unmute';
-            }
-        });
+        if (unmuteBtn && iframe) {
+            unmuteBtn.addEventListener('click', function () {
+                if (iframe.src.includes('mute=1')) {
+                    iframe.src = iframe.src.replace('mute=1', 'mute=0');
+                    this.innerText = '🔇 Mute';
+                } else {
+                    iframe.src = iframe.src.replace('mute=0', 'mute=1');
+                    this.innerText = '🔊 Unmute';
+                }
+            });
+        }
     </script>
 
 }

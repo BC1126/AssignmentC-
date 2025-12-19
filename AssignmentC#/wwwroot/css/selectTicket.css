@@ -382,3 +382,35 @@ body {
     background-size: 200px 100%;
     animation: shimmer 1.5s infinite;
 }
+.price-calculating {
+    opacity: 0.5;
+    pointer-events: none;
+    position: relative;
+}
+
+    .price-calculating::after {
+        content: "...";
+        position: absolute;
+        right: -20px;
+        animation: dots 1.5s infinite;
+    }
+
+@keyframes dots {
+    0%, 20% {
+        content: ".";
+    }
+
+    40% {
+        content: "..";
+    }
+
+    60% {
+        content: "...";
+    }
+}
+
+/* Optional: Pulse the next button while waiting */
+.btn-loading {
+    filter: grayscale(0.5);
+    cursor: wait;
+}
