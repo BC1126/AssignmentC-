@@ -1,17 +1,24 @@
 ﻿using AssignmentC_.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using System.Linq;
 using System.Net.Mail;
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace AssignmentC_.Controllers;
 
 public class TicketController(DB db, Helper hp) : Controller
 {
-    private const int TIME_LIMIT = 8 * 60;
-
+    [Authorize(Roles = "Member")]
     public IActionResult Checkout()
     {
         // Get PurchaseVM from session
@@ -58,6 +65,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(purchaseVM);
     }
 
+    [Authorize(Roles = "Member")]
     [HttpPost]
     public IActionResult Checkout(PurchaseVM vm)
     {
@@ -70,19 +78,52 @@ public class TicketController(DB db, Helper hp) : Controller
 
         if (vm.PaymentMethod == "Card")
         {
+            // Check card number
             if (vm.CardNumber == null)
             { 
                 ModelState.AddModelError("CardNumber", "Card number is required.");
             }
+            else if (!int.TryParse(vm.CardNumber, out int value))
+            {
+                ModelState.AddModelError("CardNumber", "Please enter a valid Card Number");
+            }
+            else if (vm.CardNumber.Length != 16)
+            {
+                ModelState.AddModelError("CardNumber", "CardNumber must be exactly 16 characters.");
+            }
 
+            // Check Expiry Date
+            
             if (vm.ExpiryDate == null)
             {
                 ModelState.AddModelError("ExpiryDate", "Expiry date is required.");
             }
+            else
+            {
+                var parts = vm.ExpiryDate.Split('/');
+                int month = int.Parse(parts[0]);
+                int year = int.Parse(parts[1]) + 2000;
 
+                var expiry = new DateTime(year, month, DateTime.DaysInMonth(year, month));
+
+                if (expiry < DateTime.Today)
+                {
+                    ModelState.AddModelError("ExpiryDate", "Credit card has expired.");
+                }
+            }
+
+            // Check CVV
             if (vm.CVV == null)
             {
                 ModelState.AddModelError("CVV", "CVV is required.");
+            }
+            else if (!int.TryParse(vm.CVV, out int value))
+            {
+                ModelState.AddModelError("CVV", "Please enter a valid CVV");
+            }
+            else if (vm.CVV.Length != 3)
+            {
+                ModelState.AddModelError("CVV", "CardNumber must be exactly 3 characters.");
             }
         }
         else if (vm.PaymentMethod == "EWallet")
@@ -91,10 +132,22 @@ public class TicketController(DB db, Helper hp) : Controller
             {
                 ModelState.AddModelError("PhoneNumber", "Phone number is required.");
             }
+            else if (!Regex.IsMatch(vm.PhoneNumber, @"^60\d{9,10}$"))
+            {
+                ModelState.AddModelError("PhoneNumber", "Phone number must start with 60 and be 11 or 12 digits long.");
+            }
 
             if (string.IsNullOrWhiteSpace(vm.Pin))
             {
                 ModelState.AddModelError("Pin", "PIN is required.");
+            }
+            else if (!int.TryParse(vm.Pin, out int value))
+            {
+                ModelState.AddModelError("Pin", "Please enter a valid PIN number.");
+            }
+            else if (vm.Pin.Length != 6)
+            {
+                ModelState.AddModelError("Pin", "CardNumber must be exactly 6 characters.");
             }
         }
 
@@ -102,8 +155,9 @@ public class TicketController(DB db, Helper hp) : Controller
         {
             var errors = ModelState.Values
             .SelectMany(v => v.Errors)
-            .Select(e => e.ErrorMessage)
-            .ToList();
+            .Select(e => e.ErrorMessage);
+
+            TempData["Error"] = errors;
             return RedirectToAction("Index");
         }
 
@@ -242,7 +296,7 @@ public class TicketController(DB db, Helper hp) : Controller
             };
             db.Payments.Add(payment);
             db.SaveChanges();
-            return RedirectToAction("Receipt", payment.PaymentId); ;
+            return RedirectToAction("Receipt", new { id = payment.PaymentId });
         }
         else
         {
@@ -258,9 +312,11 @@ public class TicketController(DB db, Helper hp) : Controller
             };
             db.Payments.Add(payment);
             db.SaveChanges();
-            return RedirectToAction("Receipt", payment.PaymentId); ;
+            return RedirectToAction("Receipt", new { id = payment.PaymentId }); ;
         }
     }
+
+    [Authorize(Roles = "Member")]
     public IActionResult Purchase()
     {
         // Get Booking Data
@@ -357,6 +413,7 @@ public class TicketController(DB db, Helper hp) : Controller
             }
     }
 
+    [Authorize(Roles = "Admin")]
     public IActionResult Voucher()
     {
         var vm = new VoucherViewModel
@@ -367,6 +424,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public IActionResult Voucher(VoucherViewModel model)
     {
@@ -470,6 +528,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View();
     }
 
+    [Authorize(Roles = "Admin")]
     public IActionResult EditVoucher(int? id)
     {
         var p = db.Vouchers.Find(id);
@@ -494,6 +553,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public IActionResult EditVoucher(VoucherViewModel model)
     {
@@ -563,6 +623,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return RedirectToAction("VoucherList");
     }
 
+    [Authorize(Roles = "Admin")]
     public IActionResult DeleteVoucher(int? id)
     {
         var v = db.Promotions.OfType<Voucher>().FirstOrDefault(v => v.PromotionId == id);
@@ -576,6 +637,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return Redirect(Request.Headers.Referer.ToString());
     }
 
+    [Authorize(Roles = "Admin")]
     public IActionResult VoucherList(string? search, string? type, string? status)
     {
         search = search?.Trim() ?? "";
@@ -618,8 +680,6 @@ public class TicketController(DB db, Helper hp) : Controller
                         })
                         .ToList();
 
-        
-
         if (Request.IsAjax())
         {
             return PartialView("_VoucherList", vouchers);
@@ -628,6 +688,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(vouchers);
     }
 
+    [Authorize(Roles = "Member")]
     [HttpPost]
     public IActionResult ApplyVoucher(string SelectedVoucher)
     {
@@ -679,6 +740,7 @@ public class TicketController(DB db, Helper hp) : Controller
         }
     }
 
+    [Authorize(Roles = "Member")]
     [HttpPost]
     public IActionResult OrderSummary(decimal subtotal, decimal ticketSubtotal, int quantity, decimal addOn)
     {
@@ -723,11 +785,151 @@ public class TicketController(DB db, Helper hp) : Controller
         return PartialView("_DiscountSummary", vm);
     }
 
-    public IActionResult Receipt()
+    [Authorize(Roles = "Member")]
+    public IActionResult Receipt(int id)
     {
-        return View();
+        var email = User.Identity!.Name!;
+
+        if (email == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        var vm = db.Payments
+                   .Include(p => p.Promotions)
+                   .Include(p => p.User)
+                   .Include(p => p.Booking)
+                   .ThenInclude(p => p.ShowTime)
+                   .ThenInclude(p => p.Movie)
+
+                   .Include(p => p.Booking)
+                   .ThenInclude(p => p.ShowTime)
+                   .ThenInclude(p => p.Hall)
+
+                   .Include(p => p.Order)
+                   .Where(p => p.User.Email == email && p.PaymentId == id)
+                   .Select(p => new PaymentVM
+                   {
+                       PaymentId = p.PaymentId,
+                       Amount = p.amount,
+                       Status = p.status,
+                       Date = p.date,
+
+                       Promotions = p.Promotions.ToList(),
+                       Booking = p.Booking,
+                       User = p.User,
+                       Order = p.Order,
+                       ShowTime = p.Booking.ShowTime,
+                       Movie = p.Booking.ShowTime.Movie,
+                   })
+                  .FirstOrDefault();
+
+        if (vm == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        // Get Seat
+        var s = db.BookingSeats
+                     .Include(p => p.Booking)
+                     .Include(p => p.Seat)
+                     .Where(p => p.BookingId == vm.Booking.BookingId)
+                     .Select(p => p.Seat.SeatIdentifier)
+                     .ToList();
+
+        ViewBag.Seats = s;
+
+        // Get Add On
+        var ol = db.OrderLines
+                    .Include(o => o.Order)
+                    .Where(o => o.OrderId == vm.Order.Id)
+                    .ToList();
+
+        decimal addOnSub = 0;
+
+        if (ol != null)
+        {
+            foreach (var o in ol)
+            {
+                addOnSub += o.Price * o.Quantity; 
+            }
+        }
+
+        ViewBag.AddOnSub = addOnSub;
+
+        // Get Promo Use
+        decimal subtotal = addOnSub + vm.Booking.TotalPrice;
+
+        decimal dv = 0;
+
+        foreach (var p in vm.Promotions ?? Enumerable.Empty<Promotion>())
+        {
+            if (p is Voucher v)
+            {
+                if (string.Equals(v.VoucherType.Trim(), "percentage", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal d = v.DiscountValue / 100;
+                    dv = subtotal * d;
+                }
+                else
+                {
+                    dv = v.DiscountValue;
+                }
+            }
+        }
+
+        ViewBag.Sub = dv;
+
+        return View(vm);
     }
 
+    [Authorize(Roles = "Member")]
+    public async Task<IActionResult> DownloadReceipt(int paymentId)
+    {
+        var payment = db.Payments
+                   .Include(p => p.Promotions)
+                   .Include(p => p.User)
+                   .Include(p => p.Booking)
+                   .ThenInclude(p => p.ShowTime)
+                   .ThenInclude(p => p.Movie)
+
+                   .Include(p => p.Booking)
+                   .ThenInclude(p => p.ShowTime)
+                   .ThenInclude(p => p.Hall)
+
+                   .Include(p => p.Order)
+                   .Where(p => p.PaymentId == paymentId)
+                   .Select(p => new PaymentVM
+                   {
+                       PaymentId = p.PaymentId,
+                       Amount = p.amount,
+                       Status = p.status,
+                       Date = p.date,
+
+                       Promotions = p.Promotions.ToList(),
+                       Booking = p.Booking,
+                       User = p.User,
+                       Order = p.Order,
+                       ShowTime = p.Booking.ShowTime,
+                       Movie = p.Booking.ShowTime.Movie,
+                   })
+                  .FirstOrDefault();
+
+        if (payment == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        var document = new ReceiptDocument(payment);
+
+        // 3. Generate PDF as byte array
+        var pdfBytes = document.GeneratePdf();
+
+        // 4. Return as FileResult
+        return File(pdfBytes, "application/pdf", $"Receipt_{paymentId}.pdf");
+    }
+
+    [Authorize(Roles = "Member")]
     public IActionResult MyTicket()
     {
         var email = User.Identity!.Name!;
@@ -763,6 +965,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(vm);
     }
 
+    [Authorize(Roles = "Member")]
     public IActionResult TicketDetail(int? id)
     {
         if(id == null)
@@ -804,6 +1007,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(payment);
     }
 
+    [Authorize(Roles = "Admin")]
     public IActionResult PaymentList()
     {
         var payment = db.Payments
@@ -823,6 +1027,7 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(payment);
     }
 
+    [Authorize(Roles = "Member")]
     [HttpPost]
     public IActionResult Refund(int paymentId)
     {

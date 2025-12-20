@@ -1,102 +1,13 @@
-﻿@model Payment
+﻿@model PaymentVM
 
 @section head {
     <link href="/css/ticket.css" rel="stylesheet" />
 }
 
-<div id="receipt-container">
+@{
+    int totalMinutes = Model.Booking.ShowTime.Movie.DurationMinutes;
+    int hours = totalMinutes / 60;
+    int minutes = totalMinutes % 60;
+}
 
-    <!-- HEADER -->
-    <div class="receipt-header">
-        <div class="icon">✓</div>
-        <h1>Payment Successful</h1>
-        <p>Your ticket has been booked successfully</p>
-    </div>
-
-    <!-- MOVIE INFO -->
-    <div class="section">
-        <div class="movie">
-            <div class="movie-poster"></div>
-            <div>
-                <h3>Avatar: The Way of Water</h3>
-                <div class="meta">IMAX • English • 2D</div>
-
-                <div class="movie-grid">
-                    <div><strong>Date:</strong> 15 Dec 2025</div>
-                    <div><strong>Time:</strong> 20:30</div>
-                    <div><strong>Hall:</strong> 5</div>
-                    <div><strong>Seats:</strong> E10, E11</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TRANSACTION META -->
-    <div class="section">
-        <div class="meta-box">
-            <div>
-                <span>Transaction ID</span>
-                <strong>CTX-48291</strong>
-            </div>
-            <div>
-                <span>Payment</span>
-                <strong>Credit Card</strong>
-            </div>
-            <div>
-                <span>Date</span>
-                <strong>1 Dec 2025</strong>
-            </div>
-        </div>
-    </div>
-
-    <!-- ORDER DETAILS -->
-    <div class="section">
-        <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        Standard Ticket
-                        <div class="item-sub">Adult</div>
-                    </td>
-                    <td>2</td>
-                    <td>RM 30.00</td>
-                </tr>
-                <tr>
-                    <td>Convenience Fee</td>
-                    <td>—</td>
-                    <td>RM 3.50</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="totals">
-            <div><span>Subtotal</span><span>RM 33.50</span></div>
-            <div><span>Tax</span><span>RM 1.90</span></div>
-            <div class="grand-total">
-                <span>Total</span>
-                <span>RM 35.40</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- FOOTER -->
-    <div class="section footer">
-        <div class="payment-method">
-            Paid with •••• 1234
-        </div>
-        <div class="qr"></div>
-    </div>
-
-</div>
-
-<div class="actions receiptBtn">
-    <button class="btn-primary">Download Receipt</button>
-    <button class="btn-secondary">Back to Home</button>
-</div>
+<partial name="_Receipt" model="Model"/>

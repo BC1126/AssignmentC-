@@ -114,5 +114,6 @@ namespace AssignmentC_.Models
         public Order Order { get; set; }
         public ShowTime ShowTime { get; set; }
         public Movie Movie { get; set; }
+        public List<Promotion> Promotions { get; set; }
     }
 }

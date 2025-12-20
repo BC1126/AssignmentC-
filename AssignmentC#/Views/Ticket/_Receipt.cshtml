@@ -1,0 +1,91 @@
+﻿@model PaymentVM
+@{
+    int totalMinutes = Model.Booking.ShowTime.Movie.DurationMinutes;
+    int hours = totalMinutes / 60;
+    int minutes = totalMinutes % 60;
+}
+
+<div id="receipt-container">
+
+    <!-- HEADER -->
+    <div class="receipt-header">
+        <div class="icon">✓</div>
+        <h1>Payment Successful</h1>
+        <p>Your ticket has been purchased successfully</p>
+    </div>
+
+    <!-- MOVIE INFO -->
+    <div class="section">
+        <div class="movie">
+            <div class="movie-poster"><img src="@Model.Booking.ShowTime.Movie.PosterUrl" /></div>
+            <div>
+                <h3>@Model.Booking.ShowTime.Movie.Title</h3>
+                <div class="meta">
+                    @Model.Booking.ShowTime.Movie.Rating •
+                    @if (hours > 0)
+                    {
+                        @($"{hours} h ")
+                    }
+                    @minutes m
+                </div>
+
+                <div class="movie-grid">
+                    <div><strong>Date: </strong>@Model.Booking.BookingDate</div>
+                    <div><strong>Time: </strong>@Model.Booking.ShowTime.StartTime</div>
+                    <div><strong>Hall: </strong>@Model.Booking.ShowTime.Hall.Name</div>
+                    <div><strong>Seats: </strong>@string.Join(", ", ViewBag.Seats)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ORDER DETAILS -->
+    <div class="section">
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        Ticket
+                    </td>
+                    <td>@Model.Booking.TicketQuantity</td>
+                    <td>RM @Model.Booking.TotalPrice</td>
+                </tr>
+                <tr>
+                    <td>Add On</td>
+                    <td>-</td>
+                    <td>RM @ViewBag.AddOnSub</td>
+                </tr>
+                <tr>
+                    <td>Discount</td>
+                    <td>-</td>
+                    <td>RM @ViewBag.Sub.ToString("F2")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <div class="grand-total">
+                <span>Total</span>
+                <span>RM @Model.Amount</span>
+            </div>
+        </div>
+
+        <div class="section footer">
+            <div>Pay At : @Model.Date</div>
+        </div>
+    </div>
+</div>
+
+<div class="actions receiptBtn">
+    <a href="@Url.Action("DownloadReceipt", "Ticket", new { paymentId = Model.PaymentId })" class="btn-primary">
+        Download Receipt
+    </a>
+    <a href="/Home/Index"><button class="btn-secondary">Back to Home</button></a>
+</div>

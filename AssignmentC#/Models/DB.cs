@@ -165,9 +165,6 @@ public class OrderLine
     public string ProductPhotoURL { get; set; } = "";
 }
 
-
-
-
 public class Payment
 {
     [Key]

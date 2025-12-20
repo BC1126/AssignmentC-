@@ -982,3 +982,9 @@ tbody tr:hover {
     color: white;
     border-radius: 5px;
 }
+
+@media print {
+    .receiptBtn {
+        visibility: hidden;
+    }
+}
