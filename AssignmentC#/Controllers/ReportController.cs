@@ -174,6 +174,128 @@ public class ReportController(DB db, Helper hp) : Controller
                     .ToList();
         }
     }
+
+    [Authorize(Roles = "Admin")]
+    public IActionResult MovieTicketReport(
+    string search,
+    string sort = "Title",
+    string dir = "asc",
+    int page = 1)
+    {
+        var query =
+            from b in db.Bookings
+            join st in db.ShowTimes on b.ShowTimeId equals st.ShowTimeId
+            join m in db.Movies on st.MovieId equals m.MovieId
+            group new { b, m } by new { m.MovieId, m.Title } into g
+            select new MovieTicketReportVM
+            {
+                MovieId = g.Key.MovieId,
+                Title = g.Key.Title,
+                TotalTicketsSold = g.Sum(x => x.b.TicketQuantity),
+                TotalRevenue = g.Sum(x => x.b.TotalPrice)
+            };
+
+        if (!string.IsNullOrEmpty(search))
+            query = query.Where(x => x.Title.Contains(search));
+
+        query = (sort, dir.ToLower()) switch
+        {
+            ("Title", "desc") => query.OrderByDescending(x => x.Title),
+            ("TotalTicketsSold", "asc") => query.OrderBy(x => x.TotalTicketsSold),
+            ("TotalTicketsSold", "desc") => query.OrderByDescending(x => x.TotalTicketsSold),
+            ("TotalRevenue", "asc") => query.OrderBy(x => x.TotalRevenue),
+            ("TotalRevenue", "desc") => query.OrderByDescending(x => x.TotalRevenue),
+            _ => query.OrderBy(x => x.Title)
+        };
+
+        var model = query.ToList().ToPagedList(page, 10);
+
+        ViewBag.Search = search;
+        ViewBag.Sort = sort;
+        ViewBag.Dir = dir;
+
+        if (Request.IsAjax())
+            return PartialView("_MovieTicketReportTable", model);
+
+        return View("~/Views/Report/MovieTicketReport.cshtml", model);
+    }
+
+    [Authorize(Roles = "Admin")]
+    public IActionResult MovieTicketSalesChart(
+    string viewBy = "day",
+    DateTime? date1 = null,
+    DateTime? date2 = null
+)
+    {
+        ViewBag.ViewBy = viewBy;
+
+        DateTime d1 = date1 ?? DateTime.Today.AddDays(-1);
+        DateTime d2 = date2 ?? DateTime.Today;
+
+        var q = db.Bookings
+            .Include(b => b.ShowTime)
+            .ThenInclude(st => st.Movie)
+            .AsQueryable();
+
+        decimal total1 = 0;
+        decimal total2 = 0;
+        string label1 = "";
+        string label2 = "";
+
+        if (viewBy == "day")
+        {
+            var dd1 = DateOnly.FromDateTime(d1);
+            var dd2 = DateOnly.FromDateTime(d2);
+
+            total1 = q.Where(x => x.BookingDate.Date == d1.Date)
+          .Sum(x => (decimal?)x.TotalPrice) ?? 0;
+
+            total2 = q.Where(x => x.BookingDate.Date == d2.Date)
+                      .Sum(x => (decimal?)x.TotalPrice) ?? 0;
+
+            label1 = d1.ToString("yyyy-MM-dd");
+            label2 = d2.ToString("yyyy-MM-dd");
+        }
+        else if (viewBy == "month")
+        {
+            total1 = q.Where(x =>
+                        x.BookingDate.Year == d1.Year &&
+                        x.BookingDate.Month == d1.Month)
+                      .Sum(x => (decimal?)x.TotalPrice) ?? 0;
+
+            total2 = q.Where(x =>
+                        x.BookingDate.Year == d2.Year &&
+                        x.BookingDate.Month == d2.Month)
+                      .Sum(x => (decimal?)x.TotalPrice) ?? 0;
+
+            label1 = d1.ToString("yyyy-MM");
+            label2 = d2.ToString("yyyy-MM");
+        }
+        else // year
+        {
+            total1 = q.Where(x => x.BookingDate.Year == d1.Year)
+                      .Sum(x => (decimal?)x.TotalPrice) ?? 0;
+
+            total2 = q.Where(x => x.BookingDate.Year == d2.Year)
+                      .Sum(x => (decimal?)x.TotalPrice) ?? 0;
+
+            label1 = d1.Year.ToString();
+            label2 = d2.Year.ToString();
+        }
+
+        ViewBag.Date1 = d1.ToString("yyyy-MM-dd");
+        ViewBag.Date2 = d2.ToString("yyyy-MM-dd");
+
+        ViewBag.ChartData = System.Text.Json.JsonSerializer.Serialize(new[]
+        {
+        new { Label = label1, TotalSales = total1 },
+        new { Label = label2, TotalSales = total2 }
+    });
+
+        return View("~/Views/Report/MovieTicketSalesChart.cshtml");
+    }
+
+
 }
 
 

@@ -1,0 +1,68 @@
+﻿@model X.PagedList.IPagedList<MovieTicketReportVM>
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.ActionLink(
+                    "Movie Title",
+                    "MovieTicketReport",
+                    new {
+                        sort = "Title",
+                        dir = ViewBag.Dir == "asc" ? "desc" : "asc",
+                        search = ViewBag.Search
+                    })
+            </th>
+
+            <th>
+                @Html.ActionLink(
+                    "Tickets Sold",
+                    "MovieTicketReport",
+                    new {
+                        sort = "TotalTicketsSold",
+                        dir = ViewBag.Dir == "asc" ? "desc" : "asc",
+                        search = ViewBag.Search
+                    })
+            </th>
+
+            <th>
+                @Html.ActionLink(
+                    "Revenue",
+                    "MovieTicketReport",
+                    new {
+                        sort = "TotalRevenue",
+                        dir = ViewBag.Dir == "asc" ? "desc" : "asc",
+                        search = ViewBag.Search
+                    })
+            </th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var m in Model)
+        {
+            <tr>
+                <td>@m.Title</td>
+                <td>@m.TotalTicketsSold</td>
+                <td>@("RM " + m.TotalRevenue.ToString("N2"))</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@Html.PagedListPager(
+    Model,
+    page => Url.Action("MovieTicketReport",
+        new {
+            page,
+            sort = ViewBag.Sort,
+            dir = ViewBag.Dir,
+            search = ViewBag.Search
+        }),
+    new PagedListRenderOptions {
+        LiElementClasses = new[] { "page-item" },
+        PageClasses = new[] { "page-link" }
+    }
+)
