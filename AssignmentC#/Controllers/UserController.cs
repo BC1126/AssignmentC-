@@ -33,6 +33,7 @@ public class UserController : Controller
         _cache = cache;
     }
 
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> MemberList(string sortOrder, string searchString, int? pageNumber)
     {
         // 1. Setup Sort Parameters for the UI (Toggle Logic)
@@ -92,6 +93,7 @@ public class UserController : Controller
         return View(model);
     }
 
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> StaffList(string sortOrder, string searchString, int? pageNumber)
     {
         // 1. Setup Sort Parameters for the UI
@@ -143,6 +145,7 @@ public class UserController : Controller
         return View(model);
     }
 
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AdminList(string sortOrder, string searchString, int? pageNumber)
     {
         // 1. Setup Sort Parameters
@@ -283,9 +286,38 @@ public class UserController : Controller
             {
                 var mail = new System.Net.Mail.MailMessage
                 {
-                    Subject = "Verify Your Email",
-                    Body = $"<a href='{verifyUrl}'>Click here to verify</a>",
-                    IsBodyHtml = true
+                    Subject = "Welcome to YSL Cinema! Please Verify Your Email",
+                    IsBodyHtml = true,
+                    Body = $@"
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;'>
+                            <h2 style='color: #333;'>Welcome to YSL Cinema Ticketing!</h2>
+        
+                            <p>Hi there,</p>
+
+                            <p>Thank you for signing up with <strong>YSL Cinema Ticketing</strong>. We are excited to have you on board!</p>
+        
+                            <p>To get started and access your account, please verify your email address by clicking the button below:</p>
+
+                            <div style='text-align: center; margin: 30px 0;'>
+                                <a href='{verifyUrl}' style='background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;'>
+                                    VERIFY MY EMAIL
+                                </a>
+                            </div>
+
+                            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+                            <p><a href='{verifyUrl}'>{verifyUrl}</a></p>
+
+                            <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+
+                            <p style='font-size: 12px; color: #777;'>
+                                If you didn't create an account with YSL Cinema Ticketing, you can safely delete this email.
+                            </p>
+
+                            <p style='margin-top: 20px;'>
+                                Cheers,<br>
+                                <strong>The YSL Cinema Ticketing Team</strong>
+                            </p>
+                        </div>"
                 };
                 mail.To.Add(vm.Email);
                 hp.SendEmail(mail);
@@ -474,6 +506,7 @@ public class UserController : Controller
     // ====================================================================
 
     // GET: User/SignOut
+    [Authorize]
     public IActionResult SignOut()
     {
         // 1. Call your helper method to clear the authentication cookie/session
@@ -743,46 +776,6 @@ public class UserController : Controller
         return View(vm);
     }
 
-    private void SendResetPasswordEmail(User u, string password)
-    {
-        var mail = new MailMessage();
-        mail.To.Add(new MailAddress(u.Email, u.Name));
-        mail.Subject = "Movie Theme - Your New Password";
-        mail.IsBodyHtml = true;
-
-        // Attach user photo logic (keeping your professional style)
-        var path = u switch
-        {
-            Admin => Path.Combine(en.WebRootPath, "photos", "admin.jpg"),
-            Member m => Path.Combine(en.WebRootPath, "photos", m.PhotoURL ?? "default.jpg"),
-            _ => Path.Combine(en.WebRootPath, "img", "default.jpg"),
-        };
-
-        if (System.IO.File.Exists(path))
-        {
-            var att = new Attachment(path);
-            att.ContentId = "photo";
-            mail.Attachments.Add(att);
-        }
-
-        mail.Body = $@"
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; text-align: center;'>
-            <div style='background: #1a1a1a; padding: 15px; margin-bottom: 20px;'>
-                <h2 style='color: #ff5500; margin: 0;'>MOVIE THEME</h2>
-            </div>
-            <img src='cid:photo' style='width: 100px; height: 100px; border-radius: 50%;'>
-            <h3>Hello {u.Name},</h3>
-            <p>Your password has been reset successfully. Please use the temporary password below to log in:</p>
-            <div style='background: #f4f4f4; padding: 15px; font-size: 20px; font-weight: bold; color: #ff5500; letter-spacing: 2px;'>
-                {password}
-            </div>
-            <p style='margin-top: 20px;'>We recommend changing this password immediately after logging in.</p>
-            <p style='color: #888;'>From, 🐱 Super Admin</p>
-        </div>";
-
-        hp.SendEmail(mail);
-    }
-
     [HttpGet]
     public IActionResult ForgotPassword()
     {
@@ -809,9 +802,37 @@ public class UserController : Controller
         mail.To.Add(new MailAddress(user.Email));
         mail.Subject = "Identity Verification - Reset Your Password";
         mail.IsBodyHtml = true;
-        mail.Body = $@"<h3>Hello {user.Name},</h3>
-                  <p>Click the link below to verify your identity and set a new password:</p>
-                  <p><a href='{resetLink}'>VERIFY AND RESET PASSWORD</a></p>";
+        mail.Body = $@"
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;'>
+                <h2 style='color: #333;'>Password Reset Request</h2>
+        
+                <p>Dear <strong>{user.Name}</strong>,</p>
+
+                <p>We received a request to reset the password for your <strong>YSL Cinema Ticketing</strong> account.</p>
+        
+                <p>If you made this request, please click the button below to verify your identity and set a new password:</p>
+
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{resetLink}' style='background-color: #d9534f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;'>
+                        VERIFY AND RESET PASSWORD
+                    </a>
+                </div>
+
+                <p>If the button above doesn't work, you can copy and paste the link below into your web browser:</p>
+                <p><a href='{resetLink}'>{resetLink}</a></p>
+
+                <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;'>
+
+                <p style='font-size: 12px; color: #777;'>
+                    <strong>Security Notice:</strong> This link is valid for a limited time only. 
+                    If you did not request a password reset, please ignore this email. Your password will remain unchanged.
+                </p>
+
+                <p style='margin-top: 20px;'>
+                    Best Regards,<br>
+                    <strong>The YSL Cinema Ticketing Team</strong>
+                </p>
+            </div>";
 
         hp.SendEmail(mail);
 

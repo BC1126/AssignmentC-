@@ -5,6 +5,13 @@
         <thead class="table-light">
             <tr>
                 <th>Photo</th>
+
+                <th>
+                    <a href="#" class="sort-link text-decoration-none text-dark" data-sort="@(Model.SortOrder == "Id" ? "id_desc" : "Id")">
+                        User ID <i class="bi bi-arrow-down-up small text-muted"></i>
+                    </a>
+                </th>
+
                 <th>
                     <a href="#" class="sort-link text-decoration-none text-dark" data-sort="@(Model.SortOrder == "name_asc" ? "name_desc" : "name_asc")">
                         Full Name <i class="bi bi-arrow-down-up small text-muted"></i>
@@ -21,9 +28,13 @@
             {
                 <tr>
                     <td>
-                        <img src="@u.PhotoURL" class="user-photo-thumbnail border" alt="User Photo"
-                             onerror="this.onerror=null; this.src='/images/default.jpg';" />
+                    <img src="@u.PhotoURL" class="user-photo-thumbnail border" alt="User Photo"
+                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;"
+                         onerror="this.onerror=null; this.src='/img/default.jpg';" />
                     </td>
+
+                    <td>@u.UserId</td>
+
                     <td class="fw-bold">@u.Name</td>
                     <td>@(u.Gender == "M" ? "Male" : "Female")</td>
                     <td>@u.Email</td>

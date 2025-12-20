@@ -381,7 +381,6 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> BatchDeleteMembers(string[] selectedIds)
     {
         // 1. Check if anything was selected
@@ -416,7 +415,6 @@ public class AdminController : Controller
     // POST: Admin/BatchDeleteStaff
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin")] // Only Admins can delete Staff
     public async Task<IActionResult> BatchDeleteStaff(string[] selectedIds)
     {
         if (selectedIds == null || selectedIds.Length == 0)
@@ -438,7 +436,6 @@ public class AdminController : Controller
         return RedirectToAction("StaffList","User");
     }
 
-    [Authorize(Roles = "Admin")]
     public IActionResult ViewOrder(string search, string sort = "Id", string dir = "desc", int page = 1)
     {
         var orders = db.Orders
@@ -478,9 +475,6 @@ public class AdminController : Controller
         }
     }
 
-
-
-    [Authorize(Roles = "Admin")]
     public IActionResult ViewOrderDetails(int id)
     {
         var order = db.Orders
