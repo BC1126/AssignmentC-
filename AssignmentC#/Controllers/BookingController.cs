@@ -423,7 +423,7 @@ public class BookingController : Controller
         return View(viewModel);
     }
 
-    [Authorize (Roles = "Admin")]
+    [Authorize (Roles = "Admin,Staff")]
     public IActionResult BookingManagement(string search)
     {
         var bookings = db.Bookings

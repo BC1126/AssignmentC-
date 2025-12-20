@@ -8,7 +8,7 @@ namespace AssignmentC_.Controllers;
 
 public class HallController(DB db, Helper hp) : Controller
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpGet]
     public IActionResult ManageHalls()
     {
@@ -34,7 +34,7 @@ public class HallController(DB db, Helper hp) : Controller
         return View(halls);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpGet]
     public IActionResult AddHall()
     {
@@ -121,7 +121,7 @@ public class HallController(DB db, Helper hp) : Controller
         return RedirectToAction("EditHallSeats", new { id = hall.HallId });
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpGet]
     public IActionResult EditHallSeats(int id)
     {
@@ -232,7 +232,7 @@ public class HallController(DB db, Helper hp) : Controller
         public bool IsActive { get; set; }
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpGet]
     public IActionResult EditHall(int id)
     {
