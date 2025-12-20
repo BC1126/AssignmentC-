@@ -46,13 +46,11 @@ public class BookingController : Controller
 
         var now = DateTime.UtcNow;
 
-        // 1. Get booked seats
         var bookedSeatIds = showtime.Bookings
             .SelectMany(b => b.BookingSeats)
             .Select(bs => bs.SeatId)
             .ToHashSet();
 
-        // 2. Clean up expired locks
         var expiredLocks = db.SeatLocks
             .Where(sl => sl.ShowTimeId == showtimeId && sl.ExpiresAt < now)
             .ToList();
@@ -230,7 +228,11 @@ public class BookingController : Controller
         int tempChildren = submission.ChildrenCount;
         int tempSenior = submission.SeniorCount;
         int tempOku = submission.OkuCount;
-
+        var sessionId = HttpContext.Session.Id;
+        var currentLock = db.SeatLocks
+            .Where(s => s.SessionId == sessionId && s.ShowTimeId == submission.ShowTimeId)
+            .OrderByDescending(s => s.ExpiresAt)
+            .FirstOrDefault();
         foreach (var seat in seats)
         {
             decimal price = showtime.TicketPrice;
@@ -247,7 +249,10 @@ public class BookingController : Controller
         HttpContext.Session.SetString("SelectedRegion", showtime.Hall.Outlet.City);
         HttpContext.Session.SetString("SelectedCinema", showtime.Hall.Outlet.Name);
         HttpContext.Session.SetString("CollectDate", DateOnly.FromDateTime(showtime.StartTime).ToString());
-
+        if (currentLock != null)
+        {
+            HttpContext.Session.SetString("LockExpiry", currentLock.ExpiresAt.ToString("O"));
+        }
         var bookingData = new BookingSessionData
         {
             ShowTimeId = showtime.ShowTimeId,
@@ -298,7 +303,6 @@ public class BookingController : Controller
         db.SeatLocks.RemoveRange(myExisting);
         await db.SaveChangesAsync();
 
-        // 2. NOW CHECK IF ANYONE *ELSE* HAS IT
         var heldByOthers = await db.SeatLocks.AnyAsync(s =>
             vm.SeatIds.Contains(s.SeatId) &&
             s.ShowTimeId == vm.ShowTimeId &&
@@ -332,8 +336,6 @@ public class BookingController : Controller
     public async Task<IActionResult> ReleaseSeats([FromBody] SeatLockRequest vm)
     {
         var sessionId = HttpContext.Session.Id;
-
-        // Find the lock owned by the current user
         var myLock = await db.SeatLocks
             .Where(s => vm.SeatIds.Contains(s.SeatId)
                    && s.ShowTimeId == vm.ShowTimeId
@@ -345,7 +347,6 @@ public class BookingController : Controller
             db.SeatLocks.RemoveRange(myLock);
             await db.SaveChangesAsync();
 
-            // THIS IS THE KEY: Tell everyone else to unlock this seat NOW
             await hub.Clients.All.SendAsync("SeatStatusChanged", vm.ShowTimeId, vm.SeatIds, "available");
         }
 
