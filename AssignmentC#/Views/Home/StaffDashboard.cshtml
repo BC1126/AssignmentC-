@@ -1,62 +1,82 @@
-﻿@* Views/Staff/Dashboard.cshtml *@
-
-@{
+﻿@{
     ViewData["Title"] = "Staff Dashboard";
 }
 
+<style>
+    /* Adds a subtle transition to the cards when hovering */
+    .hover-card {
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .hover-card:hover {
+            transform: translateY(-5px);
+        }
+</style>
+
 <div class="container mt-5">
-    <h1>Welcome to Staff Dashboard</h1>
-    <p>This is your restricted dashboard for managing products, movies, and orders.</p>
+    <div class="text-center mb-5">
+        <h1>Welcome to Staff Dashboard</h1>
+        <p class="text-muted">This is your restricted dashboard for managing products, movies, and orders.</p>
+        <hr class="w-25 mx-auto text-primary opacity-100">
+    </div>
 
-    <div class="row mt-4">
+    <div class="row g-4">
 
-        @* 1. USER MANAGEMENT - Blue (Primary) *@
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-primary">
-                <div class="card-body">
-                    <h5 class="card-title text-primary"><i class="fa fa-users me-2"></i> User Management</h5>
-                    <p class="card-text">Create, edit, and view user details.</p>
-                    <a asp-controller="User" asp-action="MemberList" class="btn btn-primary w-100 mt-2">Manage Users</a>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-top border-0 border-4 border-primary hover-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3 text-primary">
+                        <i class="fa fa-users fa-3x"></i>
+                    </div>
+                    <h5 class="card-title fw-bold text-primary">User Management</h5>
+                    <p class="card-text small text-muted">Create, edit, and view user details.</p>
+                    <a asp-controller="User" asp-action="MemberList" class="btn btn-primary w-100 mt-auto">Manage Users</a>
                 </div>
             </div>
         </div>
 
-        @* 2. PRODUCT MANAGEMENT - Orange (Warning) *@
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-warning">
-                <div class="card-body">
-                    @* Changed text color to matches border *@
-                    <h5 class="card-title text-warning"><i class="fa fa-box me-2"></i> Product Management</h5>
-                    <p class="card-text">View and manage all active products and inventory, including concession items.</p>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-top border-0 border-4 border-warning hover-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3 text-warning">
+                        <i class="fa fa-box fa-3x"></i>
+                    </div>
+                    <h5 class="card-title fw-bold text-warning">Product Management</h5>
+                    <p class="card-text small text-muted">View and manage all active products and inventory.</p>
 
-                    @* Buttons updated to match Warning theme *@
-                    <a href="/Product/Index" class="btn btn-warning w-100 mt-2 text-dark">Go to Products</a>
-                    <a asp-controller="Admin" asp-action="ViewOrder" class="btn btn-outline-warning w-100 mt-2 text-dark">View Orders</a>
+                    <div class="mt-auto">
+                        <a href="/Product/Index" class="btn btn-warning w-100 mb-2 text-dark">Go to Products</a>
+                        <a asp-controller="Admin" asp-action="ViewOrder" class="btn btn-outline-warning w-100 text-dark">View Orders</a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        @* 3. MOVIE & SHOWTIMES - Red (Danger) *@
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-danger">
-                <div class="card-body">
-                    <h5 class="card-title text-danger"><i class="fa fa-film me-2"></i> Movie & Showtimes</h5>
-                    <p class="card-text">Update movie details, manage hall assignments, and set up showtimes and pricing.</p>
-                    <a asp-controller="Movie" asp-action="Movies" class="btn btn-danger w-100 mt-2">Manage Movies</a>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-top border-0 border-4 border-danger hover-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3 text-danger">
+                        <i class="fa fa-film fa-3x"></i>
+                    </div>
+                    <h5 class="card-title fw-bold text-danger">Movie & Showtimes</h5>
+                    <p class="card-text small text-muted">Update movie details, hall assignments, and showtimes.</p>
+                    <a asp-controller="Movie" asp-action="Movies" class="btn btn-danger w-100 mt-auto">Manage Movies</a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-success">
-                <div class="card-body">
-                    @* text-dark added to title for better visibility on yellow theme if needed, or stick to text-warning *@
-                    <h5 class="card-title text-success"><i class="fa fa-building me-2"></i> Hall Management</h5>
-                    <p class="card-text">Configure cinema halls, seating layouts, and manage venue capacity.</p>
-                    @* text-dark ensures the text is readable on the yellow button *@
-                    <a href="/Hall/ManageHalls" class="btn btn-success w-100 mt-2 text-dark">Manage Hall</a>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-top border-0 border-4 border-success hover-card">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3 text-success">
+                        <i class="fa fa-building fa-3x"></i>
+                    </div>
+                    <h5 class="card-title fw-bold text-success">Hall Management</h5>
+                    <p class="card-text small text-muted">Configure cinema halls, seating layouts, and capacity.</p>
+                    <a href="/Hall/ManageHalls" class="btn btn-success w-100 mt-auto text-white">Manage Halls</a>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
