@@ -31,7 +31,7 @@ public class StaffController(DB db, Helper hp) : Controller
             .Include(o => o.OrderLines)
             .FirstOrDefault(o => o.Id == orderId);
 
-        if (order == null)
+        if (order == null)  
             return BadRequest("Order not found.");
 
         order.Claim = true;

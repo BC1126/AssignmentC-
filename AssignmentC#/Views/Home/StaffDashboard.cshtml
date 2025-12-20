@@ -10,45 +10,41 @@
 
     <div class="row mt-4">
 
+        @* 1. USER MANAGEMENT - Blue (Primary) *@
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm border-primary">
                 <div class="card-body">
                     <h5 class="card-title text-primary"><i class="fa fa-users me-2"></i> User Management</h5>
-                    <p class="card-text">Create, edit, and view user details</p>
+                    <p class="card-text">Create, edit, and view user details.</p>
                     <a asp-controller="User" asp-action="MemberList" class="btn btn-primary w-100 mt-2">Manage Users</a>
                 </div>
             </div>
         </div>
 
+        @* 2. PRODUCT MANAGEMENT - Orange (Warning) *@
         <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-primary">
+            <div class="card h-100 shadow-sm border-warning">
                 <div class="card-body">
-                    <h5 class="card-title text-primary"><i class="fa fa-box me-2"></i> Product Management</h5>
+                    @* Changed text color to matches border *@
+                    <h5 class="card-title text-warning"><i class="fa fa-box me-2"></i> Product Management</h5>
                     <p class="card-text">View and manage all active products and inventory, including concession items.</p>
-                    <a href="/Product/Index" class="btn btn-primary w-100 mt-2">Go to Products</a>
+
+                    @* Buttons updated to match Warning theme *@
+                    <a href="/Product/Index" class="btn btn-warning w-100 mt-2 text-dark">Go to Products</a>
+                    <a asp-controller="Admin" asp-action="ViewOrder" class="btn btn-outline-warning w-100 mt-2 text-dark">View Orders</a>
                 </div>
             </div>
         </div>
 
+        @* 3. MOVIE & SHOWTIMES - Red (Danger) *@
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm border-danger">
                 <div class="card-body">
                     <h5 class="card-title text-danger"><i class="fa fa-film me-2"></i> Movie & Showtimes</h5>
                     <p class="card-text">Update movie details, manage hall assignments, and set up showtimes and pricing.</p>
-                    <a href="/Staff/ManageMovie" class="btn btn-danger w-100 mt-2">Manage Movies</a>
+                    <a asp-controller="Movie" asp-action="Movies" class="btn btn-danger w-100 mt-2">Manage Movies</a>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-success">
-                <div class="card-body">
-                    <h5 class="card-title text-success"><i class="fa fa-receipt me-2"></i> Order Processing</h5>
-                    <p class="card-text">Review, process, track, and manage all customer ticket and product orders.</p>
-                    <a href="/Staff/OrderList" class="btn btn-success w-100 mt-2">View Orders</a>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>

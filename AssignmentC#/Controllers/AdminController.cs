@@ -9,7 +9,6 @@ using X.PagedList.Extensions;
 
 namespace AssignmentC_.Controllers;
 
-[Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
     private readonly DB db;
@@ -23,11 +22,13 @@ public class AdminController : Controller
         this.en = en;
     }
 
+    [Authorize(Roles = "Admin")]
     public IActionResult AdminDashboard()
     {
         return View("~/Views/Home/AdminDashboard.cshtml");
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> AdminEditUser(string id)
     {
@@ -89,6 +90,7 @@ public class AdminController : Controller
         return View("~/Views/User/AdminEditUser.cshtml", vm);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdminEditUser(AdminEditUserVM vm, string returnUrl)
@@ -181,6 +183,7 @@ public class AdminController : Controller
         }
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AdminDeleteUser(string id, string returnUrl)
@@ -231,6 +234,7 @@ public class AdminController : Controller
         return RedirectToAction("MemberList", "User");
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public IActionResult AdminAddUser(string role)
     {
@@ -243,6 +247,7 @@ public class AdminController : Controller
         return View("~/Views/User/AdminAddUser.cshtml", vm);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult AdminAddUser(AddUserVM vm)
@@ -320,6 +325,7 @@ public class AdminController : Controller
         return View("../User/AdminAddUser", vm);
     }
 
+    [Authorize(Roles = "Admin")]
     // GET: Admin/StaffDetails/S001
     public IActionResult StaffDetails(string id)
     {
@@ -354,6 +360,7 @@ public class AdminController : Controller
         return View("~/Views/User/MemberDetails.cshtml", vm);
     }
 
+    [Authorize(Roles = "Admin")]
     // GET: Admin/AdminDetails/A0001
     public IActionResult AdminDetails(string id)
     {
@@ -379,6 +386,7 @@ public class AdminController : Controller
         return View("~/Views/User/MemberDetails.cshtml", vm);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> BatchDeleteMembers(string[] selectedIds)
@@ -412,6 +420,7 @@ public class AdminController : Controller
         return RedirectToAction("MemberList", "User");
     }
 
+    [Authorize(Roles = "Admin")]
     // POST: Admin/BatchDeleteStaff
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -436,6 +445,7 @@ public class AdminController : Controller
         return RedirectToAction("StaffList","User");
     }
 
+    [Authorize(Roles = "Staff, Admin")]
     public IActionResult ViewOrder(string search, string sort = "Id", string dir = "desc", int page = 1)
     {
         var orders = db.Orders
@@ -475,6 +485,7 @@ public class AdminController : Controller
         }
     }
 
+    [Authorize(Roles = "Staff, Admin")]
     public IActionResult ViewOrderDetails(int id)
     {
         var order = db.Orders

@@ -19,6 +19,17 @@
         </div>
 
         <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-info"><i class="fa fa-chart-bar me-2"></i> Reports & Analytics</h5>
+                    <p class="card-text">Generate detailed system reports, visualize sales data, and analyze food performance.</p>
+                    <a href="/Report/ProductReport" class="btn btn-info w-100 mt-2 text-white">Food Report</a>
+                    <a href="/Report/SalesChart" class="btn btn-outline-info w-100 mt-2">Food Sales Chart</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm border-success">
                 <div class="card-body">
                     <h5 class="card-title text-success"><i class="fa fa-box me-2"></i> Product Management</h5>
@@ -34,9 +45,20 @@
                 <div class="card-body">
                     <h5 class="card-title text-danger"><i class="fa fa-film me-2"></i> Movie Management</h5>
                     <p class="card-text">Add new movies, set show schedules, and configure ticketing options for all cinema halls.</p>
-                    <a href="/Admin/ManageMovie" class="btn btn-danger w-100 mt-2">Manage Movies</a>
-                    <a href="/Admin/ViewShowTimes" class="btn btn-outline-danger w-100 mt-2">View Show Times</a>
+                    <a asp-controller="Movie" asp-action="Movies" class="btn btn-danger w-100 mt-2">Manage Movies</a>
                     <a href="/ActionLog/ActionLogList" class="btn btn-outline-danger w-100 mt-2">Logs</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-warning">
+                <div class="card-body">
+                    @* text-dark added to title for better visibility on yellow theme if needed, or stick to text-warning *@
+                    <h5 class="card-title text-warning"><i class="fa fa-building me-2"></i> Hall Management</h5>
+                    <p class="card-text">Configure cinema halls, seating layouts, and manage venue capacity.</p>
+                    @* text-dark ensures the text is readable on the yellow button *@
+                    <a href="/Hall/ManageHalls" class="btn btn-warning w-100 mt-2 text-dark">Manage Hall</a>
                 </div>
             </div>
         </div>
