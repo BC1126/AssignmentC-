@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using AssignmentC_.Hubs;
 using AssignmentC_.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -420,6 +421,28 @@ public class BookingController : Controller
         };
 
         return View(viewModel);
+    }
+
+    [Authorize (Roles = "Admin")]
+    public IActionResult BookingManagement(string search)
+    {
+        var bookings = db.Bookings
+            .Include(b => b.Member)             
+            .Include(b => b.BookingSeats)      
+                .ThenInclude(bs => bs.Seat)    
+            .Include(b => b.ShowTime)           
+                .ThenInclude(s => s.Movie)     
+            .OrderByDescending(b => b.BookingDate)
+            .ToList();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            bookings = bookings.Where(b =>
+                b.ShowTime.Movie.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                b.Member.Name.Contains(search, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        return View(bookings);
     }
 
     [HttpGet]

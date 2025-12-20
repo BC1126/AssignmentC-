@@ -1,0 +1,46 @@
+﻿@model IEnumerable<Booking>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Booking Transaction Management</h3>
+        <div class="input-group w-25">
+            <input type="text" id="search" class="form-control" placeholder="Search movie or member...">
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Member</th>
+                    <th>Movie & Showtime</th>
+                    <th>Seats</th>
+                    <th>Total Price</th>
+                    <th>Booking Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td><strong>#@b.BookingId</strong></td>
+                        <td>@b.Member?.Name<br /><small class="text-muted">@b.MemberId</small></td>
+                        <td>
+                            <div class="fw-bold">@b.ShowTime?.Movie?.Title</div>
+                            <small class="text-muted">@b.ShowTime?.StartTime.ToString("f")</small>
+                        </td>
+                        <td>
+                            @foreach (var bs in b.BookingSeats)
+                            {
+                                <span class="badge bg-light text-dark border me-1">@bs.Seat?.SeatIdentifier</span>
+                            }
+                        </td>
+                        <td class="text-primary fw-bold">RM @b.TotalPrice.ToString("N2")</td>
+                        <td>@b.BookingDate.ToString("g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
