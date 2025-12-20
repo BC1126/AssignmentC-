@@ -21,4 +21,12 @@ public class SalesChartVM
     public decimal TotalSales { get; set; }
 }
 
+public class MovieTicketReportVM
+{
+    public int MovieId { get; set; }
+    public string Title { get; set; }
+    public int TotalTicketsSold { get; set; }
+    public decimal TotalRevenue { get; set; }
+}
+
 
