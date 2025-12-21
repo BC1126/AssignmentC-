@@ -4,7 +4,7 @@
 
 <style>
     .access-denied-container {
-        min-height: 70vh; /* Makes the container tall */
+        min-height: 70vh;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -26,7 +26,7 @@
 
     .error-icon {
         font-size: 5rem;
-        color: #dc3545; /* Bootstrap Danger Red */
+        color: #dc3545;
         margin-bottom: 1.5rem;
     }
 
@@ -38,6 +38,22 @@
         color: #6c757d;
     }
 </style>
+
+@{
+    string targetController = "Home";
+    string targetAction = "Index";
+
+    if (User.IsInRole("Admin"))
+    {
+        targetController = "Admin"; 
+        targetAction = "AdminDashboard";
+    }
+    else if (User.IsInRole("Staff"))
+    {
+        targetController = "Staff";
+        targetAction = "StaffDashboard";
+    }
+}
 
 <div class="container access-denied-container">
     <div class="error-card text-center border">
@@ -57,7 +73,8 @@
         </p>
 
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-            <a href="/" class="btn btn-primary btn-lg px-4 gap-3">Return Home</a>
+            <a asp-controller="@targetController" asp-action="@targetAction" class="btn btn-primary btn-lg px-4 gap-3">Return Home</a>
+
             <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg px-4">Go Back</a>
         </div>
     </div>
