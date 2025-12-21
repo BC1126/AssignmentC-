@@ -193,5 +193,11 @@
             clearTimeout(timer);
             timer = setTimeout(() => $(e.target.form).submit(), 500);
         });
+
+        $(document).on('submit', '.cancel-form', function (e) {
+            if (!confirm('Are you sure you want to cancel this order?')) {
+                e.preventDefault();
+            }
+        });
     </script>
 }
