@@ -2,6 +2,14 @@
 
 <h4 class="mb-4">Edit Showtime</h4>
 
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @Html.ValidationSummary(false)
+    </div>
+}
+
+
 <div class="card shadow-sm p-4 my-4">
     <form asp-action="EditShowTime" method="post" class="needs-validation" novalidate>
         @Html.AntiForgeryToken()

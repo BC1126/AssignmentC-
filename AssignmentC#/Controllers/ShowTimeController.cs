@@ -67,60 +67,78 @@ public class ShowTimeController : Controller
     [Authorize(Roles = "Admin,Staff")]
     public IActionResult CreateShowTime(ShowTimeManageVM vm)
     {
+        // 1. Basic Validation
         var movie = db.Movies.Find(vm.MovieId);
-        if (movie == null)
-            return NotFound();
+        if (movie == null) return NotFound();
 
-        // ✅ FIX 2: Security Validation
-        // Check if the Hall exists AND is active.
-        // This prevents users from inspecting element and forcing an inactive ID.
         var targetHall = db.Halls.FirstOrDefault(h => h.HallId == vm.HallId && h.IsActive);
         if (targetHall == null)
         {
-            TempData["Error"] = "Operation failed: The selected Hall is inactive or does not exist.";
-            return RedirectToAction("Manage",
-                new { vm.OutletId, date = vm.Date }); // Redirect without hallId to reset selection
+            TempData["Error"] = "Hall invalid.";
+            return RedirectToAction("Manage", new { vm.OutletId, date = vm.Date });
         }
 
-        var newStart = vm.Date.Date.Add(vm.StartTime.TimeOfDay);
-        var newEnd = newStart.AddMinutes(movie.DurationMinutes);
+        int successCount = 0;
+        int failCount = 0;
+        int cleaningBuffer = 15; // Keep your smart scheduling rule!
 
-        // 🔥 CONFLICT CHECK
-        var conflict = db.ShowTimes
-            .Include(st => st.Movie)
-            .Any(st =>
-                st.HallId == vm.HallId &&
-                st.IsActive &&
-                newStart < st.StartTime.AddMinutes(st.Movie.DurationMinutes) &&
-                newEnd > st.StartTime
-            );
-
-        if (conflict)
+        // 2. LOOP: Iterate from 0 (Today) up to RepeatDays
+        for (int i = 0; i <= vm.RepeatDays; i++)
         {
-            TempData["Info"] = "Time conflict detected with existing showtime.";
-            return RedirectToAction("Manage",
-                new { vm.OutletId, vm.HallId, date = vm.Date });
+            // Calculate date and time for THIS iteration
+            DateTime currentDay = vm.Date.Date.AddDays(i);
+            DateTime start = currentDay.Add(vm.StartTime.TimeOfDay);
+            DateTime end = start.AddMinutes(movie.DurationMinutes);
+
+            // 3. Conflict Check for THIS specific day
+            bool conflict = db.ShowTimes
+                .Include(st => st.Movie)
+                .Any(st =>
+                    st.HallId == vm.HallId &&
+                    st.IsActive &&
+                    start < st.StartTime.AddMinutes(st.Movie.DurationMinutes + cleaningBuffer) &&
+                    end.AddMinutes(cleaningBuffer) > st.StartTime
+                );
+
+            if (conflict)
+            {
+                // If conflict, SKIP this day and count failure
+                failCount++;
+                continue;
+            }
+
+            // 4. Create and Add (Queue it)
+            var newShowTime = new ShowTime
+            {
+                MovieId = vm.MovieId,
+                HallId = vm.HallId,
+                StartTime = start,
+                TicketPrice = vm.TicketPrice,
+                IsActive = true
+            };
+
+            db.ShowTimes.Add(newShowTime);
+            hp.LogAction("ShowTime", $"Created showtime for {movie.Title} on {start:yyyy-MM-dd}");
+            successCount++;
         }
 
-        // ✅ Save
-        var newShowTime = new ShowTime
-        {
-            MovieId = vm.MovieId,
-            HallId = vm.HallId,
-            StartTime = newStart,
-            TicketPrice = vm.TicketPrice,
-            IsActive = true
-        };
-
-        db.ShowTimes.Add(newShowTime);
+        // 5. Save all changes at once
         db.SaveChanges();
 
-        // ===========================
-        // 🔹 LOG ACTION
-        // ===========================
-        hp.LogAction("ShowTime", $"Created showtime for movie {movie.Title} at hall {vm.HallId}");
+        // 6. Smart Feedback Message
+        if (failCount == 0)
+        {
+            TempData["Info"] = $"Success! Added showtimes for {successCount} days.";
+        }
+        else if (successCount > 0)
+        {
+            TempData["Info"] = $"Partial Success. Added {successCount} showtimes. Skipped {failCount} days due to conflicts.";
+        }
+        else
+        {
+            TempData["Error"] = "Failed. All selected days had conflicts.";
+        }
 
-        TempData["Info"] = "Showtime added successfully!";
         return RedirectToAction("Manage", new { vm.OutletId, vm.HallId, date = vm.Date.ToString("yyyy-MM-dd") });
     }
 
@@ -266,30 +284,54 @@ vm.ExistingShowTimes = query
         if (st == null)
             return NotFound();
 
-        var newStart = vm.Date.Date.Add(vm.StartTime.TimeOfDay);
-        var newEnd = newStart.AddMinutes(db.Movies.Find(vm.MovieId)?.DurationMinutes ?? 0);
+        // 1. Get the duration of the movie being assigned (it might be a new movie or the same one)
+        var movieDuration = db.Movies.Find(vm.MovieId)?.DurationMinutes ?? 0;
 
-        // Conflict check (excluding current showtime)
+        var newStart = vm.Date.Date.Add(vm.StartTime.TimeOfDay);
+        var newEnd = newStart.AddMinutes(movieDuration);
+
+        // ==========================================
+        // 🔥 CONFLICT CHECK (With Cleaning Gap)
+        // ==========================================
+        int cleaningBuffer = 15; // 15 minutes for cleaning
+
         var conflict = db.ShowTimes
             .Include(s => s.Movie)
             .Any(s =>
-                s.ShowTimeId != vm.ShowTimeId &&
+                s.ShowTimeId != vm.ShowTimeId && // Exclude the showtime currently being edited
                 s.HallId == vm.HallId &&
                 s.IsActive &&
-                newStart < s.StartTime.AddMinutes(s.Movie.DurationMinutes) &&
-                newEnd > s.StartTime
+
+                // 1. The NEW movie must not start while an OLD movie (plus cleaning) is running
+                newStart < s.StartTime.AddMinutes(s.Movie.DurationMinutes + cleaningBuffer) &&
+
+                // 2. The NEW movie (plus cleaning) must not run into an OLD movie's start time
+                newEnd.AddMinutes(cleaningBuffer) > s.StartTime
             );
 
         if (conflict)
         {
-            TempData["Error"] = "Time conflict detected with existing showtime.";
-            return RedirectToAction("ShowTimeManage");
+            ModelState.Clear();
+            ModelState.AddModelError("",
+                "Time conflict detected! Ensure there is at least a 15-minute cleaning gap.");
+
+            vm.Outlets = db.Outlets.ToList();
+            vm.Halls = db.Halls
+                .Where(h => h.OutletId == vm.OutletId)
+                .ToList();
+            vm.Movies = db.Movies.ToList();
+
+            return View(vm);
         }
+
+
+
         // -------------------------------
         // Track changes with new line formatting
         // -------------------------------
         var changeLogLines = new List<string>();
 
+        // Note: We compare st.MovieId (old) with vm.MovieId (new)
         if (st.MovieId != vm.MovieId)
             changeLogLines.Add($"Movie: {st.Movie?.Title} → {db.Movies.Find(vm.MovieId)?.Title}");
 
