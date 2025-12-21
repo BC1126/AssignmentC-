@@ -21,6 +21,12 @@ public class TicketController(DB db, Helper hp) : Controller
     [Authorize(Roles = "Member")]
     public IActionResult Checkout()
     {
+        var email = User!.Identity!.Name!;
+        if (email == null)
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
         // Get PurchaseVM from session
         var session = HttpContext.Session.GetString("PurchaseVM");
         var expiryStr = HttpContext.Session.GetString("LockExpiry");
@@ -53,12 +59,22 @@ public class TicketController(DB db, Helper hp) : Controller
             return PartialView("_Timer", timer);
         }
 
+
+
+        var voucherCodes = db.Payments
+                             .Where(p => p.User.Email == email)
+                             .SelectMany(p => p.Promotions)
+                             .OfType<Voucher>()
+                             .Select(v => v.VoucherCode)
+                             .ToList();
+
         // Get all vouchers
         var today = DateTime.Today;
         var vouchers = db.Promotions
                          .OfType<Voucher>()
-                         .Where(v => v.StartDate <= today && v.EndDate >= today)
+                         .Where(v => v.StartDate <= today && v.EndDate >= today && !voucherCodes.Contains(v.VoucherCode))
                          .ToList();
+
         ViewBag.Timer = new CheckoutViewModel { Timer = timer };
         ViewBag.Vouchers = vouchers;
         return View(purchaseVM);
@@ -441,12 +457,13 @@ public class TicketController(DB db, Helper hp) : Controller
     [HttpPost]
     public IActionResult Voucher(VoucherViewModel model)
     {
+        ModelState.Clear();
         var voucher = new Voucher
         {
             VoucherCode = model.VoucherCode,
             VoucherType = model.DiscountType,
             DiscountValue = model.DiscountValue,
-            EligibilityMode = model.EligibilityMode,
+            EligibilityMode = "open",
             StartDate = model.StartDate,
             EndDate = model.EndDate,
             MinSpend = model.MinSpend,
@@ -487,56 +504,21 @@ public class TicketController(DB db, Helper hp) : Controller
             ModelState.AddModelError("EndDate", "The maximum of end date is 365 days only");
         }
 
-        // Check Eligibility Mode
-        var mode = voucher.EligibilityMode.Trim();
-        if (mode != "open" && mode != "condition" && mode != "assigned" && mode != "both")
-        {
-            ModelState.AddModelError("EligibilityMode", "Invalid Eligibility Mode");
-        }
-
+        
         // No Error
         if (ModelState.IsValid)
         {
             int promoId = voucher.PromotionId;
             var promo = db.Promotions.Find(promoId);
 
-            // Condition
-            if (model.EligibilityMode == "condition" || model.EligibilityMode == "both")
-            {
-
-                var condition = new VoucherCondition
-                {
-                    ConditionType = "CUSTOM",
-                    MinAge = model.MinAge,
-                    MaxAge = model.MaxAge,
-                    IsFirstPurchase = model.IsFirstPurchase,
-                    BirthMonth = model.BirthMonth ?? new System.Collections.Generic.List<int>(),
-                };
-
-                db.VoucherConditions.Add(condition);
-                db.SaveChanges();
-            }
-
-            // Assigned User
-            else if (model.EligibilityMode == "assigned" || model.EligibilityMode == "both")
-            {
-                // Change user here
-                var user = db.Users.Find(model.AssignedUserId);
-
-                var assignment = new VoucherAssignment
-                {
-                    promotion = promo,
-                    user = user,
-                };
-
-                db.VoucherAssignments.Add(assignment);
-                db.SaveChanges();
-            }
-
             ViewBag.Message = "Voucher Created Successfully";
 
             db.Vouchers.Add(voucher);
             db.SaveChanges();
+        }
+        else
+        {
+            return View(model);
         }
         return View();
     }
@@ -557,7 +539,7 @@ public class TicketController(DB db, Helper hp) : Controller
             VoucherCode = p.VoucherCode,
             DiscountType = p.VoucherType,
             DiscountValue = p.DiscountValue,
-            EligibilityMode = p.EligibilityMode,
+            EligibilityMode = "open",
             StartDate = p.StartDate,
             EndDate = p.EndDate,
             MinSpend = p.MinSpend,
@@ -570,6 +552,7 @@ public class TicketController(DB db, Helper hp) : Controller
     [HttpPost]
     public IActionResult EditVoucher(VoucherViewModel model)
     {
+        ModelState.Clear();
         var v = db.Promotions.OfType<Voucher>().FirstOrDefault(v => v.PromotionId == model.PromotionId);
 
         if (v == null) 
@@ -609,13 +592,6 @@ public class TicketController(DB db, Helper hp) : Controller
         if (model.EndDate < model.StartDate || model.EndDate > model.StartDate.AddDays(365))
         {
             ModelState.AddModelError("EndDate", "The maximum of end date is 365 days only");
-        }
-
-        // Check Eligibility Mode
-        var mode = model.EligibilityMode.Trim();
-        if (mode != "open" && mode != "condition" && mode != "assigned" && mode != "both")
-        {
-            ModelState.AddModelError("EligibilityMode", "Invalid Eligibility Mode");
         }
 
         // With Error
@@ -675,7 +651,7 @@ public class TicketController(DB db, Helper hp) : Controller
 
                 case "active":
                     v = db.Promotions
-                          .OfType<Voucher>().Where(v => v.StartDate <= DateTime.Today && v.EndDate >= v.EndDate);
+                          .OfType<Voucher>().Where(v => v.StartDate <= DateTime.Today && v.EndDate >= DateTime.Today);
                  break;
             }
         }
@@ -1003,6 +979,7 @@ public class TicketController(DB db, Helper hp) : Controller
                         .ThenInclude(p => p.Movie)
 
                         .Include(p => p.Order)
+                        .Include(p => p.Promotions)
                         .FirstOrDefault(p => p.PaymentId == id);
 
         
@@ -1022,28 +999,101 @@ public class TicketController(DB db, Helper hp) : Controller
 
         ViewBag.Seats = s;
 
+        var ol = db.OrderLines
+                        .Include(o => o.Order)
+                        .Where(o => o.OrderId == payment.Order.Id)
+                        .ToList();
+
+        decimal addOnSub = 0;
+
+        if (ol != null)
+        {
+            foreach (var o in ol)
+            {
+                addOnSub += o.Price * o.Quantity;
+            }
+        }
+
+
+        decimal subtotal = addOnSub + payment.Booking.TotalPrice;
+
+        decimal dv = 0;
+
+        foreach (var p in payment.Promotions ?? Enumerable.Empty<Promotion>())
+        {
+            if (p is Voucher v)
+            {
+                if (string.Equals(v.VoucherType.Trim(), "percentage", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal d = v.DiscountValue / 100;
+                    dv = subtotal * d;
+                }
+                else
+                {
+                    dv = v.DiscountValue;
+                }
+            }
+        }
+
+        ViewBag.AddOnSub = addOnSub;
+        ViewBag.DiscountValue = dv;
+
         return View(payment);
     }
 
     [Authorize(Roles = "Admin")]
-    public IActionResult PaymentList()
+    public IActionResult PaymentList(string? search, string? selectedMonth, string? status)
     {
-        var payment = db.Payments
-                        .Include(p => p.User)
-                        .Include(p => p.Booking)
-                        .ThenInclude(p => p.ShowTime)
-                        .ThenInclude(p => p.Hall)
-                        .ThenInclude(p => p.Outlet)
+        var payments = db.Payments
+            .Include(p => p.User)
+            .Include(p => p.Booking)
+                .ThenInclude(b => b.ShowTime)
+                    .ThenInclude(st => st.Hall)
+                        .ThenInclude(h => h.Outlet)
+            .Include(p => p.Booking)
+                .ThenInclude(b => b.ShowTime)
+                    .ThenInclude(st => st.Movie)
+            .Include(p => p.Order)
+            .AsQueryable();
 
-                        .Include(p => p.Booking)
-                        .ThenInclude(p => p.ShowTime)
-                        .ThenInclude(p => p.Movie)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            payments = payments.Where(p =>
+                p.User.UserId.Contains(search) ||
+                p.User.Email.Contains(search)
+            );
+        }
 
-                        .Include(p => p.Order)
-                        .ToList();
+        if (!string.IsNullOrWhiteSpace(selectedMonth))
+        {
+            var parts = selectedMonth.Split('-');
+            int year = int.Parse(parts[0]);
+            int month = int.Parse(parts[1]);
 
-        return View(payment);
+            var startDate = DateOnly.FromDateTime(new DateTime(year, month, 1));
+            var endDate = startDate.AddMonths(1);
+
+            payments = payments.Where(p =>
+                p.date >= startDate &&
+                p.date < endDate
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            payments = payments.Where(p => p.status == status);
+        }
+
+        var result = payments.ToList();
+
+        if (Request.IsAjax())
+        {
+            return PartialView("_PaymentList", result);
+        }
+
+        return View(result);
     }
+
 
     [Authorize(Roles = "Admin")]
     public IActionResult DeletePayment(List<int> selectedID)

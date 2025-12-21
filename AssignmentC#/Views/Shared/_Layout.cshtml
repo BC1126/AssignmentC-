@@ -296,121 +296,183 @@
 
 	@RenderBody()
 
-		<section id="footer" class="p_3 bg-black">
-			<div class="container-xl">
-				<div class="footer_1 row pb-4">
-					<div class="col-md-3">
-						<div class="footer_1l">
-						<h4 class="mb-0">
-							<h4 class="mb-0">
-								<a class="fw-bold text-white" href="@logoLink">
-									<img style="max-width:100px; height:30px;" src="/photos/logo.png" />
-								</a>
-							</h4>
-						</h4>
+	@{
+		// Logic: If the user is Admin or Staff, we disable all footer links to prevent navigating to User pages.
+		bool shouldHideLinks = User.IsInRole("Admin") || User.IsInRole("Staff");
+	}
+
+	<footer class="bg-black text-white pt-5 pb-4" style="border-top: 1px solid #333;">
+		<div class="container-xl">
+			<div class="row">
+				<div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
+					@if (shouldHideLinks)
+					{
+						<div class="d-inline-block mb-3">
+							<img src="/photos/logo.png" alt="YSL Cinema" style="height: 40px;">
 						</div>
-					</div>
-					<div class="col-md-9">
-						<div class="footer_1r text-end">
-							<ul class="mb-0">
-								<li class="d-inline-block"><a class="text-white-50 a_tag" href="#">Help</a></li>
-								<li class="d-inline-block text-white-50">/</li>
-								<li class="d-inline-block me-2"><a class="text-white-50 a_tag" href="#"> Privacy Policy</a></li>
-								<li class="d-inline-block"><a class="social_icon" href="#"> <i class="fa fa-twitter"></i></a></li>
-								<li class="d-inline-block"><a class="social_icon" href="#"> <i class="fa fa-facebook"></i></a></li>
-								<li class="d-inline-block"><a class="social_icon" href="#"> <i class="fa fa-instagram"></i></a></li>
-								<li class="d-inline-block"><a class="social_icon" href="#"> <i class="fa fa-pinterest"></i></a></li>
-							</ul>
-						</div>
+					}
+					else
+					{
+						<a href="@logoLink" class="d-inline-block mb-3">
+							<img src="/photos/logo.png" alt="YSL Cinema" style="height: 40px;">
+						</a>
+					}
+
+					<p class="text-white-50">
+						Experience the best in cinema with YSL Cinema Ticketing.
+						Book your tickets, order snacks, and enjoy the show with just a few clicks.
+					</p>
+
+					<div class="mt-3">
+						@if (shouldHideLinks)
+						{
+							<span class="text-white me-3 fs-5"><i class="fa-brands fa-facebook-f"></i></span>
+							<span class="text-white me-3 fs-5"><i class="fa-brands fa-twitter"></i></span>
+							<span class="text-white me-3 fs-5"><i class="fa-brands fa-instagram"></i></span>
+							<span class="text-white fs-5"><i class="fa-brands fa-youtube"></i></span>
+						}
+						else
+						{
+							<a href="#" class="text-white me-3 fs-5"><i class="fa-brands fa-facebook-f"></i></a>
+							<a href="#" class="text-white me-3 fs-5"><i class="fa-brands fa-twitter"></i></a>
+							<a href="#" class="text-white me-3 fs-5"><i class="fa-brands fa-instagram"></i></a>
+							<a href="#" class="text-white fs-5"><i class="fa-brands fa-youtube"></i></a>
+						}
 					</div>
 				</div>
-				<div class="footer_2 row mt-4">
-					<div class="col-md-3">
-						<div class="footer_2i">
-							<p class="text-white fw-bold fs-5">Buy movie tickets easily with Aovis system nationwide</p>
-							<h6 class="mb-0 mt-4"><a class="button" href="#">Get Your Ticket</a></h6>
+
+				<div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+					<h5 class="text-uppercase mb-4 col_oran">Quick Links</h5>
+					<ul class="list-unstyled">
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">Home</span>
+							}
+							else
+							{
+
+								<a href="/Home/Index" class="text-white-50 text-decoration-none hover-white">Home</a>
+							}
+						</li>
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">Movies</span>
+							}
+							else
+							{
+
+								<a href="/Movie/index" class="text-white-50 text-decoration-none hover-white">Movies</a>
+							}
+						</li>
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">Food & Drinks</span>
+							}
+							else
+							{
+
+								<a href="/Product/Order" class="text-white-50 text-decoration-none hover-white">Food & Drinks</a>
+							}
+						</li>
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">My Tickets</span>
+							}
+							else
+							{
+
+								<a href="/Ticket/MyTicket" class="text-white-50 text-decoration-none hover-white">My Tickets</a>
+							}
+						</li>
+					</ul>
+				</div>
+
+				<div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+					<h5 class="text-uppercase mb-4 col_oran">Support</h5>
+					<ul class="list-unstyled">
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">About Us</span>
+							}
+							else
+							{
+
+								<a href="/Home/about" class="text-white-50 text-decoration-none hover-white">About Us</a>
+							}
+						</li>
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">Contact Us</span>
+							}
+							else
+							{
+
+								<a href="/Home/contact" class="text-white-50 text-decoration-none hover-white">Contact Us</a>
+							}
+						</li>
+						<li class="mb-2">
+							@if (shouldHideLinks)
+							{
+								<span class="text-white-50">FAQs</span>
+							}
+							else
+							{
+
+								<a href="/Home/faq" class="text-white-50 text-decoration-none hover-white">FAQs</a>
+							}
+						</li>
+					</ul>
+				</div>
+
+				<div class="col-lg-4 col-md-6">
+					<h5 class="text-uppercase mb-4 col_oran">Stay Updated</h5>
+					<p class="text-white-50">Subscribe to our newsletter for the latest movie releases.</p>
+
+					@if (shouldHideLinks)
+					{
+						<div class="input-group mb-3 opacity-50">
+							<input type="text" class="form-control rounded-0 bg-dark text-white border-secondary" placeholder="Admin View Only" disabled>
+							<button class="btn btn-primary rounded-0 col_oran border-0 fw-bold" type="button" disabled>Subscribe</button>
 						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="footer_2i">
-							<h5 class="col_oran mb-4">Movies</h5>
-							<div class="row footer_1ism">
-								<h6 class="fw-normal col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Action</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Adventure</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Animation</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Thriller</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Crime</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6 mb-0"><a class="text-white-50 a_tag" href="#"> Comedy</a></h6>
+					}
+					else
+					{
+						<form action="#">
+							<div class="input-group mb-3">
+								<input type="email" class="form-control rounded-0 bg-dark text-white border-secondary" placeholder="Your Email Address" aria-label="Email">
+								<button class="btn btn-primary rounded-0 col_oran border-0 fw-bold" type="button">Subscribe</button>
 							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="footer_2i">
-							<h5 class="col_oran mb-4">Links</h5>
-							<div class="row footer_1ism">
-								<h6 class="fw-normal col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> About Us</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> My account</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> News</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Latest Events</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6"><a class="text-white-50 a_tag" href="#"> Privacy</a></h6>
-								<h6 class="fw-normal mt-2 col-md-12 col-6 mb-0"><a class="text-white-50 a_tag" href="#"> Contact Us</a></h6>
-							</div>
-						</div>
-					</div>
-					<div class="col-md-3">
-						<div class="footer_2i">
-							<h5 class="col_oran mb-4">Newsletter</h5>
-							<p class="text-white-50">Subscribe to Leitmotif newsletter this very day.</p>
-							<div class="input-group bg-white">
-								<input type="text" class="form-control bg-transparent rounded-0 border-0" placeholder="Enter Your Email">
-								<span class="input-group-btn">
-									<button class="btn btn-primary bg-transparent rounded-0 border-0 col_oran p-3" type="button">
-										<i class="fa fa-location-arrow"></i>
-									</button>
-								</span>
-							</div>
-							<div class="form-check mt-3 text-white-50">
-								<input class="form-check-input" type="checkbox" value="">
-								<label class="form-check-label" for="flexCheckDefault">
-									I agree to all terms and policies of the company
-								</label>
-							</div>
-						</div>
-					</div>
+						</form>
+					}
 				</div>
 			</div>
-		</section>
 
-		<section id="footer_b" class="pt-3 pb-3 bg-dark">
-			<div class="container-xl">
-				<div class="footer_b1 row text-center">
-					<div class="col-md-12">
-						<p class="mb-0 text-white-50">© 2025 YSL Cinema Ticketing. All Rights Reserved | Design by <a class="col_oran fw-bold">BC Pro Group</a></p>
-					</div>
+			<hr class="my-4 border-secondary">
+
+			<div class="row align-items-center">
+				<div class="col-md-6 text-center text-md-start text-white-50">
+					&copy; 2025 <span class="text-white fw-bold">YSL Cinema Ticketing</span>. All Rights Reserved.
 				</div>
-			</div>
-		</section>
-
-		<!-- Video Modal -->
-		<div class="modal fade" id="templateVideoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
-			<div class="modal-dialog modal-lg modal-dialog-centered">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h2 class="modal-title" id="videoModalLabel">  Video</h2>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					</div>
-					<div class="modal-body">
-						<!-- YouTube Embed -->
-						<div class="ratio ratio-16x9">
-							<iframe id="youtubeVideo" src="" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" loading="lazy" allowfullscreen></iframe>
-						</div>
-
-
-					</div>
-
+				<div class="col-md-6 text-center text-md-end text-white-50">
+					Designed by
+					@if (shouldHideLinks)
+					{
+						<span class="col_oran fw-bold">BC Pro Group</span>
+					}
+					else
+					{
+						<a href="#" class="col_oran fw-bold text-decoration-none">BC Pro Group</a>
+					}
 				</div>
 			</div>
 		</div>
+	</footer>	
 		<!-- JavaScript to pause the video when modal is closed -->
 		<script>
 			var templateVideoModal = document.getElementById('templateVideoModal');

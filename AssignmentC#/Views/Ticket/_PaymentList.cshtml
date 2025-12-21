@@ -1,0 +1,58 @@
+﻿@model IEnumerable<Payment>
+
+<form asp-action="DeletePayment" method="post">
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Delete selected items?')">
+        Delete Selected Payment
+    </button>
+
+    <div class="table-wrap">
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkBoxRow"><input type="checkbox" id="selectAll" /></th>
+                    <th class="tableRow">Member ID</th>
+                    <th class="tableRow">Email</th>
+                    <th class="tableRow">Movie</th>
+                    <th class="tableRow">Date</th>
+                    <th class="tableRow">Status</th>
+                    <th class="tableRow">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var vm in Model)
+                {
+                    <tr>
+                        <td class="checkBoxRow"><input type="checkbox" name="selectedID" value="@vm.PaymentId" /></td>
+                        <td class="tableRow">@vm.User.UserId</td>
+                        <td class="tableRow">@vm.User.Email</td>
+                        <td class="tableRow">@vm.Booking.ShowTime.Movie.Title</td>
+                        <td class="tableRow">@vm.date.ToString("dd MMMM yyyy")</td>
+                        <td class="tableRow"><span class="status paid">@vm.status</span></td>
+                        <td class="tableRow">RM @vm.amount</td>
+                        <!--
+                            <td class="actions tableRow">
+                                <button class="btnActions">Edit</button>
+                                <button class="btnActions">Delete</button>
+                            </td>
+                        -->
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model?.Any() == false)
+    {
+        <div>No record found</div>
+    }
+
+</form>
+
+@section foot{
+    <script>
+        document.getElementById('selectAll').addEventListener('change', function () {
+            document.querySelectorAll('input[name="selectedID"]')
+                .forEach(cb => cb.checked = this.checked);
+        });
+    </script>
+}
