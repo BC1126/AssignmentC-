@@ -213,3 +213,7 @@ th, td {
         background: #6610f2;
         color: #fff;
     }
+
+.createBtn {
+    margin-left: 800px;
+}

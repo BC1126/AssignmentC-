@@ -1,5 +1,8 @@
 ﻿@section head {
     <link href="/css/voucher.css" rel="stylesheet" />
+    <style>
+        
+    </style>
 }
 
 <div class="voucherLayout">
@@ -11,7 +14,7 @@
                 <h2>Vouchers</h2>
                 <p>Manage discount codes and promotions for customers.</p>
             </div>
-            <a href="/Ticket/Voucher"><button class="btn-primary">+ Create New Voucher</button></a>
+            <a href="/Ticket/Voucher"><button class="btn-primary createBtn">+ Create New Voucher</button></a>
         </div>
 
         <form data-ajax="true"
@@ -24,6 +27,7 @@
                     <option value="">All Status</option>
                     <option value="active">Active</option>
                     <option value="expired">Expired</option>
+                    <option value="schedule">Scheduled</option>
                 </select>
 
                 <select name="type" id="type">
@@ -39,17 +43,6 @@
         <div id="target">
             <partial name="_VoucherList" />
         </div>
-
-        <!--
-        <div class="pagination">
-            <span>Showing 1 to 5 of 128 results</span>
-            <div class="pages">
-                <button class="active">1</button>
-                <button>2</button>
-                <button>3</button>
-            </div>
-        </div>
-        -->
 
     </main>
 

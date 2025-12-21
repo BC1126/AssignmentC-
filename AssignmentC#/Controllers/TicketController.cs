@@ -83,7 +83,7 @@ public class TicketController(DB db, Helper hp) : Controller
             { 
                 ModelState.AddModelError("CardNumber", "Card number is required.");
             }
-            else if (!int.TryParse(vm.CardNumber, out int value))
+            else if (!Regex.IsMatch(vm.CardNumber, @"^\d{16}$"))
             {
                 ModelState.AddModelError("CardNumber", "Please enter a valid Card Number");
             }
@@ -100,9 +100,9 @@ public class TicketController(DB db, Helper hp) : Controller
             }
             else
             {
-                var parts = vm.ExpiryDate.Split('/');
-                int month = int.Parse(parts[0]);
-                int year = int.Parse(parts[1]) + 2000;
+                var parts = vm.ExpiryDate.Split('-');
+                int year = int.Parse(parts[0]);
+                int month = int.Parse(parts[1]);
 
                 var expiry = new DateTime(year, month, DateTime.DaysInMonth(year, month));
 
@@ -153,11 +153,6 @@ public class TicketController(DB db, Helper hp) : Controller
 
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.Values
-            .SelectMany(v => v.Errors)
-            .Select(e => e.ErrorMessage);
-
-            TempData["Error"] = errors;
             return RedirectToAction("Index");
         }
 
@@ -650,7 +645,7 @@ public class TicketController(DB db, Helper hp) : Controller
         {
             switch (status)
             {
-                case "active":
+                case "schedule":
                     v = db.Promotions
                           .OfType<Voucher>().Where(v => v.StartDate > DateTime.Today);
                 break;
@@ -659,6 +654,11 @@ public class TicketController(DB db, Helper hp) : Controller
                     v = db.Promotions
                           .OfType<Voucher>().Where(v => v.EndDate < DateTime.Today);
                 break;
+
+                case "active":
+                    v = db.Promotions
+                          .OfType<Voucher>().Where(v => v.StartDate <= DateTime.Today && v.EndDate >= v.EndDate);
+                 break;
             }
         }
 
@@ -920,7 +920,7 @@ public class TicketController(DB db, Helper hp) : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var document = new ReceiptDocument(payment);
+        var document = new ReceiptDocument(db,payment);
 
         // 3. Generate PDF as byte array
         var pdfBytes = document.GeneratePdf();
@@ -1027,6 +1027,29 @@ public class TicketController(DB db, Helper hp) : Controller
         return View(payment);
     }
 
+    [Authorize(Roles = "Admin")]
+    public IActionResult DeletePayment(List<int> selectedID)
+    {
+        if (selectedID == null || !selectedID.Any())
+        {
+            TempData["Error"] = "No items selected";
+            return RedirectToAction("PaymentList");
+        }
+
+        var items = db.Payments
+                      .Where(p => selectedID.Contains(p.PaymentId))
+                      .ToList();
+
+        if (items.Any())
+        {
+            db.Payments.RemoveRange(items);
+            db.SaveChanges();
+        }
+
+        TempData["Success"] = $"{items.Count} item(s) deleted.";
+        return RedirectToAction("PaymentList");
+    }
+
     [Authorize(Roles = "Member")]
     [HttpPost]
     public IActionResult Refund(int paymentId)
@@ -1042,6 +1065,7 @@ public class TicketController(DB db, Helper hp) : Controller
         }
 
         payment.status = "Refund";
+        payment.date = DateOnly.FromDateTime(DateTime.Today);
         db.SaveChanges();
 
 
@@ -1078,9 +1102,9 @@ public class TicketController(DB db, Helper hp) : Controller
         }
 
         // Set database
-        var booking = payment.Booking;
-        db.Bookings.Remove(booking);
-        db.SaveChanges();
+        //var booking = payment.Booking;
+        //db.Bookings.Remove(booking);
+        //db.SaveChanges();
 
         return RedirectToAction("MyTicket");
     }

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AssignmentC_.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -8,9 +10,11 @@ namespace AssignmentC_.Controllers;
 public class ReceiptDocument : IDocument
 {
     private readonly PaymentVM _payment;
+    private readonly DB db;
 
-    public ReceiptDocument(PaymentVM payment)
+    public ReceiptDocument(DB db ,PaymentVM payment)
     {
+        this.db = db;
         _payment = payment;
     }
 
@@ -18,7 +22,42 @@ public class ReceiptDocument : IDocument
 
     public void Compose(IDocumentContainer container)
     {
-        var subtotal = 0;
+        var ol = db.OrderLines
+                        .Include(o => o.Order)
+                        .Where(o => o.OrderId == _payment.Order.Id)
+                        .ToList();
+
+        decimal addOnSub = 0;
+
+        if (ol != null)
+        {
+            foreach (var o in ol)
+            {
+                addOnSub += o.Price * o.Quantity;
+            }
+        }
+
+
+        decimal subtotal = addOnSub + _payment.Booking.TotalPrice;
+
+        decimal dv = 0;
+
+        foreach (var p in _payment.Promotions ?? Enumerable.Empty<Promotion>())
+        {
+            if (p is Voucher v)
+            {
+                if (string.Equals(v.VoucherType.Trim(), "percentage", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal d = v.DiscountValue / 100;
+                    dv = subtotal * d;
+                }
+                else
+                {
+                    dv = v.DiscountValue;
+                }
+            }
+        }
+
 
         container.Page(page =>
         {
@@ -62,11 +101,11 @@ public class ReceiptDocument : IDocument
 
                     table.Cell().Text("Add On");
                     table.Cell().Text("-");
-                    table.Cell().Text(_payment.Amount.ToString("F2"));
+                    table.Cell().Text(addOnSub.ToString("F2"));
 
                     table.Cell().Text("Discount");
                     table.Cell().Text("-");
-                    table.Cell().Text(_payment.Amount.ToString("F2"));
+                    table.Cell().Text(dv.ToString("F2"));
                 });
 
                 col.Item().Text($"Total: RM {_payment.Amount.ToString("F2")}")

@@ -1,5 +1,29 @@
 ﻿@model IEnumerable<dynamic>
 
+@section head{
+    <style>
+        .dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+            .dot.green {
+                background: #28a745;
+            }
+
+            .dot.red {
+                background: #dc3545;
+            }
+
+            .dot.yellow {
+                background: #ffc107;
+            }
+    </style>
+}
+
 <div class="table-wrapper">
     <table class="voucherList">
         <thead class="voucherHead">
@@ -17,14 +41,17 @@
             @foreach (var vm in Model)
             {
                 <tr class="voucherListRow">
-                    @if (vm.StartDate >= DateTime.Today)
+                    @if (vm.StartDate > DateTime.Today)
                     {
-                        <td class="status"><span class="dot green"></span>Active</td>
+                        <td class="status"><span class="dot yellow"></span>Scheduled</td>
                     }
-
-                    @if (vm.EndDate < DateTime.Today)
+                    else if (vm.EndDate < DateTime.Today)
                     {
                         <td class="status"><span class="dot red"></span>Expired</td>
+                    }
+                    else
+                    {
+                        <td class="status"><span class="dot green"></span>Active</td>
                     }
 
                     <td class="mono">@vm.VoucherCode</td>
