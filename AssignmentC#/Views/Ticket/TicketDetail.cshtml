@@ -26,6 +26,10 @@
                 </div>
 
                 <div class="ticket-body">
+                    <div class="qr">
+                        <img src="@Model.Booking.ShowTime.Movie.PosterUrl" alt="Movie Poster">
+                    </div>
+
                     <div>
                         <div class="info-grid">
                             <div class="info-box"><div class="label">Date</div><div class="value">@Model.date.ToString("dddd, dd MMMM yyyy")</div></div>
@@ -37,12 +41,6 @@
                         </div>
                         <div class="cinema">📍 @Model.Booking.ShowTime.Hall.Outlet.City , @Model.Booking.ShowTime.Hall.Outlet.Name </div>
                     </div>
-
-                    <div class="qr">
-                        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuO7kygYsRZVwXHVRvvk85HkJBYFiwah_FzpA5AofvHWOgcF-6ilbtqI6Bt12LV0vUnG4x2AohtHpW3PX6S3HfUmgMgbchML3wpFJ6VRrvG680VU_YZ9o0B5arjP4tYZfyjRHVKriSA27LGnL84eGGspTvUPtY5fL49Vue-deQw65657ZUT0POxhGqbyshszWEyUMZJsZlSL1_usaVb7fuVK0glJH0JX-_kemTSGJgiOYKQ1DJTuaSHirlFPtjKVcrHh2HeoBUYGM" alt="QR">
-                        <strong>Scan to enter</strong>
-                        <p>Please increase your screen brightness</p>
-                    </div>
                 </div>
 
             </div>
@@ -51,18 +49,18 @@
             <div class="payment">
                 <h3>Payment Details</h3>
                 <div class="row muted"><span>Standard Ticket (x2)</span><span> RM @Model.Booking.TotalPrice</span></div>
-                <div class="row muted"><span>Add-On</span><span>RM 0</span></div>
-                <div class="row discount"><span>Discount (SUMMER20)</span><span>- RM 0.00</span></div>
+                <div class="row muted"><span>Add-On</span><span>RM @ViewBag.AddOnSub</span></div>
+                <div class="row discount"><span>Discount</span><span>- RM @ViewBag.DiscountValue</span></div>
                 <hr style="border-color:var(--border)">
                 <div class="row"><span>Total Paid</span><span class="total">RM @Model.amount</span></div>
 
 
                 <div class="actions-grid">
-                    <button>Download PDF</button>
-                    <button>Share Ticket</button>
+                    <a href="@Url.Action("DownloadReceipt", "Ticket", new { paymentId = Model.PaymentId })" class="btn-primary">
+                        Download Receipt
+                    </a>
                 </div>
 
-                <div class="support">Need help? <u>Contact Support</u><br>Reference ID: TRX-8859201</div>
             </div>
 
         </div>
