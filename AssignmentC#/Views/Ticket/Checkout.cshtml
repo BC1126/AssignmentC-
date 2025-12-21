@@ -50,52 +50,6 @@
                 </div>
             </div>
 
-
-            <!--
-                <div class="card">
-                    <div class="flex justify-between items-start mb-4 memberPoint">
-                        <div>
-                            <h3 class="text-black-50 text-lg font-bold flex items-center gap-2">
-                                <span class="material-symbols-outlined text-primary">loyalty</span>
-                                Loyalty Rewards
-                            </h3>
-                            <p class="text-text-secondary text-sm mt-1">
-                                You have <span class="text-primary font-bold">2,450 pts</span> available.
-                            </p>
-                        </div>
-
-                        <button class="text-primary text-sm font-semibold hover:underline"><i class="fa-solid fa-angle-right arrowRight"></i></button>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-[#101323] border border-border-dark p-3 rounded-lg flex items-center gap-3 hover:border-primary/50 transition-colors cursor-pointer group">
-                            <div class="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center shrink-0">
-                                <span class="material-symbols-outlined text-amber-400">local_activity</span>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-black-50 text-sm font-semibold">Free Popcorn (L)</h4>
-                                <p class="text-text-secondary text-xs">500 pts</p>
-                            </div>
-                            <div class="w-5 h-5 rounded-full border border-border-dark group-hover:border-primary flex items-center justify-center">
-                                <div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-[#101323] border border-border-dark p-3 rounded-lg flex items-center gap-3 hover:border-primary/50 transition-colors cursor-pointer group">
-                            <div class="w-12 h-12 bg-white/5 rounded-md flex items-center justify-center shrink-0">
-                                <span class="material-symbols-outlined text-purple-400">local_drink</span>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-black-50 text-sm font-semibold">Drink Upgrade</h4>
-                                <p class="text-text-secondary text-xs">300 pts</p>
-                            </div>
-                            <div class="w-5 h-5 rounded-full border border-border-dark flex items-center justify-center">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            -->
-
             <!-- Payment Method-->
             <form method="post" action="/Ticket/Checkout">
             <div class="card">
@@ -256,7 +210,7 @@
                             
                             <p>Minimum Spend : RM @v.MinSpend</p>
                         </div>
-                        <span class="badge">@v.StartDate.ToString("dddd-MM-yyyy") - @v.EndDate.ToString("dddd-MM-yyyy") </span>
+                            <span class="badge">@v.StartDate.ToString("dd MMMM yyyy") - @v.EndDate.ToString("dd MMMM yyyy") </span>
                     </div>
                 </label>
             }

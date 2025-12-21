@@ -145,43 +145,65 @@ public class ShowTimeController : Controller
 
     // GET: ShowTimeManage
     [Authorize(Roles = "Admin,Staff")]
-    public IActionResult ShowTimeManage(int? outletId, int? hallId, DateTime? date)
+    public IActionResult ShowTimeManage(int? outletId, int? hallId, int? movieId, DateTime? date, string sort = "Date", string dir = "asc", int page = 1)
     {
+        var selectedDate = date ?? DateTime.Today;
+        int pageSize = 15;
+
         var vm = new ShowTimeManageVM
         {
-            Date = date ?? DateTime.Today,
+            Date = selectedDate,
             Outlets = db.Outlets.ToList(),
+            Movies = db.Movies.OrderBy(m => m.Title).ToList(),
             Halls = outletId.HasValue ? db.Halls.Where(h => h.OutletId == outletId.Value).ToList() : new List<Hall>(),
             OutletId = outletId ?? 0,
-            HallId = hallId ?? 0,
+            HallId = hallId ?? 0
         };
 
-        // Fetch all active showtimes initially (no filters)
-var query = db.ShowTimes
-    .Include(st => st.Movie)
-    .Include(st => st.Hall)
-    .ThenInclude(h => h.Outlet)
-    .Where(st => st.IsActive)
-    .AsQueryable();
+        var query = db.ShowTimes
+            .Include(st => st.Movie)
+            .Include(st => st.Hall)
+            .ThenInclude(h => h.Outlet)
+            .Where(st => st.IsActive)
+            .AsQueryable();
 
-if (outletId.HasValue)
-    query = query.Where(st => st.Hall.OutletId == outletId.Value);
+        // --- Filters ---
+        if (outletId.HasValue) query = query.Where(st => st.Hall.OutletId == outletId.Value);
+        if (hallId.HasValue && hallId > 0) query = query.Where(st => st.HallId == hallId.Value);
+        if (movieId.HasValue && movieId > 0) query = query.Where(st => st.MovieId == movieId.Value);
+        query = query.Where(st => st.StartTime.Date == selectedDate.Date);
 
-if (hallId.HasValue && hallId > 0)
-    query = query.Where(st => st.HallId == hallId.Value);
+        // --- 🔥 Sorting Logic (Same pattern as Movie) ---
+        query = sort switch
+        {
+            "Movie" => dir == "des" ? query.OrderByDescending(st => st.Movie.Title) : query.OrderBy(st => st.Movie.Title),
+            "Outlet" => dir == "des" ? query.OrderByDescending(st => st.Hall.Outlet.Name) : query.OrderBy(st => st.Hall.Outlet.Name),
+            "Hall" => dir == "des" ? query.OrderByDescending(st => st.Hall.Name) : query.OrderBy(st => st.Hall.Name),
+            "Price" => dir == "des" ? query.OrderByDescending(st => st.TicketPrice) : query.OrderBy(st => st.TicketPrice),
+            // Default: Sort by Date/Time
+            _ => dir == "des" ? query.OrderByDescending(st => st.StartTime) : query.OrderBy(st => st.StartTime)
+        };
 
-if (date.HasValue)
-    query = query.Where(st => st.StartTime.Date == date.Value.Date);
+        // --- Pagination ---
+        int totalItems = query.Count();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-vm.ExistingShowTimes = query
-    .OrderBy(st => st.StartTime)
-    .ToList();
+        vm.ExistingShowTimes = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
 
+        // --- ViewBags for View ---
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.SelectedMovieId = movieId;
+
+        // 🔥 Pass Sort Data
+        ViewBag.Sort = sort;
+        ViewBag.Dir = dir;
 
         return View(vm);
     }
-
-
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -202,25 +224,48 @@ vm.ExistingShowTimes = query
 
 
     [Authorize(Roles = "Admin,Staff")]
-    public IActionResult FilterShowTimes(int? outletId, int? hallId, DateTime? date)
+    public IActionResult FilterShowTimes(int? outletId, int? hallId, int? movieId, DateTime? date, string sort = "Date", string dir = "asc", int page = 1)
     {
+        int pageSize = 15;
+
         var query = db.ShowTimes
             .Include(st => st.Movie)
             .Include(st => st.Hall)
-            .ThenInclude(h=>h.Outlet)
+            .ThenInclude(h => h.Outlet)
             .Where(st => st.IsActive)
             .AsQueryable();
 
-        if (outletId.HasValue)
-            query = query.Where(st => st.Hall.OutletId == outletId.Value);
+        // --- Filters ---
+        if (outletId.HasValue) query = query.Where(st => st.Hall.OutletId == outletId.Value);
+        if (hallId.HasValue && hallId > 0) query = query.Where(st => st.HallId == hallId.Value);
+        if (movieId.HasValue && movieId > 0) query = query.Where(st => st.MovieId == movieId.Value);
+        if (date.HasValue) query = query.Where(st => st.StartTime.Date == date.Value.Date);
 
-        if (hallId.HasValue && hallId > 0)
-            query = query.Where(st => st.HallId == hallId.Value);
+        // --- 🔥 Sorting Logic ---
+        query = sort switch
+        {
+            "Movie" => dir == "des" ? query.OrderByDescending(st => st.Movie.Title) : query.OrderBy(st => st.Movie.Title),
+            "Outlet" => dir == "des" ? query.OrderByDescending(st => st.Hall.Outlet.Name) : query.OrderBy(st => st.Hall.Outlet.Name),
+            "Hall" => dir == "des" ? query.OrderByDescending(st => st.Hall.Name) : query.OrderBy(st => st.Hall.Name),
+            "Price" => dir == "des" ? query.OrderByDescending(st => st.TicketPrice) : query.OrderBy(st => st.TicketPrice),
+            _ => dir == "des" ? query.OrderByDescending(st => st.StartTime) : query.OrderBy(st => st.StartTime)
+        };
 
-        if (date.HasValue)
-            query = query.Where(st => st.StartTime.Date == date.Value.Date);
+        // --- Pagination ---
+        int totalItems = query.Count();
+        int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-        var result = query.OrderBy(st => st.StartTime).ToList();
+        var result = query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+
+        // 🔥 Pass Sort Data
+        ViewBag.Sort = sort;
+        ViewBag.Dir = dir;
 
         return PartialView("_ShowTimeTable", result);
     }
@@ -407,4 +452,100 @@ vm.ExistingShowTimes = query
         });
     }
 
+    [Authorize(Roles = "Admin,Staff")]
+    public IActionResult ExportShowTimes(int? outletId, int? hallId, int? movieId, DateTime? date)
+    {
+        // ---------------------------------------------------------
+        // 1. QUERY & FILTERING
+        // ---------------------------------------------------------
+        var query = db.ShowTimes
+            .Include(st => st.Movie)
+            .Include(st => st.Hall)
+            .ThenInclude(h => h.Outlet)
+            .Where(st => st.IsActive)
+            .AsQueryable();
+
+        if (outletId.HasValue)
+            query = query.Where(st => st.Hall.OutletId == outletId.Value);
+
+        if (hallId.HasValue && hallId > 0)
+            query = query.Where(st => st.HallId == hallId.Value);
+
+        if (movieId.HasValue && movieId > 0)
+            query = query.Where(st => st.MovieId == movieId.Value);
+
+        if (date.HasValue)
+            query = query.Where(st => st.StartTime.Date == date.Value.Date);
+
+        // ---------------------------------------------------------
+        // 2. FETCH & SORT (In Memory)
+        // ---------------------------------------------------------
+        // We fetch first, then sort by Hall + Time so we can compare adjacent rows
+        var rawData = query.ToList();
+
+        var data = rawData
+            .OrderBy(st => st.Hall.Outlet.Name)
+            .ThenBy(st => st.Hall.Name)
+            .ThenBy(st => st.StartTime)
+            .ToList();
+
+        // ---------------------------------------------------------
+        // 3. BUILD CSV CONTENT
+        // ---------------------------------------------------------
+        var sb = new System.Text.StringBuilder();
+
+        // Header Row
+        sb.AppendLine("Date,Outlet,Hall,Movie Just Ended,Cleaning Starts (End Time),Next Show Starts,Gap/Deadline");
+
+        for (int i = 0; i < data.Count; i++)
+        {
+            var item = data[i];
+
+            // --- CALCULATION LOGIC ---
+            string nextShowTime = "End of Day";
+            string gap = "Until Closing"; // Default for last movie
+
+            // Look ahead to the next record
+            if (i + 1 < data.Count)
+            {
+                var nextItem = data[i + 1];
+
+                // Check if the next record is in the SAME Hall on the SAME Day
+                if (nextItem.HallId == item.HallId && nextItem.StartTime.Date == item.StartTime.Date)
+                {
+                    nextShowTime = nextItem.StartTime.ToString("hh:mm tt");
+
+                    // Calculate minutes between Current End and Next Start
+                    double minutes = (nextItem.StartTime - item.EndTime).TotalMinutes;
+
+                    if (minutes < 0)
+                    {
+                        gap = $"OVERRUN! ({minutes:0} mins)"; // Negative gap means schedule clash
+                    }
+                    else
+                    {
+                        gap = $"{minutes:0} mins";
+                    }
+                }
+            }
+
+            // Escape quotes in movie title for CSV safety
+            string movieTitle = $"\"{item.Movie.Title.Replace("\"", "\"\"")}\"";
+
+            // --- APPEND ROW ---
+            sb.AppendLine($"{item.StartTime:dd/MM/yyyy}," +
+                          $"{item.Hall.Outlet.Name}," +
+                          $"{item.Hall.Name}," +
+                          $"{movieTitle}," +
+                          $"{item.EndTime:hh:mm tt}," +   // When cleaning begins
+                          $"{nextShowTime}," +            // When cleaning must finish
+                          $"{gap}");
+        }
+
+        // ---------------------------------------------------------
+        // 4. RETURN FILE
+        // ---------------------------------------------------------
+        string fileName = $"Cleaning_Schedule_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+        return File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", fileName);
+    }
 }

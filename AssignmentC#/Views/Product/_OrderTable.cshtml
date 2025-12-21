@@ -52,19 +52,18 @@
                 <td>@o.OrderLines.Sum(ol => ol.Price * ol.Quantity)</td>
                 <td>
                     <button data-get="/Product/OrderDetail/@o.Id" class="detail-btn">Detail</button>
-                    @if (!o.Paid)
+                    @if (!o.Claim && o.CollectDate >= DateOnly.FromDateTime(DateTime.Today))
                     {
-                        <form asp-action="" method="post" style="display:inline;">
-                            <input type="hidden" name="id" value="@o.Id" />
-                            <button type="submit" class="pay-btn">Pay</button>
-                        </form>
-
-                        <form asp-action="CancelOrder" method="post" style="display:inline;" class="cancel-form">
+                        <form asp-action="CancelOrder"
+                              method="post"
+                              style="display:inline;"
+                              class="cancel-form">
                             <input type="hidden" name="id" value="@o.Id" />
                             <button type="submit" class="cancel-btn">Cancel</button>
                         </form>
-
                     }
+
+
                     @if (o.Paid && !o.Claim && o.CollectDate == DateOnly.FromDateTime(DateTime.Today))
                     {
                         <form asp-action="ClaimOrder" method="post" style="display:inline;">

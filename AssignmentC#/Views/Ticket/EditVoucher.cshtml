@@ -76,22 +76,6 @@
                     </div>
                 </div>
 
-                <!-- Eligibility -->
-                <div class="sectionVoucher">
-                    <h3><label asp-for="EligibilityMode"></label></h3>
-                    <div class="grid-2">
-                        <div>
-                            <select asp-for="EligibilityMode">
-                                <option value="open">Open to all</option>
-                                <option value="condition">Condition-based</option>
-                                <option value="assigned">Assigned user only</option>
-                                <option value="both">Assigned + Condition</option>
-                            </select>
-                            <span class="displayErrorMsg" asp-validation-for="EligibilityMode"></span>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Actions -->
                 <div class="actions">
                     <button class="btn secondary"><a href="/Ticket/VoucherList">Back To List</a></button>
