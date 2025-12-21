@@ -51,7 +51,6 @@
                 int startPage = Math.Max(1, Model.CurrentPage - 2);
                 int endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
 
-                // Show First Page if far away
                 if (startPage > 1)
                 {
                     <li class="page-item">
@@ -64,7 +63,6 @@
                     }
                 }
 
-                // Show Window of Pages
                 for (int i = startPage; i <= endPage; i++)
                 {
                     <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
@@ -73,7 +71,6 @@
                     </li>
                 }
 
-                // Show Last Page if far away
                 if (endPage < Model.TotalPages)
                 {
                     if (endPage < Model.TotalPages - 1)
@@ -87,7 +84,6 @@
                 }
             }
 
-            @* Next Button *@
             <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
                 <a class="page-link" data-ajax="true" data-ajax-update="#logTarget" data-ajax-loading="#loader"
                    href="@Url.Action("ActionLogList", new { name = Model.SearchName, from = Model.FromDate, to = Model.ToDate, page = Model.CurrentPage + 1 })">Next</a>

@@ -7,7 +7,6 @@
     <div class="card shadow-sm p-4 mx-auto" style="max-width: 900px; background-color: #fff;">
         <h2 class="mb-4">@ViewData["Title"]</h2>
 
-        <!-- Top model errors -->
         @if (!ViewData.ModelState.IsValid)
         {
             <div class="alert alert-danger">
@@ -20,7 +19,6 @@
             </div>
         }
 
-        <!-- TempData messages -->
         @if (TempData["Info"] != null)
         {
             <div class="alert alert-success">@TempData["Info"]</div>
@@ -35,7 +33,6 @@
             <input type="hidden" asp-for="MovieId" />
 
             <div class="row g-4">
-                <!-- Left Column -->
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label asp-for="Title" class="form-label"></label>
@@ -68,7 +65,6 @@
                     </div>
                 </div>
 
-                <!-- Right Column -->
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label asp-for="Director" class="form-label"></label>
@@ -98,7 +94,6 @@
 
             <hr class="my-4" />
 
-            <!-- Poster + Banner Upload -->
             <div class="row g-4">
                 <div class="col-md-6">
                     <label class="form-label">Poster</label>
@@ -133,7 +128,6 @@
                 </div>
             </div>
 
-            <!-- Buttons -->
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">Save</button>
                 <a asp-action="Movies" class="btn btn-secondary ms-2">Cancel</a>

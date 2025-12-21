@@ -16,7 +16,6 @@
         <h5 class="mb-3">Filter ShowTimes</h5>
 
         <form method="get" asp-action="Manage" class="row g-3">
-            <!-- Outlet -->
             <div class="col-md-4">
                 <label class="form-label">Outlet</label>
                 <select name="outletId" class="form-select" onchange="this.form.submit()">
@@ -31,7 +30,6 @@
                 </select>
             </div>
 
-            <!-- Hall -->
             <div class="col-md-4">
                 <label class="form-label">Hall</label>
                 <select name="hallId" class="form-select" onchange="this.form.submit()"
@@ -50,7 +48,6 @@
                 </select>
             </div>
 
-            <!-- Date -->
             <div class="col-md-4">
                 <label class="form-label">Date</label>
                 <input type="date"
@@ -88,7 +85,6 @@
                 <tbody>
                     @foreach (var st in Model.ExistingShowTimes)
                     {
-                        // Calculate the times for display
                         var cleanEnd = st.EndTime.AddMinutes(15);
 
                         <tr class="table-warning">
@@ -134,7 +130,6 @@
                 <input type="hidden" name="HallId" value="@Model.HallId" />
                 <input type="hidden" name="Date" value="@Model.Date" />
 
-                <!-- Movie -->
                 <div class="col-md-4">
                     <label class="form-label">Movie</label>
                     <select name="MovieId" class="form-select" required>
@@ -148,13 +143,11 @@
                     </select>
                 </div>
 
-                <!-- Start Time -->
                 <div class="col-md-4">
                     <label class="form-label">Start Time</label>
                     <input type="time" name="StartTime" class="form-control" required />
                 </div>
 
-                <!-- Price -->
                 <div class="col-md-4">
                     <label class="form-label">Ticket Price (RM)</label>
                     <input type="number" name="TicketPrice"
@@ -184,19 +177,15 @@
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // 1. Get the list of existing showtimes from the table (if any)
             var lastTimeSlot = "@(Model.ExistingShowTimes != null && Model.ExistingShowTimes.Any()
                                                                 ? Model.ExistingShowTimes.Last().EndTime.AddMinutes(15).ToString("HH:mm")
                                                                 : "")";
 
-        // 2. Select the StartTime input field
         var timeInput = document.querySelector('input[name="StartTime"]');
 
-            // 3. If there is a previous movie, auto-fill the next slot
             if (lastTimeSlot && timeInput) {
                 timeInput.value = lastTimeSlot;
 
-                // Optional: Add a visual hint
                 var hint = document.createElement("small");
                 hint.className = "text-muted";
                 hint.innerText = "💡 Auto-suggested based on 15m cleaning gap.";

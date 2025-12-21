@@ -26,13 +26,12 @@
 @section Scripts {
     <script src="~/js/jquery.unobtrusive-ajax.min.js"></script>
     <script>
-        // Search-as-you-type (Demo 2 improved)
         let timer = null;
         $('#nameInput').on('input', function() {
             clearTimeout(timer);
             timer = setTimeout(() => {
                 $(this).closest('form').submit();
-            }, 500); // 500ms delay
+            }, 500); 
         });
     </script>
 }

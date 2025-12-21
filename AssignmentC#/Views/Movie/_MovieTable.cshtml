@@ -4,7 +4,6 @@
     <thead>
         <tr>
             <th>Poster</th>
-            @* Ensure all sorting links include the current search term 'name' *@
             <th>
                 <a data-ajax="true" data-ajax-update="#movieTableTarget" data-ajax-loading="#loader"
                    href="@Url.Action("Movies", new { name = Model.SearchName, sort = "Title", dir = Model.Sort == "Title" && Model.Dir == "asc" ? "des" : "asc" })">

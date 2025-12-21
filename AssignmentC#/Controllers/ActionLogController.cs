@@ -15,7 +15,6 @@ public class ActionLogController : Controller
     {
         IQueryable<ActionLog> query = db.ActionLogs;
 
-        // 1. Searching (Email, Name, or Entity)
         if (!string.IsNullOrEmpty(name))
         {
             query = query.Where(l => l.UserEmail.Contains(name) ||
@@ -23,11 +22,9 @@ public class ActionLogController : Controller
                                      l.Entity.Contains(name));
         }
 
-        // 2. Date Range Filtering
         if (from.HasValue) query = query.Where(l => l.CreatedAt >= from.Value);
         if (to.HasValue) query = query.Where(l => l.CreatedAt <= to.Value.AddDays(1).AddSeconds(-1));
 
-        // 3. Paging logic (Demo 4)
         int pageSize = 15;
         int totalCount = query.Count();
         var logs = query.OrderByDescending(l => l.CreatedAt)
@@ -45,7 +42,6 @@ public class ActionLogController : Controller
             ToDate = to
         };
 
-        // AJAX Detection (Demo 1 & 5)
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
             return PartialView("_ActionLogTable", vm);
@@ -58,7 +54,6 @@ public class ActionLogController : Controller
     [Authorize(Roles = "Admin")]
     public IActionResult DeleteOldLogs()
     {
-        // Example: Delete logs older than 30 days
         var threshold = DateTime.Now.AddDays(-30);
         var oldLogs = db.ActionLogs.Where(l => l.CreatedAt < threshold);
 

@@ -17,17 +17,14 @@ else
                     <div class="card-body text-center">
                         <h6 class="fw-bold">@movie.Title</h6>
 
-                        @* --- LOGIC START --- *@
                         @if (DateTime.Now < movie.PremierDate.AddDays(-7))
                         {
-                            @* Logic: More than 7 days before premiere -> Show Coming Soon *@
                             <button class="btn btn-secondary btn-sm mt-2 disabled" disabled style="opacity:0.7;">
                                 Coming Soon
                             </button>
                         }
                         else
                         {
-                            @* Logic: Within 7 days or already showing -> Show Get Ticket *@
                             <a asp-controller="Booking"
                                asp-action="selectShowtime"
                                asp-route-movieId="@movie.MovieId"
@@ -35,7 +32,6 @@ else
                                 Get Ticket
                             </a>
                         }
-                        @* --- LOGIC END --- *@
 
                     </div>
                 </div>
@@ -43,7 +39,6 @@ else
         }
     </div>
 
-    @* Pagination code remains the same... *@
     <nav class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
