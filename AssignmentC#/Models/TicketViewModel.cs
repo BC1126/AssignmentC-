@@ -41,10 +41,15 @@ namespace AssignmentC_.Models
         public decimal TotalAmount { get; set; }
 
         public string PaymentMethod { get; set; }
+        [DisplayName("Card Number")]
         public string? CardNumber { get; set; }
+        [DisplayName("Expiry Date")]
         public string? ExpiryDate { get; set; }
+        [DisplayName("CVV")]
         public string? CVV { get; set; }
+        [DisplayName("Phone Number")]
         public string? PhoneNumber { get; set; }
+        [DisplayName("PIN Number")]
         public string? Pin { get; set; }
     }
 

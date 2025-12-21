@@ -102,16 +102,31 @@ $('.upload input').on('change', e => {
 });
 
 //Payment method
-$('[data-method]').on('click', e => {
-    const method = e.currentTarget.dataset.method;
-
-    if (method == "creditCard") {
-        document.getElementById("payWithCard").style.display = "block";
-        document.getElementById("payWithEwallet").style.display = "none";
-    } else {
+function togglePayment(method) {
+    if (method === "ewallet") {
         document.getElementById("payWithCard").style.display = "none";
         document.getElementById("payWithEwallet").style.display = "block";
+    } else {
+        // ✅ DEFAULT = creditCard
+        document.getElementById("payWithCard").style.display = "block";
+        document.getElementById("payWithEwallet").style.display = "none";
     }
+}
+
+// Click handler
+$('[data-method]').on('change', e => {
+    togglePayment(e.currentTarget.dataset.method);
+});
+
+// ✅ Page load init (SAFE DEFAULT)
+$(document).ready(function () {
+    const checked = $('input[name="PaymentMethod"]:checked');
+
+    const method = checked.length
+        ? checked.data('method')
+        : "creditCard"; // fallback
+
+    togglePayment(method);
 });
 
 $('[data-CloseVoucher]').on('click', e => {

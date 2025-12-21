@@ -57,8 +57,7 @@ public class TicketController(DB db, Helper hp) : Controller
         var today = DateTime.Today;
         var vouchers = db.Promotions
                          .OfType<Voucher>()
-                         .Where(v => v.StartDate <= today && v.EndDate >= today
-                         )
+                         .Where(v => v.StartDate <= today && v.EndDate >= today)
                          .ToList();
         ViewBag.Timer = new CheckoutViewModel { Timer = timer };
         ViewBag.Vouchers = vouchers;
@@ -153,7 +152,26 @@ public class TicketController(DB db, Helper hp) : Controller
 
         if (!ModelState.IsValid)
         {
-            return RedirectToAction("Index");
+            var expiryStr = HttpContext.Session.GetString("LockExpiry");
+            DateTime expiryTime = DateTime.Parse(expiryStr, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            int remainingSeconds = (int)(expiryTime - DateTime.UtcNow).TotalSeconds;
+
+            var timer = new TimerViewModel
+            {
+                Expired = remainingSeconds <= 0,
+                Minutes = Math.Max(remainingSeconds, 0) / 60,
+                Seconds = Math.Max(remainingSeconds, 0) % 60
+            };
+
+            var today = DateTime.Today;
+            var vouchers = db.Promotions
+                         .OfType<Voucher>()
+                         .Where(v => v.StartDate <= today && v.EndDate >= today)
+                         .ToList();
+            ViewBag.Timer = new CheckoutViewModel { Timer = timer };
+            ViewBag.Vouchers = vouchers;
+            ViewBag.PaymentMethod = vm.PaymentMethod;
+            return View(vm);
         }
 
         var voucherCode = HttpContext.Session.GetString("AppliedVoucherCode");
