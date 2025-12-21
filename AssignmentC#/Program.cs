@@ -1,6 +1,7 @@
 global using AssignmentC_.Models;
 using AssignmentC_;
 using AssignmentC_.Hubs;
+using Rotativa.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,14 +40,13 @@ builder.Services.AddAuthentication("MyCookieAuth")
             return Task.CompletedTask;
         };
     });
-
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 var app = builder.Build();
 
 app.UseSession();
 app.UseRouting();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 
 // Enable Authentication & Authorization
 app.UseAuthentication();

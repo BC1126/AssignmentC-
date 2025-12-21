@@ -6,6 +6,20 @@
 
 @{
     var timer = ViewBag.Timer as CheckoutViewModel;
+    var cardSelected = "checked";
+    var walletSelected = "";
+    if (ViewBag.PaymentMethod != null)
+    {
+        if (ViewBag.PaymentMethod == "Card")
+        {
+            cardSelected = "checked";
+        }
+        else
+        {
+            cardSelected = "";
+            walletSelected = "checked";
+        }
+    }
 }
 
 <main>
@@ -89,7 +103,7 @@
 
                 <div class="paymentSelect">
                     <label for="creditCard" class="methodBtn" data-method="creditCard">
-                            <input type="radio" name="PaymentMethod" id="creditCard" value="Card" checked />
+                            <input type="radio" name="PaymentMethod" id="creditCard" value="Card" @cardSelected />
                         <div class="methodCard">
                             <span class="material-symbols-outlined">credit_card</span>
                             &nbsp; Card
@@ -98,7 +112,7 @@
                     </label>
 
                     <label for="ewallet" class="methodBtn" data-method="ewallet">
-                            <input type="radio" name="PaymentMethod" id="ewallet" value="EWallet" />
+                            <input type="radio" name="PaymentMethod" id="ewallet" value="EWallet" @walletSelected />
                         <div class="methodCard">
                             <span class="material-symbols-outlined">account_balance_wallet</span>
                             &nbsp; E-wallet
@@ -107,35 +121,39 @@
                 </div>
 
                 <div id="payWithCard">
-                    <label>Card Number</label>
-                        <input type="text" placeholder="0000 0000 0000 0000" name="CardNumber" />
+                        <label asp-for="CardNumber"></label>
+                        <input type="text" placeholder="0000 0000 0000 0000" asp-for="CardNumber" />
+                        <span class="displayErrorMsg" asp-validation-for="CardNumber"></span>
 
                     <div class="cardInputDetail">
 
                         <div class="form-row">
                             <div>
-                                <label>Expiry Date</label>
-                                <input type="month" placeholder="MM/YY" name="ExpiryDate" />
+                                    <label asp-for="ExpiryDate"></label>
+                                    <input type="month" placeholder="MM/YY" asp-for="ExpiryDate" />
+                                    <span class="displayErrorMsg" asp-validation-for="ExpiryDate"></span>
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div>
-                                <label>CVV</label>
-                                <input type="text" placeholder="XXX" name="CVV" />
+                                <label asp-for="CVV"></label>
+                                <input type="text" placeholder="XXX" asp-for="CVV" />
+                                    <span class="displayErrorMsg" asp-validation-for="CVV"></span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div id="payWithEwallet">
-                    <label>Phone Number</label>
-                    <input type="text" placeholder="+6012 3456 789" name="PhoneNumber" />
-
+                    <label asp-for="PhoneNumber"></label>
+                    <input type="text" placeholder="+6012 3456 789" asp-for="PhoneNumber" />
+                        <span class="displayErrorMsg" asp-validation-for="PhoneNumber"></span>
                     <div class="form-row">
                         <div>
-                            <label>PIN Number</label>
-                            <input type="password" placeholder="PIN Number" name="Pin" />
+                            <label asp-for="Pin"></label>
+                            <input type="password" placeholder="PIN Number" asp-for="Pin" />
+                                <span class="displayErrorMsg" asp-validation-for="Pin"></span>
                         </div>
                     </div>
                 </div>
@@ -144,7 +162,7 @@
             
                 <div class="actions">
                     <button class="btn-primary">Pay</button>
-                    <button class="btn-secondary">Cancel</button>
+                    <a href="/Home/Index"><button class="btn-secondary">Cancel</button></a>
                 </div>
             </form>
             

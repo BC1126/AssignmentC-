@@ -18,21 +18,16 @@
             </div>
 
             <div class="controls">
-                <div class="tabs">
-                    <a class="tab active">Upcoming</a>
-                    <a class="tab">Past</a>
-                    <a class="tab">Cancelled</a>
-                </div>
-
-                <div class="search">
-                    <span class="material-symbols-outlined" style="padding:0 8px;">search</span>
-                    <input placeholder="Search by movie title...">
-                </div>
             </div>
+
+            @if (Model?.Any() == false)
+            {
+                <div>No any purchased ticket found</div>
+            }
 
             @foreach(var vm in Model)
             {
-                if (vm.Status == "refund")
+                if (vm.Status == "Paid")
                 {
                     css = "badge-confirmed";
                 }
@@ -46,8 +41,15 @@
                     <div>
                         <div class="badges">
                                 <span class="@css">@vm.Status</span>
-                                <span class="badge-format">Paid At : @vm.Date</span>
-                        </div>
+                                @if (vm.Status == "Paid")
+                                {
+                                    <span class="badge-format">Paid At : @vm.Date</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-format">Refund At : @vm.Date</span>
+                                }
+                            </div>
                             <h3 class="movieTitle">@vm.Movie.Title</h3>
                             <p class="subtitle">@vm.Movie.PremierDate.ToString("dddd, dd MMMM yyyy") • @vm.ShowTime.StartTime</p>
                     </div>
@@ -55,7 +57,7 @@
                             <div class="actions">
                                
                                 <a href="/Ticket/TicketDetail/@vm.PaymentId"><button><span class="material-symbols-outlined">qr_code_2</span>View Ticket</button></a>
-                                @if (vm.Status == "refund")
+                                @if (vm.Status == "Paid")
                                 {
                                     <form method="post" action="/Ticket/Refund" id="refundForm">
                                     <input type="hidden" name="paymentId" value="@vm.PaymentId" />
