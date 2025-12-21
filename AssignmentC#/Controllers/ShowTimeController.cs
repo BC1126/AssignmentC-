@@ -33,7 +33,6 @@ public class ShowTimeController : Controller
         {
             vm.OutletId = outletId.Value;
 
-            // ✅ FIX 1: Only load ACTIVE halls into the dropdown list
             vm.Halls = db.Halls
                 .Where(h => h.OutletId == outletId && h.IsActive)
                 .ToList();
@@ -41,8 +40,7 @@ public class ShowTimeController : Controller
 
         if (hallId.HasValue)
         {
-            // Optional: Double check if the selected hallId is actually active. 
-            // If not, we ignore it to prevent showing data for inactive halls.
+
             var selectedHall = db.Halls.FirstOrDefault(h => h.HallId == hallId.Value && h.IsActive);
 
             if (selectedHall != null)
@@ -67,30 +65,26 @@ public class ShowTimeController : Controller
     [Authorize(Roles = "Admin,Staff")]
     public IActionResult CreateShowTime(ShowTimeManageVM vm)
     {
-        // 1. Basic Validation
         var movie = db.Movies.Find(vm.MovieId);
         if (movie == null) return NotFound();
 
         var targetHall = db.Halls.FirstOrDefault(h => h.HallId == vm.HallId && h.IsActive);
         if (targetHall == null)
         {
-            TempData["Error"] = "Hall invalid.";
+            TempData["Info"] = "Hall invalid.";
             return RedirectToAction("Manage", new { vm.OutletId, date = vm.Date });
         }
 
         int successCount = 0;
         int failCount = 0;
-        int cleaningBuffer = 15; // Keep your smart scheduling rule!
+        int cleaningBuffer = 15; 
 
-        // 2. LOOP: Iterate from 0 (Today) up to RepeatDays
         for (int i = 0; i <= vm.RepeatDays; i++)
         {
-            // Calculate date and time for THIS iteration
             DateTime currentDay = vm.Date.Date.AddDays(i);
             DateTime start = currentDay.Add(vm.StartTime.TimeOfDay);
             DateTime end = start.AddMinutes(movie.DurationMinutes);
 
-            // 3. Conflict Check for THIS specific day
             bool conflict = db.ShowTimes
                 .Include(st => st.Movie)
                 .Any(st =>
@@ -102,12 +96,10 @@ public class ShowTimeController : Controller
 
             if (conflict)
             {
-                // If conflict, SKIP this day and count failure
                 failCount++;
                 continue;
             }
 
-            // 4. Create and Add (Queue it)
             var newShowTime = new ShowTime
             {
                 MovieId = vm.MovieId,
@@ -122,10 +114,8 @@ public class ShowTimeController : Controller
             successCount++;
         }
 
-        // 5. Save all changes at once
         db.SaveChanges();
 
-        // 6. Smart Feedback Message
         if (failCount == 0)
         {
             TempData["Info"] = $"Success! Added showtimes for {successCount} days.";
@@ -136,14 +126,13 @@ public class ShowTimeController : Controller
         }
         else
         {
-            TempData["Error"] = "Failed. All selected days had conflicts.";
+            TempData["Info"] = "Failed. All selected days had conflicts.";
         }
 
         return RedirectToAction("Manage", new { vm.OutletId, vm.HallId, date = vm.Date.ToString("yyyy-MM-dd") });
     }
 
 
-    // GET: ShowTimeManage
     [Authorize(Roles = "Admin,Staff")]
     public IActionResult ShowTimeManage(int? outletId, int? hallId, int? movieId, DateTime? date, string sort = "Date", string dir = "asc", int page = 1)
     {
@@ -167,24 +156,20 @@ public class ShowTimeController : Controller
             .Where(st => st.IsActive)
             .AsQueryable();
 
-        // --- Filters ---
         if (outletId.HasValue) query = query.Where(st => st.Hall.OutletId == outletId.Value);
         if (hallId.HasValue && hallId > 0) query = query.Where(st => st.HallId == hallId.Value);
         if (movieId.HasValue && movieId > 0) query = query.Where(st => st.MovieId == movieId.Value);
         query = query.Where(st => st.StartTime.Date == selectedDate.Date);
 
-        // --- 🔥 Sorting Logic (Same pattern as Movie) ---
         query = sort switch
         {
             "Movie" => dir == "des" ? query.OrderByDescending(st => st.Movie.Title) : query.OrderBy(st => st.Movie.Title),
             "Outlet" => dir == "des" ? query.OrderByDescending(st => st.Hall.Outlet.Name) : query.OrderBy(st => st.Hall.Outlet.Name),
             "Hall" => dir == "des" ? query.OrderByDescending(st => st.Hall.Name) : query.OrderBy(st => st.Hall.Name),
             "Price" => dir == "des" ? query.OrderByDescending(st => st.TicketPrice) : query.OrderBy(st => st.TicketPrice),
-            // Default: Sort by Date/Time
             _ => dir == "des" ? query.OrderByDescending(st => st.StartTime) : query.OrderBy(st => st.StartTime)
         };
 
-        // --- Pagination ---
         int totalItems = query.Count();
         int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
@@ -193,12 +178,10 @@ public class ShowTimeController : Controller
             .Take(pageSize)
             .ToList();
 
-        // --- ViewBags for View ---
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
         ViewBag.SelectedMovieId = movieId;
 
-        // 🔥 Pass Sort Data
         ViewBag.Sort = sort;
         ViewBag.Dir = dir;
 
@@ -235,13 +218,11 @@ public class ShowTimeController : Controller
             .Where(st => st.IsActive)
             .AsQueryable();
 
-        // --- Filters ---
         if (outletId.HasValue) query = query.Where(st => st.Hall.OutletId == outletId.Value);
         if (hallId.HasValue && hallId > 0) query = query.Where(st => st.HallId == hallId.Value);
         if (movieId.HasValue && movieId > 0) query = query.Where(st => st.MovieId == movieId.Value);
         if (date.HasValue) query = query.Where(st => st.StartTime.Date == date.Value.Date);
 
-        // --- 🔥 Sorting Logic ---
         query = sort switch
         {
             "Movie" => dir == "des" ? query.OrderByDescending(st => st.Movie.Title) : query.OrderBy(st => st.Movie.Title),
@@ -251,7 +232,6 @@ public class ShowTimeController : Controller
             _ => dir == "des" ? query.OrderByDescending(st => st.StartTime) : query.OrderBy(st => st.StartTime)
         };
 
-        // --- Pagination ---
         int totalItems = query.Count();
         int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
@@ -263,7 +243,6 @@ public class ShowTimeController : Controller
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
 
-        // 🔥 Pass Sort Data
         ViewBag.Sort = sort;
         ViewBag.Dir = dir;
 
@@ -286,7 +265,6 @@ public class ShowTimeController : Controller
         return Json(halls);
     }
 
-    // GET: ShowTime/Edit/5
     [Authorize(Roles = "Admin,Staff")]
     public IActionResult EditShowTime(int id)
     {
@@ -329,28 +307,22 @@ public class ShowTimeController : Controller
         if (st == null)
             return NotFound();
 
-        // 1. Get the duration of the movie being assigned (it might be a new movie or the same one)
         var movieDuration = db.Movies.Find(vm.MovieId)?.DurationMinutes ?? 0;
 
         var newStart = vm.Date.Date.Add(vm.StartTime.TimeOfDay);
         var newEnd = newStart.AddMinutes(movieDuration);
 
-        // ==========================================
-        // 🔥 CONFLICT CHECK (With Cleaning Gap)
-        // ==========================================
-        int cleaningBuffer = 15; // 15 minutes for cleaning
+        int cleaningBuffer = 15;
 
         var conflict = db.ShowTimes
             .Include(s => s.Movie)
             .Any(s =>
-                s.ShowTimeId != vm.ShowTimeId && // Exclude the showtime currently being edited
+                s.ShowTimeId != vm.ShowTimeId && 
                 s.HallId == vm.HallId &&
                 s.IsActive &&
 
-                // 1. The NEW movie must not start while an OLD movie (plus cleaning) is running
                 newStart < s.StartTime.AddMinutes(s.Movie.DurationMinutes + cleaningBuffer) &&
 
-                // 2. The NEW movie (plus cleaning) must not run into an OLD movie's start time
                 newEnd.AddMinutes(cleaningBuffer) > s.StartTime
             );
 
@@ -371,12 +343,9 @@ public class ShowTimeController : Controller
 
 
 
-        // -------------------------------
-        // Track changes with new line formatting
-        // -------------------------------
+
         var changeLogLines = new List<string>();
 
-        // Note: We compare st.MovieId (old) with vm.MovieId (new)
         if (st.MovieId != vm.MovieId)
             changeLogLines.Add($"Movie: {st.Movie?.Title} → {db.Movies.Find(vm.MovieId)?.Title}");
 
@@ -389,9 +358,7 @@ public class ShowTimeController : Controller
         if (st.TicketPrice != vm.TicketPrice)
             changeLogLines.Add($"TicketPrice: {st.TicketPrice} → {vm.TicketPrice}");
 
-        // -------------------------------
-        // Update fields
-        // -------------------------------
+
         st.MovieId = vm.MovieId;
         st.HallId = vm.HallId;
         st.StartTime = newStart;
@@ -399,9 +366,6 @@ public class ShowTimeController : Controller
 
         db.SaveChanges();
 
-        // -------------------------------
-        // Log changes
-        // -------------------------------
         string changeLog = changeLogLines.Count > 0
             ? string.Join("\n", changeLogLines)
             : "No changes made";
@@ -423,7 +387,7 @@ public class ShowTimeController : Controller
     {
         if (selectedIds == null || !selectedIds.Any())
         {
-            TempData["Error"] = "No showtimes selected.";
+            TempData["Info"] = "No showtimes selected.";
             return RedirectToAction("ShowTimeManage");
         }
 
@@ -433,7 +397,7 @@ public class ShowTimeController : Controller
 
         if (!showtimes.Any())
         {
-            TempData["Error"] = "Selected showtimes not found.";
+            TempData["Info"] = "Selected showtimes not found.";
             return RedirectToAction("ShowTimeManage");
         }
 
@@ -455,9 +419,7 @@ public class ShowTimeController : Controller
     [Authorize(Roles = "Admin,Staff")]
     public IActionResult ExportShowTimes(int? outletId, int? hallId, int? movieId, DateTime? date)
     {
-        // ---------------------------------------------------------
-        // 1. QUERY & FILTERING
-        // ---------------------------------------------------------
+
         var query = db.ShowTimes
             .Include(st => st.Movie)
             .Include(st => st.Hall)
@@ -477,10 +439,7 @@ public class ShowTimeController : Controller
         if (date.HasValue)
             query = query.Where(st => st.StartTime.Date == date.Value.Date);
 
-        // ---------------------------------------------------------
-        // 2. FETCH & SORT (In Memory)
-        // ---------------------------------------------------------
-        // We fetch first, then sort by Hall + Time so we can compare adjacent rows
+
         var rawData = query.ToList();
 
         var data = rawData
@@ -489,38 +448,31 @@ public class ShowTimeController : Controller
             .ThenBy(st => st.StartTime)
             .ToList();
 
-        // ---------------------------------------------------------
-        // 3. BUILD CSV CONTENT
-        // ---------------------------------------------------------
+
         var sb = new System.Text.StringBuilder();
 
-        // Header Row
         sb.AppendLine("Date,Outlet,Hall,Movie Just Ended,Cleaning Starts (End Time),Next Show Starts,Gap/Deadline");
 
         for (int i = 0; i < data.Count; i++)
         {
             var item = data[i];
 
-            // --- CALCULATION LOGIC ---
             string nextShowTime = "End of Day";
-            string gap = "Until Closing"; // Default for last movie
+            string gap = "Until Closing"; 
 
-            // Look ahead to the next record
             if (i + 1 < data.Count)
             {
                 var nextItem = data[i + 1];
 
-                // Check if the next record is in the SAME Hall on the SAME Day
                 if (nextItem.HallId == item.HallId && nextItem.StartTime.Date == item.StartTime.Date)
                 {
                     nextShowTime = nextItem.StartTime.ToString("hh:mm tt");
 
-                    // Calculate minutes between Current End and Next Start
                     double minutes = (nextItem.StartTime - item.EndTime).TotalMinutes;
 
                     if (minutes < 0)
                     {
-                        gap = $"OVERRUN! ({minutes:0} mins)"; // Negative gap means schedule clash
+                        gap = $"OVERRUN! ({minutes:0} mins)"; 
                     }
                     else
                     {
@@ -529,22 +481,17 @@ public class ShowTimeController : Controller
                 }
             }
 
-            // Escape quotes in movie title for CSV safety
             string movieTitle = $"\"{item.Movie.Title.Replace("\"", "\"\"")}\"";
 
-            // --- APPEND ROW ---
             sb.AppendLine($"{item.StartTime:dd/MM/yyyy}," +
                           $"{item.Hall.Outlet.Name}," +
                           $"{item.Hall.Name}," +
                           $"{movieTitle}," +
-                          $"{item.EndTime:hh:mm tt}," +   // When cleaning begins
-                          $"{nextShowTime}," +            // When cleaning must finish
+                          $"{item.EndTime:hh:mm tt}," +  
+                          $"{nextShowTime}," +            
                           $"{gap}");
         }
 
-        // ---------------------------------------------------------
-        // 4. RETURN FILE
-        // ---------------------------------------------------------
         string fileName = $"Cleaning_Schedule_{DateTime.Now:yyyyMMdd_HHmm}.csv";
         return File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", fileName);
     }
