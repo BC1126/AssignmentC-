@@ -14,12 +14,29 @@ public class HomeController : Controller
     // In HomeController.cs
     public IActionResult Index()
     {
+        // --- 1. Check for Admin/Staff Redirect FIRST ---
+        if (User.Identity.IsAuthenticated)
+        {
+            if (User.IsInRole("Admin"))
+            {
+                // Redirect to Admin Controller, AdminDashboard Action
+                return RedirectToAction("AdminDashboard", "Admin");
+            }
+
+            if (User.IsInRole("Staff"))
+            {
+                // Redirect to Staff Controller, StaffDashboard Action
+                return RedirectToAction("StaffDashboard", "Staff");
+            }
+        }
+
+        // --- 2. If it's a Member or Guest, load the movies ---
         var today = DateTime.Today;
 
         var nowShowing = _db.Movies
                             .Where(m => m.PremierDate <= today)
                             .OrderByDescending(m => m.PremierDate)
-                            .Take(8) // Increased to 8 so we have enough for Carousel + Grid
+                            .Take(8)
                             .ToList();
 
         var comingSoon = _db.Movies
