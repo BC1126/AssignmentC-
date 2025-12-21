@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddSqlServer<DB>($@"
     Data Source=(LocalDB)\MSSQLLocalDB;
-    AttachDbFilename={builder.Environment.ContentRootPath}\DB.mdf;
+    AttachDbFilename={builder.Environment.ContentRootPath}\BCPRODB.mdf;
 ");
 
 builder.Services.AddSession(options =>
