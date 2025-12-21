@@ -79,18 +79,33 @@
                 <thead class="table-light">
                     <tr>
                         <th>Movie</th>
-                        <th>Start</th>
-                        <th>End</th>
+                        <th>Show Time</th>
+                        <th>Cleaning</th>
+                        <th>Next Slot</th>
                         <th>Price</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var st in Model.ExistingShowTimes)
                     {
+                        // Calculate the times for display
+                        var cleanEnd = st.EndTime.AddMinutes(15);
+
                         <tr class="table-warning">
-                            <td>@st.Movie.Title</td>
-                            <td>@st.StartTime.ToString("HH:mm")</td>
-                            <td>@st.EndTime.ToString("HH:mm")</td>
+                            <td>
+                                <strong>@st.Movie.Title</strong>
+                            </td>
+                            <td>
+                                @st.StartTime.ToString("HH:mm") - @st.EndTime.ToString("HH:mm")
+                                <br />
+                                <small class="text-muted">(@st.Movie.DurationMinutes mins)</small>
+                            </td>
+                            <td class="text-danger">
+                                <i class="fa fa-broom"></i> 15m
+                            </td>
+                            <td class="text-success fw-bold">
+                                @cleanEnd.ToString("HH:mm")
+                            </td>
                             <td>RM @st.TicketPrice</td>
                         </tr>
                     }
@@ -106,6 +121,11 @@
     <div class="card shadow-sm">
         <div class="card-body">
             <h5 class="mb-3">Add New ShowTime</h5>
+
+            <div class="alert alert-info py-2">
+                <i class="fa fa-info-circle"></i>
+                <strong>Smart Schedule Policy:</strong> A 15-minute cleaning buffer is automatically enforced between movies.
+            </div>
 
             <form asp-action="CreateShowTime" method="post" class="row g-3">
                 @Html.AntiForgeryToken()
@@ -142,7 +162,16 @@
                            class="form-control" required />
                 </div>
 
-                <div class="col-12">
+                <div class="col-md-4">
+                    <label class="form-label">Repeat For (Days)</label>
+                    <div class="input-group">
+                        <input type="number" name="RepeatDays" class="form-control" value="6" min="0" max="30" />
+                        <span class="input-group-text">days</span>
+                    </div>
+                    <small class="text-muted">Default is 6 (1 week total). Max 30.</small> @*today+next6 so is 6*@
+                </div>
+
+                <div class="col-12 mt-3">
                     <button type="submit" class="btn btn-primary">
                         Add Showtime
                     </button>
@@ -150,4 +179,29 @@
             </form>
         </div>
     </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Get the list of existing showtimes from the table (if any)
+            var lastTimeSlot = "@(Model.ExistingShowTimes != null && Model.ExistingShowTimes.Any()
+                                                                ? Model.ExistingShowTimes.Last().EndTime.AddMinutes(15).ToString("HH:mm")
+                                                                : "")";
+
+        // 2. Select the StartTime input field
+        var timeInput = document.querySelector('input[name="StartTime"]');
+
+            // 3. If there is a previous movie, auto-fill the next slot
+            if (lastTimeSlot && timeInput) {
+                timeInput.value = lastTimeSlot;
+
+                // Optional: Add a visual hint
+                var hint = document.createElement("small");
+                hint.className = "text-muted";
+                hint.innerText = "💡 Auto-suggested based on 15m cleaning gap.";
+                timeInput.parentNode.appendChild(hint);
+            }
+        });
+    </script>
 }

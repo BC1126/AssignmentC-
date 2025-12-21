@@ -35,5 +35,9 @@ namespace AssignmentC_.Models
         [Required(ErrorMessage = "Please enter a ticket price.")]
         [Range(0.00, 1000.00, ErrorMessage = "Ticket price must be between 0 and 1000.")]
         public decimal TicketPrice { get; set; }
+
+        [Range(0, 30, ErrorMessage = "You can repeat for up to 30 days.")]
+        public int RepeatDays { get; set; } = 0;
+
     }
 }
