@@ -2,70 +2,46 @@
 
 @section head{
     <link href="/css/myTicket.css" rel="stylesheet" />
+    <style>
+        .filters input, .filters select {
+            color: black;
+        }
+    </style>
 }
 
+<form data-ajax="true"
+      data-ajax-update="#target"
+      id="ajaxForm">
 <div class="filters">
-    <input placeholder="Search by Name, Movie or Transaction ID" />
-    <input value="Oct 1 - Oct 31, 2023" />
-    <select>
-        <option>Payment Status</option>
-    </select>
-</div>
-
-<form asp-action="DeletePayment" method="post">
-    <button type="submit" class="btn btn-primary" onclick="return confirm('Delete selected items?')">
-        Delete Selected Payment
-    </button>
-
-<div class="table-wrap">
     
-    <table>
-        <thead>
-            <tr>
-                <th class="checkBoxRow"><input type="checkbox" id="selectAll" /></th>
-                <th class="tableRow">Member ID</th>
-                <th class="tableRow">Email</th>
-                <th class="tableRow">Movie</th>
-                <th class="tableRow">Date</th>
-                <th class="tableRow">Status</th>
-                <th class="tableRow">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var vm in Model)
-            {
-                <tr>
-                    <td class="checkBoxRow"><input type="checkbox" name="selectedID" value="@vm.PaymentId" /></td>
-                    <td class="tableRow">@vm.User.UserId</td>
-                    <td class="tableRow">@vm.User.Email</td>
-                    <td class="tableRow">@vm.Booking.ShowTime.Movie.Title</td>
-                    <td class="tableRow">@vm.date.ToString("dd MMMM yyyy")</td>
-                    <td class="tableRow"><span class="status paid">@vm.status</span></td>
-                    <td class="tableRow">@vm.amount</td>
-                    <!--
-                        <td class="actions tableRow">
-                            <button class="btnActions">Edit</button>
-                            <button class="btnActions">Delete</button>
-                        </td>
-                    -->
-                </tr>
-            }
-        </tbody>
-    </table>
+        @Html.TextBox("search", "", new { type = "search", autofocus = "", data_trim = "", placeholder = "Search by Member ID or Member Email" })
+        <input type="month" value="@DateTime.Today" name="selectedMonth" id="selectedMonth" />
+        <select name="status" id="status">
+            <option value="">All Status</option>
+            <option value="Paid">Paid</option>
+            <option value="Refund">Refund</option>
+        </select>
+        <button class="btn-primary">Search</button>
+    
 </div>
-    @if (Model?.Any() == false)
-    {
-        <div>No record found</div>
-    }
-
 </form>
 
-@section foot{
+<div id="target">
+    <partial name="_PaymentList" />
+</div>
+
+@section Scripts {
     <script>
-        document.getElementById('selectAll').addEventListener('change', function () {
-            document
-                .querySelectorAll('input[name="selectedID"]')
-                .forEach(cb => cb.checked = this.checked);
+        
+        let timer = null;
+
+        $('#search').on('input', e => {
+            clearTimeout(timer);
+            timer = setTimeout(() => $(e.target.form).submit(),500);
         });
+
+        $(document).on('change', 'select, input[type="month"]', e => {
+            $(e.target.form).submit()
+        })
     </script>
 }
