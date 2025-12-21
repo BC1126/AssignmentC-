@@ -1132,6 +1132,17 @@ public class TicketController(DB db, Helper hp) : Controller
             return RedirectToAction("Index");
         }
 
+        var seat = db.BookingSeats
+                     .Include(p => p.Booking)
+                     .Include(p => p.Seat)
+                     .Where(p => p.BookingId == payment.Booking.BookingId)
+                     .ToList();
+
+        foreach (var s in seat)
+        {
+            s.Seat.IsActive = true;
+        }
+
         payment.status = "Refund";
         payment.date = DateOnly.FromDateTime(DateTime.Today);
         db.SaveChanges();
