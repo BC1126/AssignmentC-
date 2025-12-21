@@ -635,9 +635,15 @@ public class ProductController(DB db, Helper hp) : Controller
             return RedirectToAction("Order");
         }
 
-        if (order.Paid)
+        if (order.Claim)
         {
-            TempData["Error"] = "Cannot cancel a paid order.";
+            TempData["Error"] = "Cannot cancel a claimed order.";
+            return RedirectToAction("Order");
+        }
+
+        if (order.CollectDate < DateOnly.FromDateTime(DateTime.Today))
+        {
+            TempData["Error"] = "Cancellation period has expired.";
             return RedirectToAction("Order");
         }
 
