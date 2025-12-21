@@ -27,7 +27,7 @@
 
                 <div class="ticket-body">
                     <div class="qr">
-                        <img src="@Model.Booking.ShowTime.Movie.PosterUrl" alt="Movie Poster">
+                        <img src="/uploads/@Model.Booking.ShowTime.Movie.PosterUrl" alt="Movie Poster" style="height:300px;">
                     </div>
 
                     <div>
@@ -48,7 +48,7 @@
             <!-- PAYMENT -->
             <div class="payment">
                 <h3>Payment Details</h3>
-                <div class="row muted"><span>Standard Ticket (x2)</span><span> RM @Model.Booking.TotalPrice</span></div>
+                <div class="row muted"><span>Ticket (x2)</span><span> RM @Model.Booking.TotalPrice</span></div>
                 <div class="row muted"><span>Add-On</span><span>RM @ViewBag.AddOnSub</span></div>
                 <div class="row discount"><span>Discount</span><span>- RM @ViewBag.DiscountValue</span></div>
                 <hr style="border-color:var(--border)">
