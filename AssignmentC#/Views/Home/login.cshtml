@@ -4,6 +4,8 @@
     ViewData["Title"] = "Login";
 }
 
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 <style>
     /* Styling for the hover effect on the forgot password link */
     .forgot-link:hover {
@@ -24,6 +26,11 @@
 
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="text-danger mb-3">@ViewBag.Error</div>
+                        }
+
                         <div class="form-group mb-3">
                             <h6 class="mb-2 fw-bold">Email Address</h6>
                             <input asp-for="Email" class="form-control" placeholder="Enter your email" />
@@ -36,22 +43,9 @@
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <h6 class="mb-2 fw-bold mt-4">Security Verification</h6>
-
-                            <input type="hidden" name="encryptedCaptcha" value="@ViewBag.EncryptedCaptcha" />
-
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge bg-dark p-2 fs-5 text-uppercase" style="letter-spacing: 5px; min-width: 120px; display: inline-block;">
-                                    @ViewBag.CaptchaCode
-                                </span>
-                                <small class="ms-3 text-muted">Type the code above</small>
-                            </div>
-
-                            <input asp-for="CaptchaInput" class="form-control" placeholder="Enter code" autocomplete="off" />
-                            <span asp-validation-for="CaptchaInput" class="text-danger"></span>
+                        <div class="form-group mb-3 mt-4">
+                            <div class="g-recaptcha" data-sitekey="6LdtozIsAAAAABVMetAM6zTwV_SIasaH3R_wxoGM"></div>
                         </div>
-
                         <div class="form-check mb-4 mt-3">
                             <input asp-for="RememberMe" class="form-check-input" type="checkbox" />
                             <label asp-for="RememberMe" class="form-check-label fw-normal">Remember Me</label>
