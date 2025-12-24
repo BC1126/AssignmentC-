@@ -308,12 +308,6 @@ public class Helper(IWebHostEnvironment en, IHttpContextAccessor ct, DB db, ICon
         }
     }
 
-    public string GenerateCaptchaCode()
-    {
-        // Just return the string; the View/Controller will handle the "memory" via encryption
-        return Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
-    }
-
     public void LogAction(string entity, string action)
     {
         var email = ct.HttpContext!.User?.Claims
